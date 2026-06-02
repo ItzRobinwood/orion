@@ -19,7 +19,6 @@ require("./models/requestStatus.js");
 // routes
 const requestRoutes = require("./routes/requestRoutes");
 const userRoutes = require("./routes/userRoutes");
-const companyRoutes = require("./routes/companyRoutes");
 
 // associations
 const applyAssociations = require("./models/associations");
@@ -36,7 +35,6 @@ app.use(express.json());
 // rotas
 app.use("/", requestRoutes);
 app.use("/", userRoutes);
-app.use("/", companyRoutes);
 
 applyAssociations();
 
