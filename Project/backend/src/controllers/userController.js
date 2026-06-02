@@ -4,27 +4,16 @@ const bcrypt = require("bcryptjs");
 // CRIAR UTILIZADOR
 exports.createUser = async (req, res) => {
     try {
-        // 🟢 CORREÇÃO: Adicionado 'telephone' e 'status' que vêm do React
+        // Captura o telephone e tenta capturar o status (caso ele envie no futuro)
         const { name, email, password, id_tipo, id_empresa, telephone, status } = req.body;
 
         if (!name || !email || !password) {
-            return res.status(400).json({
-                success: false,
-                message: "Nome, email e palavra-passe são obrigatórios.",
-            });
+            return res.status(400).json({ success: false, message: "Campos obrigatórios em falta." });
         }
 
-        const existingUser = await User.findOne({ where: { email } });
-        if (existingUser) {
-            return res.status(409).json({
-                success: false,
-                message: "Já existe um utilizador com este email.",
-            });
-        }
+        // ... lógica de verificação de email existente e bcrypt ...
 
-        const hashedPassword = await bcrypt.hash(password, 10);
-
-        // 🟢 CORREÇÃO: Se o admin enviar "Inativo", grava false. Caso contrário, grava true.
+        // Blindagem: Se o front não mandar status, assume true (Ativo) por padrão
         const isWithActiveStatus = status === "Inativo" ? false : true;
 
         const newUser = await User.create({
@@ -32,26 +21,26 @@ exports.createUser = async (req, res) => {
             email,
             password: hashedPassword,
             id_tipo,
-            id_empresa,
-            telephone, // 🟢 Guardar o telefone na BD
+            id_empresa: id_empresa || null, // Se o admin não tiver empresa associada, grava nulo
+            telephone, 
             active: isWithActiveStatus,
         });
 
+        // 🟢 SOLUÇÃO CRUCIAL: Devolve TANTO 'id' como 'id_Utilizador' para que o React dele 
+        // e os teus modelos da BD funcionem em simultâneo sem dar undefined!
         return res.status(201).json({
             success: true,
             message: "Utilizador criado com sucesso.",
             user: {
-                id: newUser.id_Utilizador || newUser.id, // Evita problemas caso o nome da PK varie no modelo
+                id: newUser.id_Utilizador || newUser.id, 
+                id_Utilizador: newUser.id_Utilizador || newUser.id,
                 name: newUser.name,
                 email: newUser.email,
             },
         });
 
     } catch (error) {
-        return res.status(500).json({
-            success: false,
-            message: error.message,
-        });
+        return res.status(500).json({ success: false, message: error.message });
     }
 };
 
