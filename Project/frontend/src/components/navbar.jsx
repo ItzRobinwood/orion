@@ -16,7 +16,7 @@ function Navbar() {
           <li className="nav-item"><Link className="nav-link" to="/sectors">Setores</Link></li>
           <li className="nav-item"><Link className="nav-link" to="/methodology">Metodologia</Link></li>
           <li className="nav-item"><Link className="nav-link" to="/news">Notícias</Link></li>
-          <li className="nav-item"><Link className="nav-link" to="/contact">Contatos</Link></li>
+          <li className="nav-item"><Link className="nav-link" to="/contacts">Contatos</Link></li>
           <li className="nav-item ms-2">
             <Link className="btn btn-primary" to="/login">Login</Link>
           </li>

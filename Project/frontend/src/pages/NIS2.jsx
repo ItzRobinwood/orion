@@ -95,7 +95,7 @@ function NIS2() {
                 </div>
               ))}
             </div>
-            <button className="btn-primary-custom" onClick={() => navigate("/contact")}>
+            <button className="btn-primary-custom" onClick={() => navigate("/contacts")}>
               AVALIE A SUA CONFORMIDADE NIS2 →
             </button>
           </div>
