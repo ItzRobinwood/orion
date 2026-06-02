@@ -32,17 +32,13 @@ export default function AdminDashboard() {
             <div className="bg-dark text-white p-3 d-flex flex-column" style={{ width: 250 }}>
                 <h4 className="mb-4">CyberBox</h4>
                 {nav.map((item) => (
-                    <button
-                        key={item.id}
-                        onClick={() => setActive(item.id)}
-                        className={`btn w-100 mb-2 text-start ${active === item.id ? "btn-primary" : "btn-outline-light"}`}
-                    >
+                    <button key={item.id} onClick={() => setActive(item.id)}
+                        className={`btn w-100 mb-2 text-start ${active === item.id ? "btn-primary" : "btn-outline-light"}`}>
                         {item.label}
                     </button>
                 ))}
                 <div className="mt-auto pt-4 small text-secondary">© 2026 CyberBox</div>
             </div>
-
             <div className="flex-grow-1 bg-light p-4 overflow-auto">
                 <div className="d-flex justify-content-between align-items-center mb-4">
                     <h4 className="m-0 text-capitalize">{active}</h4>
@@ -57,7 +53,6 @@ export default function AdminDashboard() {
     );
 }
 
-/* ───────────────────────── DASHBOARD ───────────────────────── */
 function Dashboard() {
     return (
         <>
@@ -79,7 +74,6 @@ function Dashboard() {
     );
 }
 
-/* ───────────────────────── ACCOUNTS ───────────────────────── */
 function Accounts() {
     const [accounts, setAccounts] = useState([
         {
@@ -107,7 +101,6 @@ function Accounts() {
     );
 }
 
-/* ─────────────────── TABELA EMPRESAS ─────────────────── */
 function CompaniesTable({ accounts, setAccounts }) {
     const getEmptyForm = () => ({
         company: "", status: "Ativo",
@@ -165,22 +158,15 @@ function CompaniesTable({ accounts, setAccounts }) {
                     {showForm ? "Cancelar" : "+ Nova Empresa"}
                 </button>
             </div>
-
             {showForm && (
-                <CompanyForm
-                    form={form} title="Nova Empresa" submitLabel="Criar Empresa"
+                <CompanyForm form={form} title="Nova Empresa" submitLabel="Criar Empresa"
                     setField={setField} setSubField={setSubField}
                     setClient={setClient} addClient={addClient} removeClient={removeClient}
-                    onSubmit={handleCreate}
-                />
+                    onSubmit={handleCreate} />
             )}
-
             <table className="table table-hover mb-0">
                 <thead className="table-dark">
-                    <tr>
-                        <th>Empresa</th><th>Clientes</th><th>Resp. Segurança</th>
-                        <th>Contacto Perm.</th><th>Estado</th><th>Ações</th>
-                    </tr>
+                    <tr><th>Empresa</th><th>Clientes</th><th>Resp. Segurança</th><th>Contacto Perm.</th><th>Estado</th><th>Ações</th></tr>
                 </thead>
                 <tbody>
                     {accounts.map((a) => (
@@ -193,29 +179,23 @@ function CompaniesTable({ accounts, setAccounts }) {
                                 <td><span className={`badge ${statusColor(a.status)}`}>{a.status}</span></td>
                                 <td>
                                     <div className="d-flex gap-1">
-                                        <button type="button" className="btn btn-sm btn-outline-secondary"
-                                            onClick={() => startEdit(a)}>Editar</button>
-                                        <button type="button" className="btn btn-sm btn-outline-danger"
-                                            onClick={() => setAccounts(accounts.filter((x) => x.id !== a.id))}>Remover</button>
+                                        <button type="button" className="btn btn-sm btn-outline-secondary" onClick={() => startEdit(a)}>Editar</button>
+                                        <button type="button" className="btn btn-sm btn-outline-danger" onClick={() => setAccounts(accounts.filter((x) => x.id !== a.id))}>Remover</button>
                                     </div>
                                 </td>
                             </tr>
-
                             {editingId === a.id && editForm && (
                                 <tr key={`edit-${a.id}`}>
                                     <td colSpan={6} className="p-0">
                                         <div className="border border-warning rounded m-2 p-3 bg-white">
                                             <div className="d-flex justify-content-between align-items-center mb-3">
                                                 <h6 className="mb-0">Editar — {a.company}</h6>
-                                                <button type="button" className="btn btn-sm btn-link text-secondary p-0"
-                                                    onClick={cancelEdit}>✕ Cancelar</button>
+                                                <button type="button" className="btn btn-sm btn-link text-secondary p-0" onClick={cancelEdit}>✕ Cancelar</button>
                                             </div>
-                                            <CompanyForm
-                                                form={editForm} title="" submitLabel="Guardar Alterações"
+                                            <CompanyForm form={editForm} title="" submitLabel="Guardar Alterações"
                                                 setField={setEField} setSubField={setESubField}
                                                 setClient={setEClient} addClient={addEClient} removeClient={removeEClient}
-                                                onSubmit={saveEdit}
-                                            />
+                                                onSubmit={saveEdit} />
                                         </div>
                                     </td>
                                 </tr>
@@ -231,12 +211,10 @@ function CompaniesTable({ accounts, setAccounts }) {
     );
 }
 
-/* ── Formulário reutilizável de empresa ── */
 function CompanyForm({ form, title, submitLabel, setField, setSubField, setClient, addClient, removeClient, onSubmit }) {
     return (
         <div className="border rounded p-3 mb-4 bg-white">
             {title && <h6 className="mb-3">{title}</h6>}
-
             <div className="row g-2 mb-3">
                 <div className="col-md-8">
                     <label className="form-label fw-semibold" style={{ fontSize: 12 }}>Nome da Empresa *</label>
@@ -245,22 +223,17 @@ function CompanyForm({ form, title, submitLabel, setField, setSubField, setClien
                 </div>
                 <div className="col-md-4">
                     <label className="form-label fw-semibold" style={{ fontSize: 12 }}>Estado</label>
-                    <select className="form-select form-select-sm"
-                        value={form.status} onChange={(e) => setField("status", e.target.value)}>
+                    <select className="form-select form-select-sm" value={form.status} onChange={(e) => setField("status", e.target.value)}>
                         <option>Ativo</option>
                         <option>Inativo</option>
                     </select>
                 </div>
             </div>
             <hr />
-
             <div className="mb-3">
                 <div className="d-flex justify-content-between align-items-center mb-2">
                     <label className="fw-semibold" style={{ fontSize: 13 }}>Clientes</label>
-                    <button type="button" className="btn btn-sm btn-outline-dark" onClick={addClient}>
-                        + Adicionar Cliente
-                    </button>
-                    
+                    <button type="button" className="btn btn-sm btn-outline-dark" onClick={addClient}>+ Adicionar Cliente</button>
                 </div>
                 {form.clients.map((client, i) => (
                     <div className="row g-2 mb-2 align-items-end" key={i}>
@@ -279,22 +252,6 @@ function CompanyForm({ form, title, submitLabel, setField, setSubField, setClien
                             <input className="form-control form-control-sm" placeholder="+351 910 000 000"
                                 value={client.phone} onChange={(e) => setClient(i, "phone", e.target.value)} />
                         </div>
-                        <div className="col-md-4">
-                        <label className="form-label fw-semibold" style={{ fontSize: 12 }}>Password</label>
-                        <div className="input-group input-group-sm">
-                            <input
-                                type="text"
-                                className="form-control form-control-sm"
-                                placeholder="Gere uma password"
-                                value={form.password}
-                                onChange={(e) => setForm({ ...form, password: e.target.value })}
-                            />
-                            <button type="button" className="btn btn-outline-secondary"
-                                onClick={() => setForm({ ...form, password: generatePassword() })}>
-                                Gerar
-                            </button>
-                        </div>
-                    </div>
                         <div className="col-md-2">
                             {form.clients.length > 1 && (
                                 <button type="button" className="btn btn-sm btn-outline-danger w-100"
@@ -305,50 +262,38 @@ function CompanyForm({ form, title, submitLabel, setField, setSubField, setClien
                 ))}
             </div>
             <hr />
-
             <div className="mb-3">
                 <label className="fw-semibold d-block mb-2" style={{ fontSize: 13 }}>Responsável de Segurança</label>
                 <div className="row g-2">
                     {["name", "email", "phone"].map((f) => (
                         <div className="col-md-4" key={f}>
-                            <label className="form-label" style={{ fontSize: 11 }}>
-                                {f === "name" ? "Nome" : f === "email" ? "Email" : "Telefone"}
-                            </label>
+                            <label className="form-label" style={{ fontSize: 11 }}>{f === "name" ? "Nome" : f === "email" ? "Email" : "Telefone"}</label>
                             <input className="form-control form-control-sm"
                                 placeholder={f === "name" ? "Nome" : f === "email" ? "email@empresa.com" : "+351 910 000 000"}
-                                value={form.securityManager[f]}
-                                onChange={(e) => setSubField("securityManager", f, e.target.value)} />
+                                value={form.securityManager[f]} onChange={(e) => setSubField("securityManager", f, e.target.value)} />
                         </div>
                     ))}
                 </div>
             </div>
             <hr />
-
             <div className="mb-3">
                 <label className="fw-semibold d-block mb-2" style={{ fontSize: 13 }}>Contacto Permanente</label>
                 <div className="row g-2">
                     {["name", "email", "phone"].map((f) => (
                         <div className="col-md-4" key={f}>
-                            <label className="form-label" style={{ fontSize: 11 }}>
-                                {f === "name" ? "Nome" : f === "email" ? "Email" : "Telefone"}
-                            </label>
+                            <label className="form-label" style={{ fontSize: 11 }}>{f === "name" ? "Nome" : f === "email" ? "Email" : "Telefone"}</label>
                             <input className="form-control form-control-sm"
                                 placeholder={f === "name" ? "Nome" : f === "email" ? "email@empresa.com" : "+351 910 000 000"}
-                                value={form.permanentContact[f]}
-                                onChange={(e) => setSubField("permanentContact", f, e.target.value)} />
+                                value={form.permanentContact[f]} onChange={(e) => setSubField("permanentContact", f, e.target.value)} />
                         </div>
                     ))}
                 </div>
             </div>
-
-            <button type="button" className="btn btn-sm btn-success" onClick={onSubmit}>
-                {submitLabel}
-            </button>
+            <button type="button" className="btn btn-sm btn-success" onClick={onSubmit}>{submitLabel}</button>
         </div>
     );
 }
 
-/* ─────────────────── TABELA ADMINISTRADORES ─────────────────── */
 function AdminsTable({ admins, setAdmins }) {
     const getEmptyForm = () => ({ name: "", email: "", phone: "", password: "", status: "Ativo" });
     const [showForm, setShowForm] = useState(false);
@@ -361,11 +306,12 @@ function AdminsTable({ admins, setAdmins }) {
         return Array.from({ length: 12 }, () => chars[Math.floor(Math.random() * chars.length)]).join("");
     };
 
-const handleCreate = async () => {
+    const handleCreate = async () => {
     if (!form.name || !form.email || !form.password) {
         alert("Preenche nome, email e password antes de criar.");
         return;
     }
+
     try {
         const res = await fetch("https://orion-dewp.onrender.com/api/users", {
             method: "POST",
@@ -379,30 +325,26 @@ const handleCreate = async () => {
             })
         });
 
-        const text = await res.text();
-        console.log("Resposta raw API admin:", text);
-
-        let data;
-        try {
-            data = JSON.parse(text);
-        } catch {
-            alert(`O servidor retornou um erro inesperado (HTTP ${res.status}). Verifica se a API está online.`);
-            return;
-        }
+        const data = await res.json();
 
         if (data.success) {
-            setAdmins((prev) => [...prev, { id: data.user.id, ...form }]);
+            setAdmins((prev) => [
+                ...prev,
+                {
+                    id: data.user.id,
+                    ...form
+                }
+            ]);
+
             setForm(getEmptyForm());
             setShowForm(false);
         } else {
             alert("Erro: " + data.message);
         }
     } catch (err) {
-        console.error(err);
         alert("Erro de ligação: " + err.message);
     }
 };
-
     const startEdit = (a) => { setEditingId(a.id); setEditForm({ ...a }); setShowForm(false); };
     const cancelEdit = () => { setEditingId(null); setEditForm(null); };
     const saveEdit = () => {
@@ -422,12 +364,10 @@ const handleCreate = async () => {
                     {showForm ? "Cancelar" : "+ Novo Administrador"}
                 </button>
             </div>
-
             {showForm && (
                 <PersonForm form={form} setForm={setForm} title="Novo Administrador"
                     submitLabel="Criar Administrador" generatePassword={generatePassword} onSubmit={handleCreate} />
             )}
-
             <table className="table table-hover mb-0">
                 <thead className="table-primary">
                     <tr><th>Nome</th><th>Email</th><th>Telefone</th><th>Estado</th><th>Ações</th></tr>
@@ -442,22 +382,18 @@ const handleCreate = async () => {
                                 <td><span className={`badge ${statusColor(a.status)}`}>{a.status}</span></td>
                                 <td>
                                     <div className="d-flex gap-1">
-                                        <button type="button" className="btn btn-sm btn-outline-secondary"
-                                            onClick={() => startEdit(a)}>Editar</button>
-                                        <button type="button" className="btn btn-sm btn-outline-danger"
-                                            onClick={() => setAdmins(admins.filter((x) => x.id !== a.id))}>Remover</button>
+                                        <button type="button" className="btn btn-sm btn-outline-secondary" onClick={() => startEdit(a)}>Editar</button>
+                                        <button type="button" className="btn btn-sm btn-outline-danger" onClick={() => setAdmins(admins.filter((x) => x.id !== a.id))}>Remover</button>
                                     </div>
                                 </td>
                             </tr>
-
                             {editingId === a.id && editForm && (
                                 <tr key={`edit-${a.id}`}>
                                     <td colSpan={5} className="p-0">
                                         <div className="border border-warning rounded m-2 p-3 bg-white">
                                             <div className="d-flex justify-content-between align-items-center mb-3">
                                                 <h6 className="mb-0">Editar — {a.name}</h6>
-                                                <button type="button" className="btn btn-sm btn-link text-secondary p-0"
-                                                    onClick={cancelEdit}>✕ Cancelar</button>
+                                                <button type="button" className="btn btn-sm btn-link text-secondary p-0" onClick={cancelEdit}>✕ Cancelar</button>
                                             </div>
                                             <PersonForm form={editForm} setForm={setEditForm} title=""
                                                 submitLabel="Guardar Alterações" generatePassword={generatePassword}
@@ -477,7 +413,6 @@ const handleCreate = async () => {
     );
 }
 
-/* ─────────────────── TABELA GESTORES ─────────────────── */
 function ManagersTable({ managers, setManagers }) {
     const getEmptyForm = () => ({ name: "", email: "", phone: "", password: "", status: "Ativo" });
     const [showForm, setShowForm] = useState(false);
@@ -491,46 +426,32 @@ function ManagersTable({ managers, setManagers }) {
     };
 
     const handleCreate = async () => {
-    if (!form.name || !form.email || !form.password) {
-        alert("Preenche nome, email e password antes de criar.");
-        return;
-    }
-    try {
-        const res = await fetch("https://orion-dewp.onrender.com/api/users", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-                name: form.name,
-                email: form.email,
-                password: form.password,
-                telephone: form.phone,
-                id_tipo: 1
-            })
-        });
-
-        const text = await res.text();
-        console.log("Resposta raw API admin:", text);
-
-        let data;
-        try {
-            data = JSON.parse(text);
-        } catch {
-            alert(`O servidor retornou um erro inesperado (HTTP ${res.status}). Verifica se a API está online.`);
+        if (!form.name || !form.email || !form.password) {
+            alert("Preenche nome, email e password antes de criar.");
             return;
         }
-
-        if (data.success) {
-            setAdmins((prev) => [...prev, { id: data.user.id, ...form }]);
-            setForm(getEmptyForm());
-            setShowForm(false);
-        } else {
-            alert("Erro: " + data.message);
+        try {
+            const res = await fetch("https://orion-dewp.onrender.com/api/users", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ name: form.name, email: form.email, password: form.password, telephone: form.phone, id_tipo: 2 })
+            });
+            const text = await res.text();
+            const data = JSON.parse(text);
+            if (data.success) {
+                setManagers((prev) => [...prev, { id: data.user.id, ...form }]);
+                setForm(getEmptyForm());
+                setShowForm(false);
+            } else {
+                alert("Erro: " + data.message);
+            }
+        } catch (err) {
+            alert("Erro de ligação: " + err.message);
         }
-    } catch (err) {
-        console.error(err);
-        alert("Erro de ligação: " + err.message);
-    }
-};
+        setManagers((prev) => [...prev, { id: Date.now(), ...form }]);
+        setForm(getEmptyForm());
+        setShowForm(false);
+    };
 
     const startEdit = (m) => { setEditingId(m.id); setEditForm({ ...m }); setShowForm(false); };
     const cancelEdit = () => { setEditingId(null); setEditForm(null); };
@@ -551,12 +472,10 @@ function ManagersTable({ managers, setManagers }) {
                     {showForm ? "Cancelar" : "+ Novo Gestor"}
                 </button>
             </div>
-
             {showForm && (
                 <PersonForm form={form} setForm={setForm} title="Novo Gestor"
                     submitLabel="Criar Gestor" generatePassword={generatePassword} onSubmit={handleCreate} />
             )}
-
             <table className="table table-hover mb-0">
                 <thead className="table-info">
                     <tr><th>Nome</th><th>Email</th><th>Telefone</th><th>Estado</th><th>Ações</th></tr>
@@ -571,22 +490,18 @@ function ManagersTable({ managers, setManagers }) {
                                 <td><span className={`badge ${statusColor(m.status)}`}>{m.status}</span></td>
                                 <td>
                                     <div className="d-flex gap-1">
-                                        <button type="button" className="btn btn-sm btn-outline-secondary"
-                                            onClick={() => startEdit(m)}>Editar</button>
-                                        <button type="button" className="btn btn-sm btn-outline-danger"
-                                            onClick={() => setManagers(managers.filter((x) => x.id !== m.id))}>Remover</button>
+                                        <button type="button" className="btn btn-sm btn-outline-secondary" onClick={() => startEdit(m)}>Editar</button>
+                                        <button type="button" className="btn btn-sm btn-outline-danger" onClick={() => setManagers(managers.filter((x) => x.id !== m.id))}>Remover</button>
                                     </div>
                                 </td>
                             </tr>
-
                             {editingId === m.id && editForm && (
                                 <tr key={`edit-${m.id}`}>
                                     <td colSpan={5} className="p-0">
                                         <div className="border border-warning rounded m-2 p-3 bg-white">
                                             <div className="d-flex justify-content-between align-items-center mb-3">
                                                 <h6 className="mb-0">Editar — {m.name}</h6>
-                                                <button type="button" className="btn btn-sm btn-link text-secondary p-0"
-                                                    onClick={cancelEdit}>✕ Cancelar</button>
+                                                <button type="button" className="btn btn-sm btn-link text-secondary p-0" onClick={cancelEdit}>✕ Cancelar</button>
                                             </div>
                                             <PersonForm form={editForm} setForm={setEditForm} title=""
                                                 submitLabel="Guardar Alterações" generatePassword={generatePassword}
@@ -606,7 +521,6 @@ function ManagersTable({ managers, setManagers }) {
     );
 }
 
-/* ── Formulário reutilizável de pessoa (admin / gestor) ── */
 function PersonForm({ form, setForm, title, submitLabel, generatePassword, onSubmit, isEdit = false }) {
     return (
         <div className="border rounded p-3 mb-4 bg-white">
@@ -628,24 +542,16 @@ function PersonForm({ form, setForm, title, submitLabel, generatePassword, onSub
                     <div className="col-md-4">
                         <label className="form-label fw-semibold" style={{ fontSize: 12 }}>Password</label>
                         <div className="input-group input-group-sm">
-                            <input
-                                type="text"
-                                className="form-control form-control-sm"
-                                placeholder="Gere uma password"
-                                value={form.password}
-                                onChange={(e) => setForm({ ...form, password: e.target.value })}
-                            />
+                            <input type="text" className="form-control form-control-sm" placeholder="Gere uma password"
+                                value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} />
                             <button type="button" className="btn btn-outline-secondary"
-                                onClick={() => setForm({ ...form, password: generatePassword() })}>
-                                Gerar
-                            </button>
+                                onClick={() => setForm({ ...form, password: generatePassword() })}>Gerar</button>
                         </div>
                     </div>
                 ) : (
                     <div className="col-md-4">
                         <label className="form-label fw-semibold" style={{ fontSize: 12 }}>Password</label>
-                        <input type="password" className="form-control form-control-sm bg-light"
-                            value="placeholder" disabled />
+                        <input type="password" className="form-control form-control-sm bg-light" value="placeholder" disabled />
                         <small className="text-muted" style={{ fontSize: 11 }}>A password não pode ser alterada aqui.</small>
                     </div>
                 )}
@@ -659,15 +565,11 @@ function PersonForm({ form, setForm, title, submitLabel, generatePassword, onSub
                     </select>
                 </div>
             </div>
-
-            <button type="button" className="btn btn-sm btn-success mt-3" onClick={onSubmit}>
-                {submitLabel}
-            </button>
+            <button type="button" className="btn btn-sm btn-success mt-3" onClick={onSubmit}>{submitLabel}</button>
         </div>
     );
 }
 
-/* ───────────────────────── TICKETS ───────────────────────── */
 function Tickets() {
     return (
         <div className="card p-3">
@@ -680,7 +582,6 @@ function Tickets() {
     );
 }
 
-/* ───────────────────────── REQUESTS ───────────────────────── */
 function Requests() {
     return (
         <div className="card p-3">
@@ -690,7 +591,6 @@ function Requests() {
     );
 }
 
-/* ───────────────────────── DOCS ───────────────────────── */
 function Docs() {
     return (
         <div className="card p-3">
@@ -700,7 +600,6 @@ function Docs() {
     );
 }
 
-/* ───────────────────────── SETTINGS ───────────────────────── */
 function Settings() {
     return (
         <div className="card p-3">
@@ -718,7 +617,6 @@ function Settings() {
     );
 }
 
-/* ───────────────────────── CARD ───────────────────────── */
 function Card({ title, value, color }) {
     return (
         <div className="col-md-3">
@@ -730,7 +628,6 @@ function Card({ title, value, color }) {
     );
 }
 
-/* ───────────────────────── CONTENT ───────────────────────── */
 function Content() {
     const [pages, setPages] = useState([
         { id: 1, page: "Início", section: "Hero", content: "Segurança cibernética para empresas modernas.", updated: "10/05/2026" },
@@ -744,8 +641,7 @@ function Content() {
 
     const handleEdit = (item) => { setEditing(item.id); setText(item.content); };
     const handleSave = (id) => {
-        setPages(pages.map(p => p.id === id
-            ? { ...p, content: text, updated: new Date().toLocaleDateString("pt-PT") } : p));
+        setPages(pages.map(p => p.id === id ? { ...p, content: text, updated: new Date().toLocaleDateString("pt-PT") } : p));
         setEditing(null);
     };
 
@@ -774,14 +670,11 @@ function Content() {
                             <td>
                                 {editing === item.id ? (
                                     <>
-                                        <button type="button" className="btn btn-sm btn-success me-1"
-                                            onClick={() => handleSave(item.id)}>Guardar</button>
-                                        <button type="button" className="btn btn-sm btn-outline-secondary"
-                                            onClick={() => setEditing(null)}>Cancelar</button>
+                                        <button type="button" className="btn btn-sm btn-success me-1" onClick={() => handleSave(item.id)}>Guardar</button>
+                                        <button type="button" className="btn btn-sm btn-outline-secondary" onClick={() => setEditing(null)}>Cancelar</button>
                                     </>
                                 ) : (
-                                    <button type="button" className="btn btn-sm btn-outline-dark"
-                                        onClick={() => handleEdit(item)}>Editar</button>
+                                    <button type="button" className="btn btn-sm btn-outline-dark" onClick={() => handleEdit(item)}>Editar</button>
                                 )}
                             </td>
                         </tr>
