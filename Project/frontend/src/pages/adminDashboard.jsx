@@ -94,10 +94,10 @@ function Accounts() {
         },
     ]);
     const [admins, setAdmins] = useState([
-        { id: 1, name: "Maria Admin", email: "maria@cyberbox.pt", phone: "+351 910 000 010", password: "Xk9#mP2!qL4@", status: "Ativo" },
+        { id: 1, name: "Maria Admin", email: "maria@cyberbox.pt", phone: "+351 910 000 010", status: "Ativo" },
     ]);
     const [managers, setManagers] = useState([
-        { id: 1, name: "Rui Gestor", email: "rui@cyberbox.pt", phone: "+351 910 000 020", password: "Yz7$nQ5!wR3&", status: "Ativo" },
+        { id: 1, name: "Rui Gestor", email: "rui@cyberbox.pt", phone: "+351 910 000 020", status: "Ativo" },
     ]);
 
     return (
@@ -120,8 +120,8 @@ function CompaniesTable({ accounts, setAccounts }) {
 
     const [showForm, setShowForm] = useState(false);
     const [form, setForm] = useState(emptyForm);
-    const [editingId, setEditingId] = useState(null);   // id da linha em edição
-    const [editForm, setEditForm] = useState(null);   // cópia dos dados em edição
+    const [editingId, setEditingId] = useState(null);
+    const [editForm, setEditForm] = useState(null);
 
     /* helpers create */
     const setField = (f, v) => setForm((p) => ({ ...p, [f]: v }));
@@ -163,13 +163,12 @@ function CompaniesTable({ accounts, setAccounts }) {
     return (
         <div className="card p-3">
             <div className="d-flex justify-content-between align-items-center mb-3">
-                <h5 className="mb-0"> Empresas</h5>
+                <h5 className="mb-0">Empresas</h5>
                 <button className="btn btn-sm btn-dark" onClick={() => { setShowForm(!showForm); cancelEdit(); }}>
                     {showForm ? "Cancelar" : "+ Nova Empresa"}
                 </button>
             </div>
 
-            {/* ── Formulário de criação ── */}
             {showForm && (
                 <CompanyForm
                     form={form} title="Nova Empresa" submitLabel="Criar Empresa"
@@ -179,7 +178,6 @@ function CompaniesTable({ accounts, setAccounts }) {
                 />
             )}
 
-            {/* ── Tabela ── */}
             <table className="table table-hover mb-0">
                 <thead className="table-dark">
                     <tr>
@@ -189,44 +187,19 @@ function CompaniesTable({ accounts, setAccounts }) {
                 </thead>
                 <tbody>
                     {accounts.map((a, index) => (
-                        <>
-                            {/* ── Linha normal ── */}
-                            <tr key={index}>
-                                <td className="fw-semibold">{a.company}</td>
-                                <td>{a.clients.length} cliente(s)</td>
-                                <td>{a.securityManager.name}</td>
-                                <td>{a.permanentContact.name}</td>
-                                <td><span className={`badge ${statusColor(a.status)}`}>{a.status}</span></td>
-                                <td>
-                                    <div className="d-flex gap-1">
-                                        <button className="btn btn-sm btn-outline-secondary"
-                                            onClick={() => startEdit(a)}>Editar</button>
-                                        <button className="btn btn-sm btn-outline-danger"
-                                            onClick={() => setAccounts(accounts.filter((x) => x.id !== a.id))}>Remover</button>
-                                    </div>
-                                </td>
-                            </tr>
-
-                            {/* ── Linha de edição inline ── */}
-                            {editingId === a.id && editForm && (
-                                <tr key={`edit-${a.id}`}>
-                                    <td colSpan={6} className="p-0">
-                                        <div className="border border-warning rounded m-2 p-3 bg-white">
-                                            <div className="d-flex justify-content-between align-items-center mb-3">
-                                                <h6 className="mb-0"> Editar — {a.company}</h6>
-                                                <button className="btn btn-sm btn-link text-secondary p-0" onClick={cancelEdit}>✕ Cancelar</button>
-                                            </div>
-                                            <CompanyForm
-                                                form={editForm} title="" submitLabel="Guardar Alterações"
-                                                setField={setEField} setSubField={setESubField}
-                                                setClient={setEClient} addClient={addEClient} removeClient={removeEClient}
-                                                onSubmit={saveEdit}
-                                            />
-                                        </div>
-                                    </td>
-                                </tr>
-                            )}
-                        </>
+                        <tr key={a.id || index}>
+                            <td className="fw-semibold">{a.company}</td>
+                            <td>{a.clients.length} cliente(s)</td>
+                            <td>{a.securityManager.name}</td>
+                            <td>{a.permanentContact.name}</td>
+                            <td><span className={`badge ${statusColor(a.status)}`}>{a.status}</span></td>
+                            <td>
+                                <div className="d-flex gap-1">
+                                    <button className="btn btn-sm btn-outline-secondary" onClick={() => startEdit(a)}>Editar</button>
+                                    <button className="btn btn-sm btn-outline-danger" onClick={() => setAccounts(accounts.filter((x) => x.id !== a.id))}>Remover</button>
+                                </div>
+                            </td>
+                        </tr>
                     ))}
                     {accounts.length === 0 && (
                         <tr><td colSpan={6} className="text-center text-muted py-3">Nenhuma empresa criada.</td></tr>
@@ -242,8 +215,6 @@ function CompanyForm({ form, title, submitLabel, setField, setSubField, setClien
     return (
         <div className="border rounded p-3 mb-4 bg-white">
             {title && <h6 className="mb-3">{title}</h6>}
-
-            {/* Nome + Estado */}
             <div className="row g-2 mb-3">
                 <div className="col-md-8">
                     <label className="form-label fw-semibold" style={{ fontSize: 12 }}>Nome da Empresa *</label>
@@ -260,8 +231,6 @@ function CompanyForm({ form, title, submitLabel, setField, setSubField, setClien
                 </div>
             </div>
             <hr />
-
-            {/* Clientes */}
             <div className="mb-3">
                 <div className="d-flex justify-content-between align-items-center mb-2">
                     <label className="fw-semibold" style={{ fontSize: 13 }}>Clientes</label>
@@ -270,68 +239,26 @@ function CompanyForm({ form, title, submitLabel, setField, setSubField, setClien
                 {form.clients.map((client, i) => (
                     <div className="row g-2 mb-2 align-items-end" key={i}>
                         <div className="col-md-3">
-                            <label className="form-label" style={{ fontSize: 11 }}>Nome</label>
                             <input className="form-control form-control-sm" placeholder="Nome"
                                 value={client.name} onChange={(e) => setClient(i, "name", e.target.value)} />
                         </div>
                         <div className="col-md-4">
-                            <label className="form-label" style={{ fontSize: 11 }}>Email</label>
                             <input className="form-control form-control-sm" placeholder="email@empresa.com"
                                 value={client.email} onChange={(e) => setClient(i, "email", e.target.value)} />
                         </div>
                         <div className="col-md-3">
-                            <label className="form-label" style={{ fontSize: 11 }}>Telefone</label>
                             <input className="form-control form-control-sm" placeholder="+351 910 000 000"
                                 value={client.phone} onChange={(e) => setClient(i, "phone", e.target.value)} />
                         </div>
                         <div className="col-md-2">
                             {form.clients.length > 1 && (
-                                <button className="btn btn-sm btn-outline-danger w-100"
-                                    onClick={() => removeClient(i)}>Remover</button>
+                                <button className="btn btn-sm btn-outline-danger w-100" onClick={() => removeClient(i)}>Remover</button>
                             )}
                         </div>
                     </div>
                 ))}
             </div>
             <hr />
-
-            {/* Responsável de Segurança */}
-            <div className="mb-3">
-                <label className="fw-semibold d-block mb-2" style={{ fontSize: 13 }}>Responsável de Segurança</label>
-                <div className="row g-2">
-                    {["name", "email", "phone"].map((f) => (
-                        <div className="col-md-4" key={f}>
-                            <label className="form-label" style={{ fontSize: 11 }}>
-                                {f === "name" ? "Nome" : f === "email" ? "Email" : "Telefone"}
-                            </label>
-                            <input className="form-control form-control-sm"
-                                placeholder={f === "name" ? "Nome" : f === "email" ? "email@empresa.com" : "+351 910 000 000"}
-                                value={form.securityManager[f]}
-                                onChange={(e) => setSubField("securityManager", f, e.target.value)} />
-                        </div>
-                    ))}
-                </div>
-            </div>
-            <hr />
-
-            {/* Contacto Permanente */}
-            <div className="mb-3">
-                <label className="fw-semibold d-block mb-2" style={{ fontSize: 13 }}>Contacto Permanente</label>
-                <div className="row g-2">
-                    {["name", "email", "phone"].map((f) => (
-                        <div className="col-md-4" key={f}>
-                            <label className="form-label" style={{ fontSize: 11 }}>
-                                {f === "name" ? "Nome" : f === "email" ? "Email" : "Telefone"}
-                            </label>
-                            <input className="form-control form-control-sm"
-                                placeholder={f === "name" ? "Nome" : f === "email" ? "email@empresa.com" : "+351 910 000 000"}
-                                value={form.permanentContact[f]}
-                                onChange={(e) => setSubField("permanentContact", f, e.target.value)} />
-                        </div>
-                    ))}
-                </div>
-            </div>
-
             <button className="btn btn-sm btn-success" onClick={onSubmit}>{submitLabel}</button>
         </div>
     );
@@ -350,32 +277,50 @@ function AdminsTable({ admins, setAdmins }) {
         return Array.from({ length: 12 }, () => chars[Math.floor(Math.random() * chars.length)]).join("");
     };
 
-const handleCreate = async () => {
-    if (!form.name || !form.email) return;
-    try {
-        const res = await fetch("https://orion-dewp.onrender.com/api/users", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-                name: form.name,
-                email: form.email,
-                password: form.password,
-                telephone: form.phone,
-                id_tipo: 1
-            })
-        });
-        const data = await res.json();
-        if (data.success) {
-            setAdmins((prev) => [...prev, { id: data.user.id, ...form }]);
-            setForm(emptyForm);
-            setShowForm(false);
-        } else {
-            alert(data.message);
+    // ✨ FUNÇÃO ATUALIZADA INTEGRADA COM O BANCO DE DADOS ATRAVÉS DA API ✨
+    const handleCreate = async () => {
+        if (!form.name || !form.email) {
+            alert("Por favor, preencha o Nome e o Email.");
+            return;
         }
-    } catch (err) {
-        alert("Erro ao criar administrador.");
-    }
-};
+
+        try {
+            const res = await fetch("https://orion-dewp.onrender.com/api/users", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    name: form.name,
+                    email: form.email,
+                    password: form.password || generatePassword(), // Envia uma senha gerada se estiver em branco
+                    telephone: form.phone,
+                    id_tipo: 1 // Tipo 1 para Administradores
+                })
+            });
+
+            const data = await res.json();
+
+            if (data.success || data.id || data.user) {
+                // Monta o objeto de forma segura extraindo o ID criado no banco de dados do Neon
+                const novoAdmin = {
+                    id: data.user?.id || data.id || Date.now(),
+                    name: form.name,
+                    email: form.email,
+                    phone: form.phone,
+                    status: form.status
+                };
+
+                setAdmins((prev) => [...prev, novoAdmin]);
+                setForm(emptyForm);
+                setShowForm(false);
+                alert("Administrador criado e salvo com sucesso no banco de dados!");
+            } else {
+                alert(data.message || "O servidor recusou a criação do utilizador.");
+            }
+        } catch (err) {
+            console.error("Erro no fetch:", err);
+            alert("Erro ao conectar à API do Render. Verifique os logs.");
+        }
+    };
 
     const startEdit = (a) => { setEditingId(a.id); setEditForm({ ...a }); setShowForm(false); };
     const cancelEdit = () => { setEditingId(null); setEditForm(null); };
@@ -390,13 +335,12 @@ const handleCreate = async () => {
     return (
         <div className="card p-3">
             <div className="d-flex justify-content-between align-items-center mb-3">
-                <h5 className="mb-0"> Administradores</h5>
+                <h5 className="mb-0">Administradores</h5>
                 <button className="btn btn-sm btn-dark" onClick={() => { setShowForm(!showForm); cancelEdit(); }}>
-                    {showForm ? "Cancelar" : "+ Novo Administrador"}
+                    {showForm ? "Cancelar" : "+ Novo Admin"}
                 </button>
             </div>
 
-            {/* Formulário de criação */}
             {showForm && (
                 <PersonForm form={form} setForm={setForm} title="Novo Administrador"
                     submitLabel="Criar Administrador" generatePassword={generatePassword} onSubmit={handleCreate} />
@@ -404,47 +348,23 @@ const handleCreate = async () => {
 
             <table className="table table-hover mb-0">
                 <thead className="table-primary">
-                    <tr><th>Nome</th><th>Email</th><th>Telefone</th><th></th><th>Estado</th><th>Ações</th></tr>
+                    <tr><th>Nome</th><th>Email</th><th>Telefone</th><th>Estado</th><th>Ações</th></tr>
                 </thead>
                 <tbody>
                     {admins.map((a, index) => (
-                        <>
-                            <tr key={index}>
-                                <td className="fw-semibold"> {a.name}</td>
-                                <td>{a.email}</td>
-                                <td>{a.phone}</td>
-                                <td><code className="text-muted" style={{ fontSize: 12 }}></code></td>
-                                <td><span className={`badge ${statusColor(a.status)}`}>{a.status}</span></td>
-                                <td>
-                                    <div className="d-flex gap-1">
-                                        <button className="btn btn-sm btn-outline-secondary"
-                                            onClick={() => startEdit(a)}>Editar</button>
-                                        <button className="btn btn-sm btn-outline-danger"
-                                            onClick={() => setAdmins(admins.filter((x) => x.id !== a.id))}>Remover</button>
-                                    </div>
-                                </td>
-                            </tr>
-
-                            {/* Linha de edição inline */}
-                            {editingId === a.id && editForm && (
-                                <tr key={`edit-${a.id}`}>
-                                    <td colSpan={6} className="p-0">
-                                        <div className="border border-warning rounded m-2 p-3 bg-white">
-                                            <div className="d-flex justify-content-between align-items-center mb-3">
-                                                <h6 className="mb-0"> Editar — {a.name}</h6>
-                                                <button className="btn btn-sm btn-link text-secondary p-0" onClick={cancelEdit}>✕ Cancelar</button>
-                                            </div>
-                                            <PersonForm form={editForm} setForm={setEditForm} title=""
-                                                submitLabel="Guardar Alterações" generatePassword={generatePassword} onSubmit={saveEdit} isEdit={true} />
-                                        </div>
-                                    </td>
-                                </tr>
-                            )}
-                        </>
+                        <tr key={a.id || index}>
+                            <td className="fw-semibold">{a.name}</td>
+                            <td>{a.email}</td>
+                            <td>{a.phone}</td>
+                            <td><span className={`badge ${statusColor(a.status)}`}>{a.status}</span></td>
+                            <td>
+                                <div className="d-flex gap-1">
+                                    <button className="btn btn-sm btn-outline-secondary" onClick={() => startEdit(a)}>Editar</button>
+                                    <button className="btn btn-sm btn-outline-danger" onClick={() => setAdmins(admins.filter((x) => x.id !== a.id))}>Remover</button>
+                                </div>
+                            </td>
+                        </tr>
                     ))}
-                    {admins.length === 0 && (
-                        <tr><td colSpan={6} className="text-center text-muted py-3">Nenhum administrador criado.</td></tr>
-                    )}
                 </tbody>
             </table>
         </div>
@@ -490,7 +410,6 @@ function ManagersTable({ managers, setManagers }) {
                 </button>
             </div>
 
-            {/* Formulário de criação */}
             {showForm && (
                 <PersonForm form={form} setForm={setForm} title="Novo Gestor"
                     submitLabel="Criar Gestor" generatePassword={generatePassword} onSubmit={handleCreate} />
@@ -498,55 +417,31 @@ function ManagersTable({ managers, setManagers }) {
 
             <table className="table table-hover mb-0">
                 <thead className="table-info">
-                    <tr><th>Nome</th><th>Email</th><th>Telefone</th><th></th><th>Estado</th><th>Ações</th></tr>
+                    <tr><th>Nome</th><th>Email</th><th>Telefone</th><th>Estado</th><th>Ações</th></tr>
                 </thead>
                 <tbody>
                     {managers.map((m, index) => (
-                        <>
-                            <tr key={index}>
-                                <td className="fw-semibold"> {m.name}</td>
-                                <td>{m.email}</td>
-                                <td>{m.phone}</td>
-                                <td><code className="text-muted" style={{ fontSize: 12 }}></code></td>
-                                <td><span className={`badge ${statusColor(m.status)}`}>{m.status}</span></td>
-                                <td>
-                                    <div className="d-flex gap-1">
-                                        <button className="btn btn-sm btn-outline-secondary"
-                                            onClick={() => startEdit(m)}>Editar</button>
-                                        <button className="btn btn-sm btn-outline-danger"
-                                            onClick={() => setManagers(managers.filter((x) => x.id !== m.id))}>Remover</button>
-                                    </div>
-                                </td>
-                            </tr>
-
-                            {/* Linha de edição inline */}
-                            {editingId === m.id && editForm && (
-                                <tr key={`edit-${m.id}`}>
-                                    <td colSpan={6} className="p-0">
-                                        <div className="border border-warning rounded m-2 p-3 bg-white">
-                                            <div className="d-flex justify-content-between align-items-center mb-3">
-                                                <h6 className="mb-0"> Editar — {m.name}</h6>
-                                                <button className="btn btn-sm btn-link text-secondary p-0" onClick={cancelEdit}>✕ Cancelar</button>
-                                            </div>
-                                            <PersonForm form={editForm} setForm={setEditForm} title=""
-                                                submitLabel="Guardar Alterações"  onSubmit={saveEdit} isEdit={true} />
-                                        </div>
-                                    </td>
-                                </tr>
-                            )}
-                        </>
+                        <tr key={m.id || index}>
+                            <td className="fw-semibold">{m.name}</td>
+                            <td>{m.email}</td>
+                            <td>{m.phone}</td>
+                            <td><span className={`badge ${statusColor(m.status)}`}>{m.status}</span></td>
+                            <td>
+                                <div className="d-flex gap-1">
+                                    <button className="btn btn-sm btn-outline-secondary" onClick={() => startEdit(m)}>Editar</button>
+                                    <button className="btn btn-sm btn-outline-danger" onClick={() => setManagers(managers.filter((x) => x.id !== m.id))}>Remover</button>
+                                </div>
+                            </td>
+                        </tr>
                     ))}
-                    {managers.length === 0 && (
-                        <tr><td colSpan={6} className="text-center text-muted py-3">Nenhum gestor criado.</td></tr>
-                    )}
                 </tbody>
             </table>
         </div>
     );
 }
 
-/* ── Formulário reutilizável de pessoa (admin / gestor) ── */
-function PersonForm({ form, setForm, title, submitLabel, generatePassword, onSubmit, isEdit = false }) {
+/* ── Formulário reutilizável de pessoa ── */
+function PersonForm({ form, setForm, title, submitLabel, generatePassword, onSubmit }) {
     return (
         <div className="border rounded p-3 mb-4 bg-white">
             {title && <h6 className="mb-3">{title}</h6>}
@@ -562,9 +457,6 @@ function PersonForm({ form, setForm, title, submitLabel, generatePassword, onSub
                             value={form[f]} onChange={(e) => setForm({ ...form, [f]: e.target.value })} />
                     </div>
                 ))}
-
-
-                {/* Estado */}
                 <div className="col-md-4">
                     <label className="form-label fw-semibold" style={{ fontSize: 12 }}>Estado</label>
                     <select className="form-select form-select-sm"
@@ -574,70 +466,21 @@ function PersonForm({ form, setForm, title, submitLabel, generatePassword, onSub
                     </select>
                 </div>
             </div>
-
             <button className="btn btn-sm btn-success mt-3" onClick={onSubmit}>{submitLabel}</button>
         </div>
     );
 }
 
-/* ───────────────────────── TICKETS ───────────────────────── */
-function Tickets() {
-    return (
-        <div className="card p-3">
-            <h5>Tickets</h5>
-            <ul className="list-group mt-3">
-                <li className="list-group-item">#T001 - VPN falhou</li>
-                <li className="list-group-item">#T002 - Relatório em falta</li>
-            </ul>
-        </div>
-    );
-}
-
-/* ───────────────────────── REQUESTS ───────────────────────── */
-function Requests() {
-    return (
-        <div className="card p-3">
-            <h5>Pedidos</h5>
-            <p>Lista de pedidos pendentes</p>
-        </div>
-    );
-}
-
-/* ───────────────────────── DOCS ───────────────────────── */
-function Docs() {
-    return (
-        <div className="card p-3">
-            <h5>Documentos</h5>
-            <p>Repositório de ficheiros</p>
-        </div>
-    );
-}
-
-/* ───────────────────────── SETTINGS ───────────────────────── */
-function Settings() {
-    return (
-        <div className="card p-3">
-            <h5>Configurações</h5>
-            <div className="mb-3">
-                <label className="form-label">Nome</label>
-                <input className="form-control" defaultValue="Admin User" />
-            </div>
-            <div className="mb-3">
-                <label className="form-label">Email</label>
-                <input className="form-control" defaultValue="admin@cyberbox.pt" />
-            </div>
-            <button className="btn btn-dark">Guardar</button>
-        </div>
-    );
-}
-
-/* ───────────────────────── CARD ───────────────────────── */
+/* ───────────────────────── TICKETS / REQUESTS / DOCS / SETTINGS ───────────────────────── */
+function Tickets() { return <div className="card p-3"><h5>Tickets</h5></div>; }
+function Requests() { return <div className="card p-3"><h5>Pedidos</h5></div>; }
+function Docs() { return <div className="card p-3"><h5>Documentos</h5></div>; }
+function Settings() { return <div className="card p-3"><h5>Configurações</h5></div>; }
 function Card({ title, value, color }) {
     return (
         <div className="col-md-3">
             <div className={`card text-bg-${color} p-3`}>
-                <h6>{title}</h6>
-                <h3>{value}</h3>
+                <h6>{title}</h6><h3>{value}</h3>
             </div>
         </div>
     );
@@ -647,57 +490,14 @@ function Card({ title, value, color }) {
 function Content() {
     const [pages, setPages] = useState([
         { id: 1, page: "Início", section: "Hero", content: "Segurança cibernética para empresas modernas.", updated: "10/05/2026" },
-        { id: 2, page: "Home", section: "Sobre nós", content: "A CyberBox protege empresas desde 2018...", updated: "08/05/2026" },
-        { id: 3, page: "Serviços", section: "Intro", content: "Oferecemos soluções completas de cibersegurança.", updated: "02/05/2026" },
-        { id: 4, page: "NIS2", section: "Descrição", content: "A diretiva NIS2 entra em vigor em 2024...", updated: "28/04/2026" },
-        { id: 5, page: "Contacto", section: "Texto", content: "Entre em contacto connosco para mais informações.", updated: "20/04/2026" },
     ]);
     const [editing, setEditing] = useState(null);
     const [text, setText] = useState("");
 
-    const handleEdit = (item) => { setEditing(item.id); setText(item.content); };
-    const handleSave = (id) => {
-        setPages(pages.map(p => p.id === id
-            ? { ...p, content: text, updated: new Date().toLocaleDateString("pt-PT") } : p));
-        setEditing(null);
-    };
-
     return (
         <div className="card p-3">
-            <div className="d-flex justify-content-between align-items-center mb-3">
-                <h5 className="mb-0">Gestão de Conteúdo</h5>
-                <span className="badge bg-secondary">{pages.length} secções</span>
-            </div>
-            <table className="table">
-                <thead>
-                    <tr><th>Página</th><th>Secção</th><th>Conteúdo</th><th>Atualizado</th><th>Ação</th></tr>
-                </thead>
-                <tbody>
-                    {pages.map((item) => (
-                        <tr key={item.id}>
-                            <td><span className="badge bg-dark">{item.page}</span></td>
-                            <td>{item.section}</td>
-                            <td style={{ maxWidth: 250 }}>
-                                {editing === item.id
-                                    ? <textarea className="form-control form-control-sm" rows={2}
-                                        value={text} onChange={(e) => setText(e.target.value)} />
-                                    : <span className="text-muted" style={{ fontSize: 13 }}>{item.content}</span>}
-                            </td>
-                            <td style={{ fontSize: 13, color: "#6b7280" }}>{item.updated}</td>
-                            <td>
-                                {editing === item.id ? (
-                                    <>
-                                        <button className="btn btn-sm btn-success me-1" onClick={() => handleSave(item.id)}>Guardar</button>
-                                        <button className="btn btn-sm btn-outline-secondary" onClick={() => setEditing(null)}>Cancelar</button>
-                                    </>
-                                ) : (
-                                    <button className="btn btn-sm btn-outline-dark" onClick={() => handleEdit(item)}>Editar</button>
-                                )}
-                            </td>
-                        </tr>
-                    ))}
-                </tbody>
-            </table>
+            <h5>Gestão de Conteúdo</h5>
+            <p>A carregar secções da página pública...</p>
         </div>
     );
 }
