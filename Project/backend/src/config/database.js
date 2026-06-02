@@ -1,13 +1,20 @@
-var Sequelize = require("sequelize");
+const { Pool } = require("pg");
 
-const sequelize = new Sequelize(process.env.DATABASE_URL, {
-  dialect: "postgres",
-  dialectOptions: {
+// Validação amigável para os teus colegas de equipa se esquecerem da variável localmente
+if (!process.env.DATABASE_URL) {
+    console.error("❌ ERRO: A variável de ambiente DATABASE_URL não foi definida!");
+    console.error("Lembra-te de passá-la no terminal antes de iniciar o servidor.");
+}
+
+const pool = new Pool({
+    connectionString: process.env.DATABASE_URL,
     ssl: {
-      require: true,
-      rejectUnauthorized: false,
-    },
-  },
+        rejectUnauthorized: false 
+    }
 });
 
-module.exports = sequelize;
+pool.on("connect", () => {
+    console.log(" Ligado com sucesso à base de dados Neon!");
+});
+
+module.exports = pool;

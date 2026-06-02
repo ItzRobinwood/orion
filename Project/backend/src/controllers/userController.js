@@ -4,7 +4,8 @@ const bcrypt = require("bcryptjs");
 // CRIAR UTILIZADOR
 exports.createUser = async (req, res) => {
     try {
-        const { name, email, password, id_tipo, id_empresa } = req.body;
+        // 🟢 CORREÇÃO: Adicionado 'telephone' e 'status' que vêm do React
+        const { name, email, password, id_tipo, id_empresa, telephone, status } = req.body;
 
         if (!name || !email || !password) {
             return res.status(400).json({
@@ -23,20 +24,24 @@ exports.createUser = async (req, res) => {
 
         const hashedPassword = await bcrypt.hash(password, 10);
 
+        // 🟢 CORREÇÃO: Se o admin enviar "Inativo", grava false. Caso contrário, grava true.
+        const isWithActiveStatus = status === "Inativo" ? false : true;
+
         const newUser = await User.create({
             name,
             email,
             password: hashedPassword,
             id_tipo,
             id_empresa,
-            active: false,
+            telephone, // 🟢 Guardar o telefone na BD
+            active: isWithActiveStatus,
         });
 
         return res.status(201).json({
             success: true,
             message: "Utilizador criado com sucesso.",
             user: {
-                id: newUser.id_Utilizador,
+                id: newUser.id_Utilizador || newUser.id, // Evita problemas caso o nome da PK varie no modelo
                 name: newUser.name,
                 email: newUser.email,
             },
@@ -89,7 +94,7 @@ exports.loginUser = async (req, res) => {
             success: true,
             message: "Login efetuado com sucesso.",
             user: {
-                id: user.id_Utilizador,
+                id: user.id_Utilizador || user.id,
                 name: user.name,
                 email: user.email,
                 id_tipo: user.id_tipo,
@@ -105,19 +110,14 @@ exports.loginUser = async (req, res) => {
     }
 };
 
-// ATUALIZAR PASSWORD
+// ATUALIZAR UTILIZADOR
 exports.updateUser = async (req, res) => {
     try {
-        const { email, password, newPassword } = req.body;
+        // 🟢 CORREÇÃO: Captura o ID a partir dos parâmetros da URL (/api/users/:id)
+        const { id } = req.params; 
+        const { name, email, telephone, status, password, newPassword } = req.body;
 
-        if (!email || !password || !newPassword) {
-            return res.status(400).json({
-                success: false,
-                message: "Email, palavra-passe atual e nova palavra-passe são obrigatórios.",
-            });
-        }
-
-        const user = await User.findOne({ where: { email } });
+        const user = await User.findByPk(id);
         if (!user) {
             return res.status(404).json({
                 success: false,
@@ -125,24 +125,30 @@ exports.updateUser = async (req, res) => {
             });
         }
 
-        const isMatch = await bcrypt.compare(password, user.password);
-        if (!isMatch) {
-            return res.status(401).json({
-                success: false,
-                message: "A palavra-passe atual está incorreta.",
-            });
+        // Criar o objeto com os dados a atualizar
+        const updateData = {};
+        if (name) updateData.name = name;
+        if (email) updateData.email = email;
+        if (telephone) updateData.telephone = telephone;
+        if (status) updateData.active = (status !== "Inativo");
+
+        // 🟢 Se o pedido incluir alteração de password, valida a antiga antes de encriptar a nova
+        if (password && newPassword) {
+            const isMatch = await bcrypt.compare(password, user.password);
+            if (!isMatch) {
+                return res.status(401).json({
+                    success: false,
+                    message: "A palavra-passe atual está incorreta.",
+                });
+            }
+            updateData.password = await bcrypt.hash(newPassword, 10);
         }
 
-        const hashedPassword = await bcrypt.hash(newPassword, 10);
-
-        await User.update(
-            { password: hashedPassword },
-            { where: { email } }
-        );
+        await User.update(updateData, { where: { id_Utilizador: id } });
 
         return res.json({
             success: true,
-            message: "Palavra-passe atualizada com sucesso.",
+            message: "Utilizador atualizado com sucesso.",
         });
 
     } catch (error) {

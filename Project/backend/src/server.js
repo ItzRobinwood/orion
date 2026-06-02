@@ -29,20 +29,29 @@ const seedRequestTypes = require("./seeders/seedRequestTypes");
 
 const app = express();
 
+// Configuração do CORS flexível para o grupo
 app.use(cors());
 app.use(express.json());
 
-// rotas
-app.use("/", requestRoutes);
-app.use("/", userRoutes);
+// 🟢 CORREÇÃO 1: Adicionado o prefixo /api que o teu React exige
+app.use("/api", requestRoutes);
+app.use("/api", userRoutes);
+
+// Rota de teste para ver no browser se o Render está vivo
+app.get("/", (req, res) => {
+  res.send("CyberBox API está online e funcional! 🚀");
+});
 
 applyAssociations();
 
 const PORT = process.env.PORT || 3000;
 
-sequelize.sync({ alter: true }).then(async () => {
-  console.log("Banco sincronizado 🚀");
+// 🟢 CORREÇÃO 2: Removido o { alter: true } para evitar crashes no Neon/Render
+sequelize.sync().then(async () => {
+  console.log("Banco sincronizado com sucesso 🚀");
 
+  // 🟢 AVISO 3: Garante que dentro destes ficheiros de seed tens um 
+  // "if (jaExiste) return;" para não duplicar dados a cada restart do Render!
   await seedUserTypes();
   await seedRequestTypes();
 
@@ -50,6 +59,6 @@ sequelize.sync({ alter: true }).then(async () => {
     console.log(`Servidor rodando na porta ${PORT} 🚀`);
   });
 }).catch((err) => {
-  console.error("Erro ao conectar à base de dados:", err.message);
+  console.error("Erro fatal ao conectar à base de dados:", err.message);
   process.exit(1);
 });
