@@ -4,30 +4,40 @@ const bcrypt = require("bcryptjs");
 // CRIAR UTILIZADOR
 exports.createUser = async (req, res) => {
     try {
-        // Captura o telephone e tenta capturar o status (caso ele envie no futuro)
         const { name, email, password, id_tipo, id_empresa, telephone, status } = req.body;
 
         if (!name || !email || !password) {
-            return res.status(400).json({ success: false, message: "Campos obrigatórios em falta." });
+            return res.status(400).json({
+                success: false,
+                message: "Nome, email e palavra-passe são obrigatórios.",
+            });
         }
 
-        // ... lógica de verificação de email existente e bcrypt ...
+        const existingUser = await User.findOne({ where: { email } });
+        if (existingUser) {
+            return res.status(409).json({
+                success: false,
+                message: "Já existe um utilizador com este email.",
+            });
+        }
 
-        // Blindagem: Se o front não mandar status, assume true (Ativo) por padrão
+        // 1. Primeiro geramos o Hash da password e guardamos na constante
+        const hashedPassword = await bcrypt.hash(password, 10);
+
+        // O admin escolhe o estado no React, se for "Inativo" grava false, senão true
         const isWithActiveStatus = status === "Inativo" ? false : true;
 
+        // 2. Agora o 'hashedPassword' já existe e pode ser usado com segurança aqui dentro!
         const newUser = await User.create({
             name,
             email,
-            password: hashedPassword,
+            password: hashedPassword, // <--- Aqui ele já vai encontrar a variável!
             id_tipo,
-            id_empresa: id_empresa || null, // Se o admin não tiver empresa associada, grava nulo
+            id_empresa: id_empresa || null,
             telephone, 
             active: isWithActiveStatus,
         });
 
-        // 🟢 SOLUÇÃO CRUCIAL: Devolve TANTO 'id' como 'id_Utilizador' para que o React dele 
-        // e os teus modelos da BD funcionem em simultâneo sem dar undefined!
         return res.status(201).json({
             success: true,
             message: "Utilizador criado com sucesso.",
@@ -40,7 +50,10 @@ exports.createUser = async (req, res) => {
         });
 
     } catch (error) {
-        return res.status(500).json({ success: false, message: error.message });
+        return res.status(500).json({
+            success: false,
+            message: error.message,
+        });
     }
 };
 
