@@ -73,7 +73,7 @@ function Dashboard() {
                 <h6>Atividade recente</h6>
                 <ul className="list-group list-group-flush">
                     <li className="list-group-item">Admin fez login</li>
-                    <li className="list-group-item">Ticket #T002 atualizado</li>
+                    <li className="list-group-item">Ticket #T002 updated</li>
                     <li className="list-group-item">Novo utilizador criado</li>
                 </ul>
             </div>
@@ -129,13 +129,6 @@ function CompaniesTable({ accounts, setAccounts }) {
     const setClient = (i, f, v) => setForm((p) => { const c = [...p.clients]; c[i] = { ...c[i], [f]: v }; return { ...p, clients: c }; });
     const addClient = () => setForm((p) => ({ ...p, clients: [...p.clients, { name: "", email: "", phone: "" }] }));
     const removeClient = (i) => setForm((p) => ({ ...p, clients: p.clients.filter((_, idx) => idx !== i) }));
-
-    /* helpers edit */
-    const setEField = (f, v) => setEditForm((p) => ({ ...p, [f]: v }));
-    const setESubField = (s, f, v) => setEditForm((p) => ({ ...p, [s]: { ...p[s], [f]: v } }));
-    const setEClient = (i, f, v) => setEditForm((p) => { const c = [...p.clients]; c[i] = { ...c[i], [f]: v }; return { ...p, clients: c }; });
-    const addEClient = () => setEditForm((p) => ({ ...p, clients: [...p.clients, { name: "", email: "", phone: "" }] }));
-    const removeEClient = (i) => setEditForm((p) => ({ ...p, clients: p.clients.filter((_, idx) => idx !== i) }));
 
     const handleCreate = () => {
         if (!form.company) return;
@@ -277,7 +270,6 @@ function AdminsTable({ admins, setAdmins }) {
         return Array.from({ length: 12 }, () => chars[Math.floor(Math.random() * chars.length)]).join("");
     };
 
-    // ✨ FUNÇÃO ATUALIZADA INTEGRADA COM O BANCO DE DADOS ATRAVÉS DA API ✨
     const handleCreate = async () => {
         if (!form.name || !form.email) {
             alert("Por favor, preencha o Nome e o Email.");
@@ -291,16 +283,15 @@ function AdminsTable({ admins, setAdmins }) {
                 body: JSON.stringify({
                     name: form.name,
                     email: form.email,
-                    password: form.password || generatePassword(), // Envia uma senha gerada se estiver em branco
+                    password: form.password || generatePassword(),
                     telephone: form.phone,
-                    id_tipo: 1 // Tipo 1 para Administradores
+                    id_tipo: 1
                 })
             });
 
             const data = await res.json();
 
             if (data.success || data.id || data.user) {
-                // Monta o objeto de forma segura extraindo o ID criado no banco de dados do Neon
                 const novoAdmin = {
                     id: data.user?.id || data.id || Date.now(),
                     name: form.name,
@@ -312,13 +303,13 @@ function AdminsTable({ admins, setAdmins }) {
                 setAdmins((prev) => [...prev, novoAdmin]);
                 setForm(emptyForm);
                 setShowForm(false);
-                alert("Administrador criado e salvo com sucesso no banco de dados!");
+                alert("Administrador criado e salvo com sucesso!");
             } else {
                 alert(data.message || "O servidor recusou a criação do utilizador.");
             }
         } catch (err) {
             console.error("Erro no fetch:", err);
-            alert("Erro ao conectar à API do Render. Verifique os logs.");
+            alert("Erro ao conectar à API. Verifique a consola.");
         }
     };
 
@@ -384,11 +375,48 @@ function ManagersTable({ managers, setManagers }) {
         return Array.from({ length: 12 }, () => chars[Math.floor(Math.random() * chars.length)]).join("");
     };
 
-    const handleCreate = () => {
-        if (!form.name || !form.email) return;
-        setManagers((prev) => [...prev, { id: Date.now(), ...form }]);
-        setForm(emptyForm);
-        setShowForm(false);
+    // ✨ FUNÇÃO ATUALIZADA INTEGRADA COM O BACK-END PARA GESTORES (id_tipo: 2) ✨
+    const handleCreate = async () => {
+        if (!form.name || !form.email) {
+            alert("Por favor, preencha o Nome e o Email.");
+            return;
+        }
+
+        try {
+            const res = await fetch("https://orion-dewp.onrender.com/users", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    name: form.name,
+                    email: form.email,
+                    password: form.password || generatePassword(), // Gera senha automática caso vazia
+                    telephone: form.phone,
+                    id_tipo: 2 // Tipo 2 para Gestores
+                })
+            });
+
+            const data = await res.json();
+
+            if (data.success || data.id || data.user) {
+                const novoGestor = {
+                    id: data.user?.id || data.id || Date.now(),
+                    name: form.name,
+                    email: form.email,
+                    phone: form.phone,
+                    status: form.status
+                };
+
+                setManagers((prev) => [...prev, novoGestor]);
+                setForm(emptyForm);
+                setShowForm(false);
+                alert("Gestor criado e salvo com sucesso!");
+            } else {
+                alert(data.message || "O servidor recusou a criação do gestor.");
+            }
+        } catch (err) {
+            console.error("Erro no fetch do gestor:", err);
+            alert("Erro ao conectar à API. Verifique a consola.");
+        }
     };
 
     const startEdit = (m) => { setEditingId(m.id); setEditForm({ ...m }); setShowForm(false); };
