@@ -11,8 +11,10 @@ router.post("/users/login", controller.loginUser);
 // Atualizar utilizador
 router.put("/users/:id", controller.updateUser);
  
+// Listar utilizadores
+router.get("/users", controller.getUsers);
+
 // Rotas a implementar futuramente:
-// router.get("/users", controller.getUsers);
 // router.get("/users/:id", controller.getUserById);
 // router.delete("/users/:id", controller.deleteUser);
  

@@ -160,3 +160,23 @@ exports.updateUser = async (req, res) => {
         });
     }
 };
+
+// LISTAR TODOS OS UTILIZADORES
+exports.getUsers = async (req, res) => {
+    try {
+        const users = await User.findAll({
+            attributes: ['id_Utilizador', 'name', 'email', 'telephone', 'active', 'id_tipo']
+            // Buscamos apenas os campos necessários, sem expor a password encriptada por segurança
+        });
+
+        return res.json({
+            success: true,
+            users
+        });
+    } catch (error) {
+        return res.status(500).json({
+            success: false,
+            message: error.message,
+        });
+    }
+};

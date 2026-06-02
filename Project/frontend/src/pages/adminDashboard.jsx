@@ -74,6 +74,9 @@ function Dashboard() {
     );
 }
 
+/* TO DO: Atualizar o Front-end para carregar do Neon (adminDashboard.jsx)
+Agora precisamos de ir à função Accounts() dentro do vosso ficheiro do React.
+Vamos usar o useEffect para disparar um pedido à API logo quando a componente aparece no ecrã. */
 function Accounts() {
     const [accounts, setAccounts] = useState([
         {
@@ -306,45 +309,48 @@ function AdminsTable({ admins, setAdmins }) {
         return Array.from({ length: 12 }, () => chars[Math.floor(Math.random() * chars.length)]).join("");
     };
 
+    /* Como agora a lista vem da base de dados, quando criares um utilizador com sucesso no formulário,
+     em vez de fazermos apenas um push manual no array do React,
+     o correto é chamar a função recarregarDados() para trazer a lista fresquinha do Neon.*/
     const handleCreate = async () => {
-    if (!form.name || !form.email || !form.password) {
-        alert("Preenche nome, email e password antes de criar.");
-        return;
-    }
-
-    try {
-        const res = await fetch("https://orion-dewp.onrender.com/api/users", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-                name: form.name,
-                email: form.email,
-                password: form.password,
-                telephone: form.phone,
-                id_tipo: 1
-            })
-        });
-
-        const data = await res.json();
-
-        if (data.success) {
-            setAdmins((prev) => [
-                ...prev,
-                {
-                    id: data.user.id,
-                    ...form
-                }
-            ]);
-
-            setForm(getEmptyForm());
-            setShowForm(false);
-        } else {
-            alert("Erro: " + data.message);
+        if (!form.name || !form.email || !form.password) {
+            alert("Preenche nome, email e password antes de criar.");
+            return;
         }
-    } catch (err) {
-        alert("Erro de ligação: " + err.message);
-    }
-};
+
+        try {
+            const res = await fetch("https://orion-dewp.onrender.com/api/users", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    name: form.name,
+                    email: form.email,
+                    password: form.password,
+                    telephone: form.phone,
+                    id_tipo: 1
+                })
+            });
+
+            const data = await res.json();
+
+            if (data.success) {
+                setAdmins((prev) => [
+                    ...prev,
+                    {
+                        id: data.user.id,
+                        ...form
+                    }
+                ]);
+
+                setForm(getEmptyForm());
+                setShowForm(false);
+            } else {
+                alert("Erro: " + data.message);
+            }
+        } catch (err) {
+            alert("Erro de ligação: " + err.message);
+        }
+    };
     const startEdit = (a) => { setEditingId(a.id); setEditForm({ ...a }); setShowForm(false); };
     const cancelEdit = () => { setEditingId(null); setEditForm(null); };
     const saveEdit = () => {
