@@ -391,7 +391,6 @@ function ManagersTable({ managers, setManagers }) {
         return Array.from({ length: 12 }, () => chars[Math.floor(Math.random() * chars.length)]).join("");
     };
 
-    // ✨ FUNÇÃO ATUALIZADA INTEGRADA COM O BACK-END PARA GESTORES (id_tipo: 2) ✨
     const handleCreate = async () => {
         if (!form.name || !form.email) {
             alert("Por favor, preencha o Nome e o Email.");
