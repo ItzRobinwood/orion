@@ -285,7 +285,7 @@ function AdminsTable({ admins, setAdmins }) {
         }
 
         try {
-            const res = await fetch("https://orion-dewp.onrender.com/api/users", {
+            const res = await fetch("https://orion-dewp.onrender.com/users", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
