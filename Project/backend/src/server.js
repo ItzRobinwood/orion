@@ -16,7 +16,7 @@ require("./models/questions.js");
 require("./models/messagesQuestions.js");
 require("./models/requestStatus.js");
 
-// 1. IMPORTAR AS SUAS ROTAS AQUI (Atenção ao caminho dos ficheiros!)
+// routes
 const requestRoutes = require("./routes/requestRoutes");
 const userRoutes = require("./routes/userRoutes");
 
@@ -32,7 +32,7 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// 2. ATIVAR AS ROTAS NO EXPRESS AQUI
+// rotas
 app.use("/", requestRoutes);
 app.use("/", userRoutes);
 
@@ -49,4 +49,7 @@ sequelize.sync({ alter: true }).then(async () => {
   app.listen(PORT, () => {
     console.log(`Servidor rodando na porta ${PORT} 🚀`);
   });
-}); 
+}).catch((err) => {
+  console.error("Erro ao conectar à base de dados:", err.message);
+  process.exit(1);
+});

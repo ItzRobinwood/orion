@@ -63,7 +63,7 @@ function NewsSection() {
   const fetchNews = useCallback(async () => {
     setLoading(true); setError(null);
     try {
-      const res = await fetch("/api/news");
+      const res = await fetch("https://orion-dewp.onrender.com/api/news");
       if (!res.ok) throw new Error("Erro no servidor");
       const data = await res.json();
       setPosts(data);

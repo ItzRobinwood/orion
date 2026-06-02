@@ -29,7 +29,6 @@ export default function AdminDashboard() {
 
     return (
         <div className="d-flex vh-100">
-            {/* SIDEBAR */}
             <div className="bg-dark text-white p-3 d-flex flex-column" style={{ width: 250 }}>
                 <h4 className="mb-4">CyberBox</h4>
                 {nav.map((item) => (
@@ -44,7 +43,6 @@ export default function AdminDashboard() {
                 <div className="mt-auto pt-4 small text-secondary">© 2026 CyberBox</div>
             </div>
 
-            {/* MAIN */}
             <div className="flex-grow-1 bg-light p-4 overflow-auto">
                 <div className="d-flex justify-content-between align-items-center mb-4">
                     <h4 className="m-0 text-capitalize">{active}</h4>
@@ -111,26 +109,24 @@ function Accounts() {
 
 /* ─────────────────── TABELA EMPRESAS ─────────────────── */
 function CompaniesTable({ accounts, setAccounts }) {
-    const emptyForm = {
+    const getEmptyForm = () => ({
         company: "", status: "Ativo",
         clients: [{ name: "", email: "", phone: "" }],
         securityManager: { name: "", email: "", phone: "" },
         permanentContact: { name: "", email: "", phone: "" },
-    };
+    });
 
     const [showForm, setShowForm] = useState(false);
-    const [form, setForm] = useState(emptyForm);
-    const [editingId, setEditingId] = useState(null);   // id da linha em edição
-    const [editForm, setEditForm] = useState(null);   // cópia dos dados em edição
+    const [form, setForm] = useState(getEmptyForm());
+    const [editingId, setEditingId] = useState(null);
+    const [editForm, setEditForm] = useState(null);
 
-    /* helpers create */
     const setField = (f, v) => setForm((p) => ({ ...p, [f]: v }));
     const setSubField = (s, f, v) => setForm((p) => ({ ...p, [s]: { ...p[s], [f]: v } }));
     const setClient = (i, f, v) => setForm((p) => { const c = [...p.clients]; c[i] = { ...c[i], [f]: v }; return { ...p, clients: c }; });
     const addClient = () => setForm((p) => ({ ...p, clients: [...p.clients, { name: "", email: "", phone: "" }] }));
     const removeClient = (i) => setForm((p) => ({ ...p, clients: p.clients.filter((_, idx) => idx !== i) }));
 
-    /* helpers edit */
     const setEField = (f, v) => setEditForm((p) => ({ ...p, [f]: v }));
     const setESubField = (s, f, v) => setEditForm((p) => ({ ...p, [s]: { ...p[s], [f]: v } }));
     const setEClient = (i, f, v) => setEditForm((p) => { const c = [...p.clients]; c[i] = { ...c[i], [f]: v }; return { ...p, clients: c }; });
@@ -140,7 +136,7 @@ function CompaniesTable({ accounts, setAccounts }) {
     const handleCreate = () => {
         if (!form.company) return;
         setAccounts((prev) => [...prev, { id: Date.now(), ...form }]);
-        setForm(emptyForm);
+        setForm(getEmptyForm());
         setShowForm(false);
     };
 
@@ -163,13 +159,13 @@ function CompaniesTable({ accounts, setAccounts }) {
     return (
         <div className="card p-3">
             <div className="d-flex justify-content-between align-items-center mb-3">
-                <h5 className="mb-0"> Empresas</h5>
-                <button className="btn btn-sm btn-dark" onClick={() => { setShowForm(!showForm); cancelEdit(); }}>
+                <h5 className="mb-0">Empresas</h5>
+                <button type="button" className="btn btn-sm btn-dark"
+                    onClick={() => { setShowForm(!showForm); cancelEdit(); setForm(getEmptyForm()); }}>
                     {showForm ? "Cancelar" : "+ Nova Empresa"}
                 </button>
             </div>
 
-            {/* ── Formulário de criação ── */}
             {showForm && (
                 <CompanyForm
                     form={form} title="Nova Empresa" submitLabel="Criar Empresa"
@@ -179,7 +175,6 @@ function CompaniesTable({ accounts, setAccounts }) {
                 />
             )}
 
-            {/* ── Tabela ── */}
             <table className="table table-hover mb-0">
                 <thead className="table-dark">
                     <tr>
@@ -188,10 +183,9 @@ function CompaniesTable({ accounts, setAccounts }) {
                     </tr>
                 </thead>
                 <tbody>
-                    {accounts.map((a, index) => (
+                    {accounts.map((a) => (
                         <>
-                            {/* ── Linha normal ── */}
-                            <tr key={index}>
+                            <tr key={a.id}>
                                 <td className="fw-semibold">{a.company}</td>
                                 <td>{a.clients.length} cliente(s)</td>
                                 <td>{a.securityManager.name}</td>
@@ -199,22 +193,22 @@ function CompaniesTable({ accounts, setAccounts }) {
                                 <td><span className={`badge ${statusColor(a.status)}`}>{a.status}</span></td>
                                 <td>
                                     <div className="d-flex gap-1">
-                                        <button className="btn btn-sm btn-outline-secondary"
+                                        <button type="button" className="btn btn-sm btn-outline-secondary"
                                             onClick={() => startEdit(a)}>Editar</button>
-                                        <button className="btn btn-sm btn-outline-danger"
+                                        <button type="button" className="btn btn-sm btn-outline-danger"
                                             onClick={() => setAccounts(accounts.filter((x) => x.id !== a.id))}>Remover</button>
                                     </div>
                                 </td>
                             </tr>
 
-                            {/* ── Linha de edição inline ── */}
                             {editingId === a.id && editForm && (
                                 <tr key={`edit-${a.id}`}>
                                     <td colSpan={6} className="p-0">
                                         <div className="border border-warning rounded m-2 p-3 bg-white">
                                             <div className="d-flex justify-content-between align-items-center mb-3">
-                                                <h6 className="mb-0"> Editar — {a.company}</h6>
-                                                <button className="btn btn-sm btn-link text-secondary p-0" onClick={cancelEdit}>✕ Cancelar</button>
+                                                <h6 className="mb-0">Editar — {a.company}</h6>
+                                                <button type="button" className="btn btn-sm btn-link text-secondary p-0"
+                                                    onClick={cancelEdit}>✕ Cancelar</button>
                                             </div>
                                             <CompanyForm
                                                 form={editForm} title="" submitLabel="Guardar Alterações"
@@ -243,7 +237,6 @@ function CompanyForm({ form, title, submitLabel, setField, setSubField, setClien
         <div className="border rounded p-3 mb-4 bg-white">
             {title && <h6 className="mb-3">{title}</h6>}
 
-            {/* Nome + Estado */}
             <div className="row g-2 mb-3">
                 <div className="col-md-8">
                     <label className="form-label fw-semibold" style={{ fontSize: 12 }}>Nome da Empresa *</label>
@@ -261,11 +254,13 @@ function CompanyForm({ form, title, submitLabel, setField, setSubField, setClien
             </div>
             <hr />
 
-            {/* Clientes */}
             <div className="mb-3">
                 <div className="d-flex justify-content-between align-items-center mb-2">
                     <label className="fw-semibold" style={{ fontSize: 13 }}>Clientes</label>
-                    <button className="btn btn-sm btn-outline-dark" onClick={addClient}>+ Adicionar Cliente</button>
+                    <button type="button" className="btn btn-sm btn-outline-dark" onClick={addClient}>
+                        + Adicionar Cliente
+                    </button>
+                    
                 </div>
                 {form.clients.map((client, i) => (
                     <div className="row g-2 mb-2 align-items-end" key={i}>
@@ -284,9 +279,25 @@ function CompanyForm({ form, title, submitLabel, setField, setSubField, setClien
                             <input className="form-control form-control-sm" placeholder="+351 910 000 000"
                                 value={client.phone} onChange={(e) => setClient(i, "phone", e.target.value)} />
                         </div>
+                        <div className="col-md-4">
+                        <label className="form-label fw-semibold" style={{ fontSize: 12 }}>Password</label>
+                        <div className="input-group input-group-sm">
+                            <input
+                                type="text"
+                                className="form-control form-control-sm"
+                                placeholder="Gere uma password"
+                                value={form.password}
+                                onChange={(e) => setForm({ ...form, password: e.target.value })}
+                            />
+                            <button type="button" className="btn btn-outline-secondary"
+                                onClick={() => setForm({ ...form, password: generatePassword() })}>
+                                Gerar
+                            </button>
+                        </div>
+                    </div>
                         <div className="col-md-2">
                             {form.clients.length > 1 && (
-                                <button className="btn btn-sm btn-outline-danger w-100"
+                                <button type="button" className="btn btn-sm btn-outline-danger w-100"
                                     onClick={() => removeClient(i)}>Remover</button>
                             )}
                         </div>
@@ -295,7 +306,6 @@ function CompanyForm({ form, title, submitLabel, setField, setSubField, setClien
             </div>
             <hr />
 
-            {/* Responsável de Segurança */}
             <div className="mb-3">
                 <label className="fw-semibold d-block mb-2" style={{ fontSize: 13 }}>Responsável de Segurança</label>
                 <div className="row g-2">
@@ -314,7 +324,6 @@ function CompanyForm({ form, title, submitLabel, setField, setSubField, setClien
             </div>
             <hr />
 
-            {/* Contacto Permanente */}
             <div className="mb-3">
                 <label className="fw-semibold d-block mb-2" style={{ fontSize: 13 }}>Contacto Permanente</label>
                 <div className="row g-2">
@@ -332,16 +341,18 @@ function CompanyForm({ form, title, submitLabel, setField, setSubField, setClien
                 </div>
             </div>
 
-            <button className="btn btn-sm btn-success" onClick={onSubmit}>{submitLabel}</button>
+            <button type="button" className="btn btn-sm btn-success" onClick={onSubmit}>
+                {submitLabel}
+            </button>
         </div>
     );
 }
 
 /* ─────────────────── TABELA ADMINISTRADORES ─────────────────── */
 function AdminsTable({ admins, setAdmins }) {
-    const emptyForm = { name: "", email: "", phone: "", password: "", status: "Ativo" };
+    const getEmptyForm = () => ({ name: "", email: "", phone: "", password: "", status: "Ativo" });
     const [showForm, setShowForm] = useState(false);
-    const [form, setForm] = useState(emptyForm);
+    const [form, setForm] = useState(getEmptyForm());
     const [editingId, setEditingId] = useState(null);
     const [editForm, setEditForm] = useState(null);
 
@@ -350,12 +361,47 @@ function AdminsTable({ admins, setAdmins }) {
         return Array.from({ length: 12 }, () => chars[Math.floor(Math.random() * chars.length)]).join("");
     };
 
-    const handleCreate = () => {
-        if (!form.name || !form.email) return;
-        setAdmins((prev) => [...prev, { id: Date.now(), ...form }]);
-        setForm(emptyForm);
-        setShowForm(false);
-    };
+const handleCreate = async () => {
+    if (!form.name || !form.email || !form.password) {
+        alert("Preenche nome, email e password antes de criar.");
+        return;
+    }
+    try {
+        const res = await fetch("https://orion-dewp.onrender.com/api/users", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                name: form.name,
+                email: form.email,
+                password: form.password,
+                telephone: form.phone,
+                id_tipo: 1
+            })
+        });
+
+        const text = await res.text();
+        console.log("Resposta raw API admin:", text);
+
+        let data;
+        try {
+            data = JSON.parse(text);
+        } catch {
+            alert(`O servidor retornou um erro inesperado (HTTP ${res.status}). Verifica se a API está online.`);
+            return;
+        }
+
+        if (data.success) {
+            setAdmins((prev) => [...prev, { id: data.user.id, ...form }]);
+            setForm(getEmptyForm());
+            setShowForm(false);
+        } else {
+            alert("Erro: " + data.message);
+        }
+    } catch (err) {
+        console.error(err);
+        alert("Erro de ligação: " + err.message);
+    }
+};
 
     const startEdit = (a) => { setEditingId(a.id); setEditForm({ ...a }); setShowForm(false); };
     const cancelEdit = () => { setEditingId(null); setEditForm(null); };
@@ -370,13 +416,13 @@ function AdminsTable({ admins, setAdmins }) {
     return (
         <div className="card p-3">
             <div className="d-flex justify-content-between align-items-center mb-3">
-                <h5 className="mb-0"> Administradores</h5>
-                <button className="btn btn-sm btn-dark" onClick={() => { setShowForm(!showForm); cancelEdit(); }}>
+                <h5 className="mb-0">Administradores</h5>
+                <button type="button" className="btn btn-sm btn-dark"
+                    onClick={() => { setShowForm(!showForm); cancelEdit(); setForm(getEmptyForm()); }}>
                     {showForm ? "Cancelar" : "+ Novo Administrador"}
                 </button>
             </div>
 
-            {/* Formulário de criação */}
             {showForm && (
                 <PersonForm form={form} setForm={setForm} title="Novo Administrador"
                     submitLabel="Criar Administrador" generatePassword={generatePassword} onSubmit={handleCreate} />
@@ -384,38 +430,38 @@ function AdminsTable({ admins, setAdmins }) {
 
             <table className="table table-hover mb-0">
                 <thead className="table-primary">
-                    <tr><th>Nome</th><th>Email</th><th>Telefone</th><th></th><th>Estado</th><th>Ações</th></tr>
+                    <tr><th>Nome</th><th>Email</th><th>Telefone</th><th>Estado</th><th>Ações</th></tr>
                 </thead>
                 <tbody>
-                    {admins.map((a, index) => (
+                    {admins.map((a) => (
                         <>
-                            <tr key={index}>
-                                <td className="fw-semibold"> {a.name}</td>
+                            <tr key={a.id}>
+                                <td className="fw-semibold">{a.name}</td>
                                 <td>{a.email}</td>
                                 <td>{a.phone}</td>
-                                <td><code className="text-muted" style={{ fontSize: 12 }}></code></td>
                                 <td><span className={`badge ${statusColor(a.status)}`}>{a.status}</span></td>
                                 <td>
                                     <div className="d-flex gap-1">
-                                        <button className="btn btn-sm btn-outline-secondary"
+                                        <button type="button" className="btn btn-sm btn-outline-secondary"
                                             onClick={() => startEdit(a)}>Editar</button>
-                                        <button className="btn btn-sm btn-outline-danger"
+                                        <button type="button" className="btn btn-sm btn-outline-danger"
                                             onClick={() => setAdmins(admins.filter((x) => x.id !== a.id))}>Remover</button>
                                     </div>
                                 </td>
                             </tr>
 
-                            {/* Linha de edição inline */}
                             {editingId === a.id && editForm && (
                                 <tr key={`edit-${a.id}`}>
-                                    <td colSpan={6} className="p-0">
+                                    <td colSpan={5} className="p-0">
                                         <div className="border border-warning rounded m-2 p-3 bg-white">
                                             <div className="d-flex justify-content-between align-items-center mb-3">
-                                                <h6 className="mb-0"> Editar — {a.name}</h6>
-                                                <button className="btn btn-sm btn-link text-secondary p-0" onClick={cancelEdit}>✕ Cancelar</button>
+                                                <h6 className="mb-0">Editar — {a.name}</h6>
+                                                <button type="button" className="btn btn-sm btn-link text-secondary p-0"
+                                                    onClick={cancelEdit}>✕ Cancelar</button>
                                             </div>
                                             <PersonForm form={editForm} setForm={setEditForm} title=""
-                                                submitLabel="Guardar Alterações" generatePassword={generatePassword} onSubmit={saveEdit} isEdit={true} />
+                                                submitLabel="Guardar Alterações" generatePassword={generatePassword}
+                                                onSubmit={saveEdit} isEdit={true} />
                                         </div>
                                     </td>
                                 </tr>
@@ -423,7 +469,7 @@ function AdminsTable({ admins, setAdmins }) {
                         </>
                     ))}
                     {admins.length === 0 && (
-                        <tr><td colSpan={6} className="text-center text-muted py-3">Nenhum administrador criado.</td></tr>
+                        <tr><td colSpan={5} className="text-center text-muted py-3">Nenhum administrador criado.</td></tr>
                     )}
                 </tbody>
             </table>
@@ -433,9 +479,9 @@ function AdminsTable({ admins, setAdmins }) {
 
 /* ─────────────────── TABELA GESTORES ─────────────────── */
 function ManagersTable({ managers, setManagers }) {
-    const emptyForm = { name: "", email: "", phone: "", password: "", status: "Ativo" };
+    const getEmptyForm = () => ({ name: "", email: "", phone: "", password: "", status: "Ativo" });
     const [showForm, setShowForm] = useState(false);
-    const [form, setForm] = useState(emptyForm);
+    const [form, setForm] = useState(getEmptyForm());
     const [editingId, setEditingId] = useState(null);
     const [editForm, setEditForm] = useState(null);
 
@@ -444,12 +490,47 @@ function ManagersTable({ managers, setManagers }) {
         return Array.from({ length: 12 }, () => chars[Math.floor(Math.random() * chars.length)]).join("");
     };
 
-    const handleCreate = () => {
-        if (!form.name || !form.email) return;
-        setManagers((prev) => [...prev, { id: Date.now(), ...form }]);
-        setForm(emptyForm);
-        setShowForm(false);
-    };
+    const handleCreate = async () => {
+    if (!form.name || !form.email || !form.password) {
+        alert("Preenche nome, email e password antes de criar.");
+        return;
+    }
+    try {
+        const res = await fetch("https://orion-dewp.onrender.com/api/users", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                name: form.name,
+                email: form.email,
+                password: form.password,
+                telephone: form.phone,
+                id_tipo: 1
+            })
+        });
+
+        const text = await res.text();
+        console.log("Resposta raw API admin:", text);
+
+        let data;
+        try {
+            data = JSON.parse(text);
+        } catch {
+            alert(`O servidor retornou um erro inesperado (HTTP ${res.status}). Verifica se a API está online.`);
+            return;
+        }
+
+        if (data.success) {
+            setAdmins((prev) => [...prev, { id: data.user.id, ...form }]);
+            setForm(getEmptyForm());
+            setShowForm(false);
+        } else {
+            alert("Erro: " + data.message);
+        }
+    } catch (err) {
+        console.error(err);
+        alert("Erro de ligação: " + err.message);
+    }
+};
 
     const startEdit = (m) => { setEditingId(m.id); setEditForm({ ...m }); setShowForm(false); };
     const cancelEdit = () => { setEditingId(null); setEditForm(null); };
@@ -465,12 +546,12 @@ function ManagersTable({ managers, setManagers }) {
         <div className="card p-3">
             <div className="d-flex justify-content-between align-items-center mb-3">
                 <h5 className="mb-0">Gestores</h5>
-                <button className="btn btn-sm btn-dark" onClick={() => { setShowForm(!showForm); cancelEdit(); }}>
+                <button type="button" className="btn btn-sm btn-dark"
+                    onClick={() => { setShowForm(!showForm); cancelEdit(); setForm(getEmptyForm()); }}>
                     {showForm ? "Cancelar" : "+ Novo Gestor"}
                 </button>
             </div>
 
-            {/* Formulário de criação */}
             {showForm && (
                 <PersonForm form={form} setForm={setForm} title="Novo Gestor"
                     submitLabel="Criar Gestor" generatePassword={generatePassword} onSubmit={handleCreate} />
@@ -478,38 +559,38 @@ function ManagersTable({ managers, setManagers }) {
 
             <table className="table table-hover mb-0">
                 <thead className="table-info">
-                    <tr><th>Nome</th><th>Email</th><th>Telefone</th><th></th><th>Estado</th><th>Ações</th></tr>
+                    <tr><th>Nome</th><th>Email</th><th>Telefone</th><th>Estado</th><th>Ações</th></tr>
                 </thead>
                 <tbody>
-                    {managers.map((m, index) => (
+                    {managers.map((m) => (
                         <>
-                            <tr key={index}>
-                                <td className="fw-semibold"> {m.name}</td>
+                            <tr key={m.id}>
+                                <td className="fw-semibold">{m.name}</td>
                                 <td>{m.email}</td>
                                 <td>{m.phone}</td>
-                                <td><code className="text-muted" style={{ fontSize: 12 }}></code></td>
                                 <td><span className={`badge ${statusColor(m.status)}`}>{m.status}</span></td>
                                 <td>
                                     <div className="d-flex gap-1">
-                                        <button className="btn btn-sm btn-outline-secondary"
+                                        <button type="button" className="btn btn-sm btn-outline-secondary"
                                             onClick={() => startEdit(m)}>Editar</button>
-                                        <button className="btn btn-sm btn-outline-danger"
+                                        <button type="button" className="btn btn-sm btn-outline-danger"
                                             onClick={() => setManagers(managers.filter((x) => x.id !== m.id))}>Remover</button>
                                     </div>
                                 </td>
                             </tr>
 
-                            {/* Linha de edição inline */}
                             {editingId === m.id && editForm && (
                                 <tr key={`edit-${m.id}`}>
-                                    <td colSpan={6} className="p-0">
+                                    <td colSpan={5} className="p-0">
                                         <div className="border border-warning rounded m-2 p-3 bg-white">
                                             <div className="d-flex justify-content-between align-items-center mb-3">
-                                                <h6 className="mb-0"> Editar — {m.name}</h6>
-                                                <button className="btn btn-sm btn-link text-secondary p-0" onClick={cancelEdit}>✕ Cancelar</button>
+                                                <h6 className="mb-0">Editar — {m.name}</h6>
+                                                <button type="button" className="btn btn-sm btn-link text-secondary p-0"
+                                                    onClick={cancelEdit}>✕ Cancelar</button>
                                             </div>
                                             <PersonForm form={editForm} setForm={setEditForm} title=""
-                                                submitLabel="Guardar Alterações"  onSubmit={saveEdit} isEdit={true} />
+                                                submitLabel="Guardar Alterações" generatePassword={generatePassword}
+                                                onSubmit={saveEdit} isEdit={true} />
                                         </div>
                                     </td>
                                 </tr>
@@ -517,7 +598,7 @@ function ManagersTable({ managers, setManagers }) {
                         </>
                     ))}
                     {managers.length === 0 && (
-                        <tr><td colSpan={6} className="text-center text-muted py-3">Nenhum gestor criado.</td></tr>
+                        <tr><td colSpan={5} className="text-center text-muted py-3">Nenhum gestor criado.</td></tr>
                     )}
                 </tbody>
             </table>
@@ -543,8 +624,32 @@ function PersonForm({ form, setForm, title, submitLabel, generatePassword, onSub
                     </div>
                 ))}
 
+                {!isEdit ? (
+                    <div className="col-md-4">
+                        <label className="form-label fw-semibold" style={{ fontSize: 12 }}>Password</label>
+                        <div className="input-group input-group-sm">
+                            <input
+                                type="text"
+                                className="form-control form-control-sm"
+                                placeholder="Gere uma password"
+                                value={form.password}
+                                onChange={(e) => setForm({ ...form, password: e.target.value })}
+                            />
+                            <button type="button" className="btn btn-outline-secondary"
+                                onClick={() => setForm({ ...form, password: generatePassword() })}>
+                                Gerar
+                            </button>
+                        </div>
+                    </div>
+                ) : (
+                    <div className="col-md-4">
+                        <label className="form-label fw-semibold" style={{ fontSize: 12 }}>Password</label>
+                        <input type="password" className="form-control form-control-sm bg-light"
+                            value="placeholder" disabled />
+                        <small className="text-muted" style={{ fontSize: 11 }}>A password não pode ser alterada aqui.</small>
+                    </div>
+                )}
 
-                {/* Estado */}
                 <div className="col-md-4">
                     <label className="form-label fw-semibold" style={{ fontSize: 12 }}>Estado</label>
                     <select className="form-select form-select-sm"
@@ -555,7 +660,9 @@ function PersonForm({ form, setForm, title, submitLabel, generatePassword, onSub
                 </div>
             </div>
 
-            <button className="btn btn-sm btn-success mt-3" onClick={onSubmit}>{submitLabel}</button>
+            <button type="button" className="btn btn-sm btn-success mt-3" onClick={onSubmit}>
+                {submitLabel}
+            </button>
         </div>
     );
 }
@@ -606,7 +713,7 @@ function Settings() {
                 <label className="form-label">Email</label>
                 <input className="form-control" defaultValue="admin@cyberbox.pt" />
             </div>
-            <button className="btn btn-dark">Guardar</button>
+            <button type="button" className="btn btn-dark">Guardar</button>
         </div>
     );
 }
@@ -667,11 +774,14 @@ function Content() {
                             <td>
                                 {editing === item.id ? (
                                     <>
-                                        <button className="btn btn-sm btn-success me-1" onClick={() => handleSave(item.id)}>Guardar</button>
-                                        <button className="btn btn-sm btn-outline-secondary" onClick={() => setEditing(null)}>Cancelar</button>
+                                        <button type="button" className="btn btn-sm btn-success me-1"
+                                            onClick={() => handleSave(item.id)}>Guardar</button>
+                                        <button type="button" className="btn btn-sm btn-outline-secondary"
+                                            onClick={() => setEditing(null)}>Cancelar</button>
                                     </>
                                 ) : (
-                                    <button className="btn btn-sm btn-outline-dark" onClick={() => handleEdit(item)}>Editar</button>
+                                    <button type="button" className="btn btn-sm btn-outline-dark"
+                                        onClick={() => handleEdit(item)}>Editar</button>
                                 )}
                             </td>
                         </tr>
