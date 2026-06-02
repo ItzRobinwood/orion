@@ -19,6 +19,8 @@ require("./models/requestStatus.js");
 // routes
 const requestRoutes = require("./routes/requestRoutes");
 const userRoutes = require("./routes/userRoutes");
+const userRoutes = require("./routes/userRoutes");
+const companyRoutes = require("./routes/companyRoutes"); // 👈 1. IMPORTAR AQUI
 
 // associations
 const applyAssociations = require("./models/associations");
@@ -35,6 +37,9 @@ app.use(express.json());
 // rotas
 app.use("/", requestRoutes);
 app.use("/", userRoutes);
+app.use("/", requestRoutes);
+app.use("/", userRoutes);
+app.use("/", companyRoutes); // 👈 2. ATIVAR AQUI
 
 applyAssociations();
 
