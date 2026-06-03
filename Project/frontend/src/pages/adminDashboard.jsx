@@ -74,9 +74,6 @@ function Dashboard() {
     );
 }
 
-/* TO DO: Atualizar o Front-end para carregar do Neon (adminDashboard.jsx)
-Agora precisamos de ir à função Accounts() dentro do vosso ficheiro do React.
-Vamos usar o useEffect para disparar um pedido à API logo quando a componente aparece no ecrã. */
 function Accounts() {
     const [accounts, setAccounts] = useState([
         {
@@ -88,18 +85,42 @@ function Accounts() {
             status: "Ativo",
         },
     ]);
-    const [admins, setAdmins] = useState([
-        { id: 1, name: "Maria Admin", email: "maria@cyberbox.pt", phone: "+351 910 000 010", password: "Xk9#mP2!qL4@", status: "Ativo" },
-    ]);
+    const [admins, setAdmins] = useState([]);
     const [managers, setManagers] = useState([
         { id: 1, name: "Rui Gestor", email: "rui@cyberbox.pt", phone: "+351 910 000 020", password: "Yz7$nQ5!wR3&", status: "Ativo" },
     ]);
 
+    const reloadAdmins = async () => {
+        try {
+            const res = await fetch("https://orion-dewp.onrender.com/api/users");
+            const data = await res.json();
+            setAdmins(data.users.filter(u => u.id_tipo === 1));
+        } catch (err) {
+            console.error("Error loading admins:", err);
+        }
+    };
+
+    const reloadManagers = async () => {
+    try {
+        const res = await fetch("https://orion-dewp.onrender.com/api/users");
+        const data = await res.json();
+        setManagers(data.users.filter(u => u.id_tipo === 2));
+    } catch (err) {
+        console.error("Error loading managers:", err);
+    }
+};
+
+    useEffect(() => {
+        reloadAdmins();
+        reloadManagers();
+    }, []);
+    
+
     return (
         <div className="d-flex flex-column gap-4">
             <CompaniesTable accounts={accounts} setAccounts={setAccounts} />
-            <AdminsTable admins={admins} setAdmins={setAdmins} />
-            <ManagersTable managers={managers} setManagers={setManagers} />
+            <AdminsTable admins={admins} setAdmins={setAdmins} reloadAdmins={reloadAdmins} />
+            <ManagersTable managers={managers} setManagers={setManagers} reloadManagers={reloadManagers} />
         </div>
     );
 }
@@ -297,7 +318,7 @@ function CompanyForm({ form, title, submitLabel, setField, setSubField, setClien
     );
 }
 
-function AdminsTable({ admins, setAdmins }) {
+function AdminsTable({ admins, setAdmins, reloadData }) {
     const getEmptyForm = () => ({ name: "", email: "", phone: "", password: "", status: "Ativo" });
     const [showForm, setShowForm] = useState(false);
     const [form, setForm] = useState(getEmptyForm());
@@ -314,7 +335,7 @@ function AdminsTable({ admins, setAdmins }) {
      o correto é chamar a função recarregarDados() para trazer a lista fresquinha do Neon.*/
     const handleCreate = async () => {
         if (!form.name || !form.email || !form.password) {
-            alert("Preenche nome, email e password antes de criar.");
+            alert("Please fill in name, email and password before creating.");
             return;
         }
 
@@ -334,23 +355,17 @@ function AdminsTable({ admins, setAdmins }) {
             const data = await res.json();
 
             if (data.success) {
-                setAdmins((prev) => [
-                    ...prev,
-                    {
-                        id: data.user.id,
-                        ...form
-                    }
-                ]);
-
+                await reloadAdmins();
                 setForm(getEmptyForm());
                 setShowForm(false);
             } else {
-                alert("Erro: " + data.message);
+                alert("Error: " + data.message);
             }
         } catch (err) {
-            alert("Erro de ligação: " + err.message);
+            alert("Connection error: " + err.message);
         }
     };
+
     const startEdit = (a) => { setEditingId(a.id); setEditForm({ ...a }); setShowForm(false); };
     const cancelEdit = () => { setEditingId(null); setEditForm(null); };
     const saveEdit = () => {
@@ -419,7 +434,7 @@ function AdminsTable({ admins, setAdmins }) {
     );
 }
 
-function ManagersTable({ managers, setManagers }) {
+function ManagersTable({ managers, setManagers, reloadManagers }) {
     const getEmptyForm = () => ({ name: "", email: "", phone: "", password: "", status: "Ativo" });
     const [showForm, setShowForm] = useState(false);
     const [form, setForm] = useState(getEmptyForm());
@@ -433,7 +448,7 @@ function ManagersTable({ managers, setManagers }) {
 
     const handleCreate = async () => {
         if (!form.name || !form.email || !form.password) {
-            alert("Preenche nome, email e password antes de criar.");
+            alert("Please fill in name, email and password before creating.");
             return;
         }
         try {
@@ -442,23 +457,18 @@ function ManagersTable({ managers, setManagers }) {
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ name: form.name, email: form.email, password: form.password, telephone: form.phone, id_tipo: 2 })
             });
-            const text = await res.text();
-            const data = JSON.parse(text);
+            const data = await res.json();
             if (data.success) {
-                setManagers((prev) => [...prev, { id: data.user.id, ...form }]);
+                await reloadManagers();
                 setForm(getEmptyForm());
                 setShowForm(false);
             } else {
-                alert("Erro: " + data.message);
+                alert("Error: " + data.message);
             }
         } catch (err) {
-            alert("Erro de ligação: " + err.message);
+            alert("Connection error: " + err.message);
         }
-        setManagers((prev) => [...prev, { id: Date.now(), ...form }]);
-        setForm(getEmptyForm());
-        setShowForm(false);
     };
-
     const startEdit = (m) => { setEditingId(m.id); setEditForm({ ...m }); setShowForm(false); };
     const cancelEdit = () => { setEditingId(null); setEditForm(null); };
     const saveEdit = () => {
