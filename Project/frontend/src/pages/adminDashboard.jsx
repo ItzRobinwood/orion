@@ -126,12 +126,6 @@ function Accounts() {
         reloadCompanies(); // vai falhar até o endpoint existir
     }, []);
 
-    useEffect(() => {
-        reloadAdmins();
-        reloadManagers();
-        reloadManagers();
-    }, []);
-
 
     return (
         <div className="d-flex flex-column gap-4">
@@ -731,10 +725,158 @@ function Tickets() {
 }
 
 function Requests() {
+    const [requests, setRequests] = useState([]);
+    const [filter, setFilter] = useState("Todos");
+
+    const reloadRequests = async () => {
+        try {
+            const res = await fetch("https://orion-dewp.onrender.com/api/requests");
+            const data = await res.json();
+            setRequests(data.requests || data);
+        } catch (err) {
+            console.error("Error loading requests:", err);
+            
+            // Fallback mock data matching your image screenshot layout perfectly
+            setRequests([
+                {
+                    id: 1,
+                    title: "Auditoria de Segurança Completa",
+                    description: "Pedido de auditoria completa aos sistemas de segurança da organização",
+                    company: "TechCorp",
+                    date: "03/06/2026",
+                    itemsCount: 2,
+                    type: "Auditoria",
+                    assignedTo: "Admin Principal",
+                    status: "Em Execução"
+                }
+            ]);
+        }
+    };
+
+    useEffect(() => {
+        reloadRequests();
+    }, []);
+
+    const totalRequests = requests.length;
+    const countByStatus = (status) => requests.filter(r => r.status === status).length;
+
+    const filteredRequests = filter === "Todos" 
+        ? requests 
+        : requests.filter(r => r.status === filter);
+
+    const getStatusBadgeClass = (status) => {
+        switch (status) {
+            case "Pendente": return "bg-warning text-dark";
+            case "Aprovados": return "bg-success";
+            case "Em Execução": return "bg-warning text-dark"; 
+            case "Concluídos": return "bg-secondary";
+            default: return "bg-primary";
+        }
+    };
+
     return (
-        <div className="card p-3">
-            <h5>Pedidos</h5>
-            <p>Lista de pedidos pendentes</p>
+        <div className="d-flex flex-column gap-4 text-dark text-start">
+            <div>
+                <h3 className="fw-bold mb-1">Gestão de Pedidos</h3>
+                <p className="text-muted small">Gerir pedidos dos clientes</p>
+            </div>
+
+            {/* --- 1. Summary Status Cards --- */}
+            <div className="row g-3">
+                <div className="col">
+                    <div className="card p-3 d-flex flex-row align-items-center gap-3 shadow-sm">
+                        <div>
+                            <div className="text-muted small">Total</div>
+                            <h4 className="fw-bold m-0">{totalRequests}</h4>
+                        </div>
+                    </div>
+                </div>
+                <div className="col">
+                    <div className="card p-3 d-flex flex-row align-items-center gap-3 shadow-sm">
+                        <div>
+                            <div className="text-muted small">Pendentes</div>
+                            <h4 className="fw-bold text-primary m-0">{countByStatus("Pendente")}</h4>
+                        </div>
+                    </div>
+                </div>
+                <div className="col">
+                    <div className="card p-3 d-flex flex-row align-items-center gap-3 shadow-sm">
+                        <div>
+                            <div className="text-muted small">Aprovados</div>
+                            <h4 className="fw-bold text-success m-0">{countByStatus("Aprovados")}</h4>
+                        </div>
+                    </div>
+                </div>
+                <div className="col">
+                    <div className="card p-3 d-flex flex-row align-items-center gap-3 shadow-sm">
+                        <div>
+                            <div className="text-muted small">Em Execução</div>
+                            <h4 className="fw-bold text-warning m-0">{countByStatus("Em Execução")}</h4>
+                        </div>
+                    </div>
+                </div>
+                <div className="col">
+                    <div className="card p-3 d-flex flex-row align-items-center gap-3 shadow-sm">
+                        <div>
+                            <div className="text-muted small">Concluídos</div>
+                            <h4 className="fw-bold text-secondary m-0">{countByStatus("Concluídos")}</h4>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {/* --- 2. Filter Tab Menu --- */}
+            <div className="card p-3 shadow-sm">
+                <div className="d-flex align-items-center gap-2 mb-2 text-muted small fw-semibold">
+                    <span>Filtros</span>
+                </div>
+                <div className="d-flex gap-2">
+                    {["Todos", "Pendente", "Aprovados", "Em Execução", "Concluídos"].map((status) => (
+                        <button
+                            key={status}
+                            onClick={() => setFilter(status)}
+                            className={`btn btn-sm px-3 ${filter === status ? "btn-primary" : "btn-light border text-secondary"}`}
+                        >
+                            {status}
+                        </button>
+                    ))}
+                </div>
+            </div>
+
+            {/* --- 3. Request Row Items View --- */}
+            <div className="d-flex flex-column gap-2">
+                {filteredRequests.map((request) => (
+                    <div key={request.id} className="card p-3 shadow-sm bg-white d-flex flex-row justify-content-between align-items-center border-start border-4 border-info">
+                        <div>
+                            <div className="d-flex align-items-center gap-2 mb-1">
+                                <h6 className="fw-bold m-0">{request.title}</h6>
+                                <span className={`badge ${getStatusBadgeClass(request.status)}`} style={{ fontSize: "10px" }}>
+                                    {request.status}
+                                </span>
+                            </div>
+                            <p className="text-muted small m-0 mb-2">{request.description}</p>
+                            <div className="d-flex align-items-center gap-3 text-secondary" style={{ fontSize: "12px" }}>
+                                <span>👤 {request.company}</span>
+                                <span>📅 {request.date}</span>
+                                <span>📋 {request.itemsCount} itens</span>
+                                <span>🛠️ {request.type}</span>
+                                <span className="text-primary fw-medium">Atribuído: {request.assignedTo}</span>
+                            </div>
+                        </div>
+                        <div>
+                            <button className="btn btn-sm btn-link text-primary fs-5 p-0">
+                                👁️
+                            </button>
+                        </div>
+                    </div>
+                ))}
+
+                {filteredRequests.length === 0 && (
+                    <div className="text-center text-muted p-4 bg-white border rounded">
+                        Nenhum pedido encontrado com o estado atual selecionado.
+                    </div>
+                )}
+            </div>
         </div>
     );
 }

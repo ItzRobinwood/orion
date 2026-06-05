@@ -1,3 +1,7 @@
+import React from "react";
+// 1. Corrected path to go up TWO levels into the src/assets folder
+import heroImage from "../../assets/heroimg.png";
+
 function Hero() {
   return (
     <section
@@ -6,7 +10,7 @@ function Hero() {
     >
       <div className="container">
         <div className="row align-items-center">
-          
+
           {/* Texto */}
           <div className="col-md-6">
             <h1 className="display-4 fw-bold mb-4">
@@ -21,11 +25,21 @@ function Hero() {
           </div>
 
           {/* Lado direito */}
-          <div className="col-md-6 text-center">
-            <div className="bg-light text-dark d-flex align-items-center justify-content-center" style={{ height: "200px" }}>
-              Imagem / Ilustração
-            </div>
-          </div>
+          {/* Lado direito */}
+<div className="col-md-6 text-center">
+  <div className="img-container">
+    <img 
+      src={heroImage} 
+      alt="Tecnologiameeting" 
+      className="w-100 rounded shadow" 
+      style={{ 
+        height: "350px",      // 1. Locks the vertical height so it doesn't get too big
+        objectFit: "cover",   // 2. Stretches the image sideways cleanly without distorting it
+        objectPosition: "center" // 3. Keeps the focus of the image dead center
+      }} 
+    />
+  </div>
+</div>
 
         </div>
       </div>
