@@ -318,7 +318,7 @@ function CompanyForm({ form, title, submitLabel, setField, setSubField, setClien
     );
 }
 
-function AdminsTable({ admins, setAdmins, reloadData }) {
+function AdminsTable({ admins, setAdmins, reloadAdmins }) {
     const getEmptyForm = () => ({ name: "", email: "", phone: "", password: "", status: "Ativo" });
     const [showForm, setShowForm] = useState(false);
     const [form, setForm] = useState(getEmptyForm());
@@ -366,10 +366,45 @@ function AdminsTable({ admins, setAdmins, reloadData }) {
 
     const startEdit = (a) => { setEditingId(a.id); setEditForm({ ...a }); setShowForm(false); };
     const cancelEdit = () => { setEditingId(null); setEditForm(null); };
-    const saveEdit = () => {
+    const saveEdit = async () => {
         if (!editForm.name || !editForm.email) return;
-        setAdmins((prev) => prev.map((a) => a.id === editingId ? { ...editForm } : a));
-        cancelEdit();
+        try {
+            const res = await fetch(`https://orion-dewp.onrender.com/api/users/${editingId}`, {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    name: editForm.name,
+                    email: editForm.email,
+                    telephone: editForm.phone,
+                    password: editForm.password
+                })
+            });
+            const data = await res.json();
+            if (data.success) {
+                await reloadAdmins();
+                cancelEdit();
+            } else {
+                alert("Error: " + data.message);
+            }
+        } catch (err) {
+            alert("Connection error: " + err.message);
+        }
+    };
+
+    const handleDelete = async (id) => {
+        try {
+            const res = await fetch(`https://orion-dewp.onrender.com/api/users/${id}`, {
+                method: "DELETE"
+            });
+            const data = await res.json();
+            if (data.success) {
+                await reloadAdmins();
+            } else {
+                alert("Error: " + data.message);
+            }
+        } catch (err) {
+            alert("Connection error: " + err.message);
+        }
     };
 
     const statusColor = (s) => s === "Ativo" ? "bg-success" : "bg-danger";
@@ -379,7 +414,7 @@ function AdminsTable({ admins, setAdmins, reloadData }) {
             <div className="d-flex justify-content-between align-items-center mb-3">
                 <h5 className="mb-0">Administradores</h5>
                 <button type="button" className="btn btn-sm btn-dark"
-                    onClick={() => { setShowForm(!showForm); cancelEdit(); setForm(getEmptyForm()); }}>
+                    onClick={() => handleDelete(a.id)}>
                     {showForm ? "Cancelar" : "+ Novo Administrador"}
                 </button>
             </div>
@@ -469,10 +504,45 @@ function ManagersTable({ managers, setManagers, reloadManagers }) {
     };
     const startEdit = (m) => { setEditingId(m.id); setEditForm({ ...m }); setShowForm(false); };
     const cancelEdit = () => { setEditingId(null); setEditForm(null); };
-    const saveEdit = () => {
+    const saveEdit = async () => {
         if (!editForm.name || !editForm.email) return;
-        setManagers((prev) => prev.map((m) => m.id === editingId ? { ...editForm } : m));
-        cancelEdit();
+        try {
+            const res = await fetch(`https://orion-dewp.onrender.com/api/users/${editingId}`, {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    name: editForm.name,
+                    email: editForm.email,
+                    telephone: editForm.phone,
+                    password: editForm.password
+                })
+            });
+            const data = await res.json();
+            if (data.success) {
+                await reloadManagers();
+                cancelEdit();
+            } else {
+                alert("Error: " + data.message);
+            }
+        } catch (err) {
+            alert("Connection error: " + err.message);
+        }
+    };
+
+    const handleDelete = async (id) => {
+        try {
+            const res = await fetch(`https://orion-dewp.onrender.com/api/users/${id}`, {
+                method: "DELETE"
+            });
+            const data = await res.json();
+            if (data.success) {
+                await reloadManagers();
+            } else {
+                alert("Error: " + data.message);
+            }
+        } catch (err) {
+            alert("Connection error: " + err.message);
+        }
     };
 
     const statusColor = (s) => s === "Ativo" ? "bg-success" : "bg-danger";
@@ -482,7 +552,7 @@ function ManagersTable({ managers, setManagers, reloadManagers }) {
             <div className="d-flex justify-content-between align-items-center mb-3">
                 <h5 className="mb-0">Gestores</h5>
                 <button type="button" className="btn btn-sm btn-dark"
-                    onClick={() => { setShowForm(!showForm); cancelEdit(); setForm(getEmptyForm()); }}>
+                    onClick={() => handleDelete(m.id)}>
                     {showForm ? "Cancelar" : "+ Novo Gestor"}
                 </button>
             </div>
