@@ -94,7 +94,15 @@ function Accounts() {
         try {
             const res = await fetch("https://orion-dewp.onrender.com/api/users");
             const data = await res.json();
-            setAdmins(data.users.filter(u => u.id_tipo === 1));
+            const mapped = data.users
+                .filter(u => u.id_tipo === 1)
+                .map(u => ({
+                    ...u,
+                    id: u.id_Utilizador,
+                    phone: u.telephone,
+                    status: u.active ? "Ativo" : "Inativo"
+                }));
+            setAdmins(mapped);
         } catch (err) {
             console.error("Error loading admins:", err);
         }
@@ -436,7 +444,11 @@ function AdminsTable({ admins, setAdmins, reloadAdmins }) {
         }
     };
 
-    const startEdit = (a) => { setEditingId(a.id); setEditForm({ ...a }); setShowForm(false); };
+    const startEdit = (a) => {
+        setEditingId(a.id_Utilizador || a.id);
+        setEditForm({ ...a });
+        setShowForm(false);
+    };
     const cancelEdit = () => { setEditingId(null); setEditForm(null); };
     const saveEdit = async () => {
         if (!editForm.name || !editForm.email) return;
@@ -486,7 +498,7 @@ function AdminsTable({ admins, setAdmins, reloadAdmins }) {
             <div className="d-flex justify-content-between align-items-center mb-3">
                 <h5 className="mb-0">Administradores</h5>
                 <button type="button" className="btn btn-sm btn-dark"
-                    onClick={() => handleDelete(a.id)}>
+                    onClick={() => { setShowForm(!showForm); cancelEdit(); setForm(getEmptyForm()); }}>
                     {showForm ? "Cancelar" : "+ Novo Administrador"}
                 </button>
             </div>
@@ -509,7 +521,7 @@ function AdminsTable({ admins, setAdmins, reloadAdmins }) {
                                 <td>
                                     <div className="d-flex gap-1">
                                         <button type="button" className="btn btn-sm btn-outline-secondary" onClick={() => startEdit(a)}>Editar</button>
-                                        <button type="button" className="btn btn-sm btn-outline-danger" onClick={() => setAdmins(admins.filter((x) => x.id !== a.id))}>Remover</button>
+                                        <button type="button" className="btn btn-sm btn-outline-danger" onClick={() => handleDelete(a.id_Utilizador || a.id)}>Remover</button>
                                     </div>
                                 </td>
                             </tr>
