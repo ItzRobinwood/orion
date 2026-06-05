@@ -117,8 +117,26 @@ function Accounts() {
             console.error("Error loading managers:", err);
         }
     };
+
+    const reloadCompanies = async () => {
+        try {
+            const res = await fetch("https://orion-dewp.onrender.com/api/companies");
+            const data = await res.json();
+            setAccounts(data.companies);
+        } catch (err) {
+            console.error("Error loading companies:", err);
+        }
+    };
+
     useEffect(() => {
         reloadAdmins();
+        reloadManagers();
+        reloadCompanies(); // vai falhar até o endpoint existir
+    }, []);
+
+    useEffect(() => {
+        reloadAdmins();
+        reloadManagers();
         reloadManagers();
     }, []);
 
@@ -132,7 +150,7 @@ function Accounts() {
     );
 }
 
-function CompaniesTable({ accounts, setAccounts }) {
+function CompaniesTable({ accounts, setAccounts, reloadCompanies }) {
     const getEmptyForm = () => ({
         company: "", status: "Ativo",
         clients: [{ name: "", email: "", phone: "" }],
@@ -157,11 +175,26 @@ function CompaniesTable({ accounts, setAccounts }) {
     const addEClient = () => setEditForm((p) => ({ ...p, clients: [...p.clients, { name: "", email: "", phone: "" }] }));
     const removeEClient = (i) => setEditForm((p) => ({ ...p, clients: p.clients.filter((_, idx) => idx !== i) }));
 
-    const handleCreate = () => {
+    const handleCreate = async () => {
         if (!form.company) return;
-        setAccounts((prev) => [...prev, { id: Date.now(), ...form }]);
-        setForm(getEmptyForm());
-        setShowForm(false);
+        try {
+            // TODO: confirm endpoint URL and request body structure with backend team
+            const res = await fetch("https://orion-dewp.onrender.com/api/companies", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(form)
+            });
+            const data = await res.json();
+            if (data.success) {
+                await reloadCompanies();
+                setForm(getEmptyForm());
+                setShowForm(false);
+            } else {
+                alert("Error: " + data.message);
+            }
+        } catch (err) {
+            alert("Connection error: " + err.message);
+        }
     };
 
     const startEdit = (a) => {
@@ -172,10 +205,42 @@ function CompaniesTable({ accounts, setAccounts }) {
 
     const cancelEdit = () => { setEditingId(null); setEditForm(null); };
 
-    const saveEdit = () => {
+    const saveEdit = async () => {
         if (!editForm.company) return;
-        setAccounts((prev) => prev.map((a) => a.id === editingId ? { ...editForm } : a));
-        cancelEdit();
+        try {
+            // TODO: confirm endpoint URL and request body structure with backend team
+            const res = await fetch(`https://orion-dewp.onrender.com/api/companies/${editingId}`, {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(editForm)
+            });
+            const data = await res.json();
+            if (data.success) {
+                await reloadCompanies();
+                cancelEdit();
+            } else {
+                alert("Error: " + data.message);
+            }
+        } catch (err) {
+            alert("Connection error: " + err.message);
+        }
+    };
+
+    const handleDelete = async (id) => {
+        try {
+            // TODO: confirm endpoint URL with backend team
+            const res = await fetch(`https://orion-dewp.onrender.com/api/companies/${id}`, {
+                method: "DELETE"
+            });
+            const data = await res.json();
+            if (data.success) {
+                await reloadCompanies();
+            } else {
+                alert("Error: " + data.message);
+            }
+        } catch (err) {
+            alert("Connection error: " + err.message);
+        }
     };
 
     const statusColor = (s) => s === "Ativo" ? "bg-success" : s === "Pendente" ? "bg-warning text-dark" : "bg-danger";
@@ -211,7 +276,7 @@ function CompaniesTable({ accounts, setAccounts }) {
                                 <td>
                                     <div className="d-flex gap-1">
                                         <button type="button" className="btn btn-sm btn-outline-secondary" onClick={() => startEdit(a)}>Editar</button>
-                                        <button type="button" className="btn btn-sm btn-outline-danger" onClick={() => setAccounts(accounts.filter((x) => x.id !== a.id))}>Remover</button>
+                                        <button type="button" className="btn btn-sm btn-outline-danger" onClick={() => handleDelete(a.id)}>Remover</button>
                                     </div>
                                 </td>
                             </tr>
