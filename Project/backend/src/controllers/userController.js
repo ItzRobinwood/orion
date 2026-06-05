@@ -180,3 +180,22 @@ exports.getUsers = async (req, res) => {
         });
     }
 };
+
+//DELETE USER
+exports.deleteUser = async (req, res) => {
+    try {
+        const { id } = req.params; 
+        const user = await User.findByPk(id);
+        if (!user) {
+            return res.status(404).json({ success: false, message: "Utilizador não encontrado." });
+        }
+
+        await user.destroy();
+
+        return res.json({ success: true, message: "Utilizador eliminado com sucesso." });
+
+    } catch (error) {
+        return res.status(500).json({ success: false, message: error.message });
+    }
+};
+

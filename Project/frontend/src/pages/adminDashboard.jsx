@@ -94,7 +94,15 @@ function Accounts() {
         try {
             const res = await fetch("https://orion-dewp.onrender.com/api/users");
             const data = await res.json();
-            setAdmins(data.users.filter(u => u.id_tipo === 1));
+            const mapped = data.users
+                .filter(u => u.id_tipo === 1)
+                .map(u => ({
+                    ...u,
+                    id: u.id_Utilizador,
+                    phone: u.telephone,
+                    status: u.active ? "Ativo" : "Inativo"
+                }));
+            setAdmins(mapped);
         } catch (err) {
             console.error("Error loading admins:", err);
         }
@@ -104,7 +112,15 @@ function Accounts() {
         try {
             const res = await fetch("https://orion-dewp.onrender.com/api/users");
             const data = await res.json();
-            setManagers(data.users.filter(u => u.id_tipo === 2));
+            const mapped = data.users
+                .filter(u => u.id_tipo === 2)
+                .map(u => ({
+                    ...u,
+                    id: u.id_Utilizador,
+                    phone: u.telephone,              // ✅ mapear campo
+                    status: u.active ? "Ativo" : "Inativo"  // ✅ mapear estado
+                }));
+            setManagers(mapped);
         } catch (err) {
             console.error("Error loading managers:", err);
         }
@@ -422,7 +438,11 @@ function AdminsTable({ admins, setAdmins, reloadAdmins }) {
         }
     };
 
-    const startEdit = (a) => { setEditingId(a.id); setEditForm({ ...a }); setShowForm(false); };
+    const startEdit = (a) => {
+        setEditingId(a.id_Utilizador || a.id);
+        setEditForm({ ...a });
+        setShowForm(false);
+    };
     const cancelEdit = () => { setEditingId(null); setEditForm(null); };
     const saveEdit = async () => {
         if (!editForm.name || !editForm.email) return;
@@ -472,7 +492,7 @@ function AdminsTable({ admins, setAdmins, reloadAdmins }) {
             <div className="d-flex justify-content-between align-items-center mb-3">
                 <h5 className="mb-0">Administradores</h5>
                 <button type="button" className="btn btn-sm btn-dark"
-                    onClick={() => handleDelete(a.id)}>
+                    onClick={() => { setShowForm(!showForm); cancelEdit(); setForm(getEmptyForm()); }}>
                     {showForm ? "Cancelar" : "+ Novo Administrador"}
                 </button>
             </div>
@@ -495,7 +515,7 @@ function AdminsTable({ admins, setAdmins, reloadAdmins }) {
                                 <td>
                                     <div className="d-flex gap-1">
                                         <button type="button" className="btn btn-sm btn-outline-secondary" onClick={() => startEdit(a)}>Editar</button>
-                                        <button type="button" className="btn btn-sm btn-outline-danger" onClick={() => setAdmins(admins.filter((x) => x.id !== a.id))}>Remover</button>
+                                        <button type="button" className="btn btn-sm btn-outline-danger" onClick={() => handleDelete(a.id_Utilizador || a.id)}>Remover</button>
                                     </div>
                                 </td>
                             </tr>
@@ -560,7 +580,11 @@ function ManagersTable({ managers, setManagers, reloadManagers }) {
             alert("Connection error: " + err.message);
         }
     };
-    const startEdit = (m) => { setEditingId(m.id); setEditForm({ ...m }); setShowForm(false); };
+    const startEdit = (m) => {
+        setEditingId(m.id_Utilizador || m.id);
+        setEditForm({ ...m });
+        setShowForm(false);
+    };
     const cancelEdit = () => { setEditingId(null); setEditForm(null); };
     const saveEdit = async () => {
         if (!editForm.name || !editForm.email) return;
@@ -610,7 +634,7 @@ function ManagersTable({ managers, setManagers, reloadManagers }) {
             <div className="d-flex justify-content-between align-items-center mb-3">
                 <h5 className="mb-0">Gestores</h5>
                 <button type="button" className="btn btn-sm btn-dark"
-                    onClick={() => handleDelete(m.id)}>
+                    onClick={() => { setShowForm(!showForm); cancelEdit(); setForm(getEmptyForm()); }}>
                     {showForm ? "Cancelar" : "+ Novo Gestor"}
                 </button>
             </div>
@@ -633,7 +657,7 @@ function ManagersTable({ managers, setManagers, reloadManagers }) {
                                 <td>
                                     <div className="d-flex gap-1">
                                         <button type="button" className="btn btn-sm btn-outline-secondary" onClick={() => startEdit(m)}>Editar</button>
-                                        <button type="button" className="btn btn-sm btn-outline-danger" onClick={() => setManagers(managers.filter((x) => x.id !== m.id))}>Remover</button>
+                                        <button type="button" className="btn btn-sm btn-outline-danger" onClick={() => handleDelete(m.id_Utilizador || m.id)}>Remover</button>
                                     </div>
                                 </td>
                             </tr>
@@ -929,8 +953,32 @@ function Content() {
     const [editing, setEditing] = useState(null);
     const [text, setText] = useState("");
 
+    // TODO: replace useState initial data with API call when endpoint is ready
+    // const reloadContent = async () => {
+    //     const res = await fetch("https://orion-dewp.onrender.com/api/content");
+    //     const data = await res.json();
+    //     setPages(data.content);
+    // };
+    // useEffect(() => { reloadContent(); }, []);
+
     const handleEdit = (item) => { setEditing(item.id); setText(item.content); };
-    const handleSave = (id) => {
+
+    const handleSave = async (id) => {
+        // TODO: uncomment when endpoint is ready
+        // try {
+        //     const res = await fetch(`https://orion-dewp.onrender.com/api/content/${id}`, {
+        //         method: "PUT",
+        //         headers: { "Content-Type": "application/json" },
+        //         body: JSON.stringify({ content: text })
+        //     });
+        //     const data = await res.json();
+        //     if (!data.success) { alert("Error: " + data.message); return; }
+        //     await reloadContent();
+        // } catch (err) {
+        //     alert("Connection error: " + err.message);
+        // }
+
+        // TODO: remove this local update once API is connected
         setPages(pages.map(p => p.id === id ? { ...p, content: text, updated: new Date().toLocaleDateString("pt-PT") } : p));
         setEditing(null);
     };

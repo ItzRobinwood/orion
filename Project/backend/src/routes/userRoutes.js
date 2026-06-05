@@ -16,6 +16,7 @@ router.get("/users", controller.getUsers);
 
 // Rotas a implementar futuramente:
 // router.get("/users/:id", controller.getUserById);
-// router.delete("/users/:id", controller.deleteUser);
+//Deletar utilizador
+router.delete("/users/:id", controller.deleteUser);
  
 module.exports = router;
