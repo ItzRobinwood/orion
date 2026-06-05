@@ -787,8 +787,32 @@ function Content() {
     const [editing, setEditing] = useState(null);
     const [text, setText] = useState("");
 
+    // TODO: replace useState initial data with API call when endpoint is ready
+    // const reloadContent = async () => {
+    //     const res = await fetch("https://orion-dewp.onrender.com/api/content");
+    //     const data = await res.json();
+    //     setPages(data.content);
+    // };
+    // useEffect(() => { reloadContent(); }, []);
+
     const handleEdit = (item) => { setEditing(item.id); setText(item.content); };
-    const handleSave = (id) => {
+
+    const handleSave = async (id) => {
+        // TODO: uncomment when endpoint is ready
+        // try {
+        //     const res = await fetch(`https://orion-dewp.onrender.com/api/content/${id}`, {
+        //         method: "PUT",
+        //         headers: { "Content-Type": "application/json" },
+        //         body: JSON.stringify({ content: text })
+        //     });
+        //     const data = await res.json();
+        //     if (!data.success) { alert("Error: " + data.message); return; }
+        //     await reloadContent();
+        // } catch (err) {
+        //     alert("Connection error: " + err.message);
+        // }
+
+        // TODO: remove this local update once API is connected
         setPages(pages.map(p => p.id === id ? { ...p, content: text, updated: new Date().toLocaleDateString("pt-PT") } : p));
         setEditing(null);
     };
