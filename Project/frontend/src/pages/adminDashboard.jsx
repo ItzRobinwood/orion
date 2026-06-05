@@ -104,12 +104,19 @@ function Accounts() {
         try {
             const res = await fetch("https://orion-dewp.onrender.com/api/users");
             const data = await res.json();
-            setManagers(data.users.filter(u => u.id_tipo === 2));
+            const mapped = data.users
+                .filter(u => u.id_tipo === 2)
+                .map(u => ({
+                    ...u,
+                    id: u.id_Utilizador,
+                    phone: u.telephone,              // ✅ mapear campo
+                    status: u.active ? "Ativo" : "Inativo"  // ✅ mapear estado
+                }));
+            setManagers(mapped);
         } catch (err) {
             console.error("Error loading managers:", err);
         }
     };
-
     useEffect(() => {
         reloadAdmins();
         reloadManagers();
@@ -502,7 +509,11 @@ function ManagersTable({ managers, setManagers, reloadManagers }) {
             alert("Connection error: " + err.message);
         }
     };
-    const startEdit = (m) => { setEditingId(m.id); setEditForm({ ...m }); setShowForm(false); };
+    const startEdit = (m) => {
+        setEditingId(m.id_Utilizador || m.id);
+        setEditForm({ ...m });
+        setShowForm(false);
+    };
     const cancelEdit = () => { setEditingId(null); setEditForm(null); };
     const saveEdit = async () => {
         if (!editForm.name || !editForm.email) return;
@@ -552,7 +563,7 @@ function ManagersTable({ managers, setManagers, reloadManagers }) {
             <div className="d-flex justify-content-between align-items-center mb-3">
                 <h5 className="mb-0">Gestores</h5>
                 <button type="button" className="btn btn-sm btn-dark"
-                    onClick={() => handleDelete(m.id)}>
+                    onClick={() => { setShowForm(!showForm); cancelEdit(); setForm(getEmptyForm()); }}>
                     {showForm ? "Cancelar" : "+ Novo Gestor"}
                 </button>
             </div>
@@ -575,7 +586,7 @@ function ManagersTable({ managers, setManagers, reloadManagers }) {
                                 <td>
                                     <div className="d-flex gap-1">
                                         <button type="button" className="btn btn-sm btn-outline-secondary" onClick={() => startEdit(m)}>Editar</button>
-                                        <button type="button" className="btn btn-sm btn-outline-danger" onClick={() => setManagers(managers.filter((x) => x.id !== m.id))}>Remover</button>
+                                        <button type="button" className="btn btn-sm btn-outline-danger" onClick={() => handleDelete(m.id_Utilizador || m.id)}>Remover</button>
                                     </div>
                                 </td>
                             </tr>
