@@ -130,7 +130,28 @@ function Accounts() {
         try {
             const res = await fetch("https://orion-dewp.onrender.com/api/companies");
             const data = await res.json();
-            setAccounts(data.companies);
+            const mapped = data.companies.map(c => ({
+                id: c.id,
+                company: c.nome,
+                status: c.status ? "Ativo" : "Inativo",
+                securityManager: {
+                    name: c.nomeResponsavelSeg || "",
+                    email: c.emailResponsavelSeg || "",
+                    phone: c.telefoneResponsavelSeg || ""
+                },
+                permanentContact: {
+                    name: c.nomeContactoPerm || "",
+                    email: c.emailContactoPerm || "",
+                    phone: c.telefoneContactoPerm || ""
+                },
+                // clientes são os users associados à empresa com id_tipo === 3
+                clients: (c.users || []).filter(u => u.id_tipo === 3).map(u => ({
+                    name: u.name,
+                    email: u.email,
+                    phone: u.telephone
+                }))
+            }));
+            setAccounts(mapped);
         } catch (err) {
             console.error("Error loading companies:", err);
         }
@@ -177,27 +198,35 @@ function CompaniesTable({ accounts, setAccounts, reloadCompanies }) {
     const addEClient = () => setEditForm((p) => ({ ...p, clients: [...p.clients, { name: "", email: "", phone: "" }] }));
     const removeEClient = (i) => setEditForm((p) => ({ ...p, clients: p.clients.filter((_, idx) => idx !== i) }));
 
-    const handleCreate = async () => {
-        if (!form.company) return;
-        try {
-            // TODO: confirm endpoint URL and request body structure with backend team
-            const res = await fetch("https://orion-dewp.onrender.com/api/companies", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(form)
-            });
-            const data = await res.json();
-            if (data.success) {
-                await reloadCompanies();
-                setForm(getEmptyForm());
-                setShowForm(false);
-            } else {
-                alert("Error: " + data.message);
-            }
-        } catch (err) {
-            alert("Connection error: " + err.message);
+const handleCreate = async () => {
+    if (!form.company) return;
+    try {
+        const res = await fetch("https://orion-dewp.onrender.com/api/companies", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                nome: form.company,
+                status: form.status === "Ativo",
+                nomeResponsavelSeg: form.securityManager.name,
+                emailResponsavelSeg: form.securityManager.email,
+                telefoneResponsavelSeg: form.securityManager.phone,
+                nomeContactoPerm: form.permanentContact.name,
+                emailContactoPerm: form.permanentContact.email,
+                telefoneContactoPerm: form.permanentContact.phone
+            })
+        });
+        const data = await res.json();
+        if (data.success) {
+            await reloadCompanies();
+            setForm(getEmptyForm());
+            setShowForm(false);
+        } else {
+            alert("Error: " + data.message);
         }
-    };
+    } catch (err) {
+        alert("Connection error: " + err.message);
+    }
+};
 
     const startEdit = (a) => {
         setEditingId(a.id);
@@ -759,7 +788,7 @@ function Requests() {
             setRequests(data.requests || data);
         } catch (err) {
             console.error("Error loading requests:", err);
-            
+
             // Fallback mock data matching your image screenshot layout perfectly
             setRequests([
                 {
@@ -784,15 +813,15 @@ function Requests() {
     const totalRequests = requests.length;
     const countByStatus = (status) => requests.filter(r => r.status === status).length;
 
-    const filteredRequests = filter === "Todos" 
-        ? requests 
+    const filteredRequests = filter === "Todos"
+        ? requests
         : requests.filter(r => r.status === filter);
 
     const getStatusBadgeClass = (status) => {
         switch (status) {
             case "Pendente": return "bg-warning text-dark";
             case "Aprovados": return "bg-success";
-            case "Em Execução": return "bg-warning text-dark"; 
+            case "Em Execução": return "bg-warning text-dark";
             case "Concluídos": return "bg-secondary";
             default: return "bg-primary";
         }

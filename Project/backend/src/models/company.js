@@ -47,7 +47,13 @@ const Company = sequelize.define('Company', {
     telefoneContactoPerm: {
         type: DataTypes.STRING,
         allowNull: true
-    }
+    },
+
+    status: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: true,
+    allowNull: false
+}
 
 }, {
     tableName: 'companies',

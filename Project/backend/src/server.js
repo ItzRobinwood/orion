@@ -19,6 +19,7 @@ require("./models/requestStatus.js");
 // routes
 const requestRoutes = require("./routes/requestRoutes");
 const userRoutes = require("./routes/userRoutes");
+const companiesRoutes = require('./routes/companiesRoutes');
 
 // associations
 const applyAssociations = require("./models/associations");
@@ -36,6 +37,7 @@ app.use(express.json());
 // 🟢 CORREÇÃO 1: Adicionado o prefixo /api que o teu React exige
 app.use("/api", requestRoutes);
 app.use("/api", userRoutes);
+app.use('/api', companiesRoutes);
 
 // Rota de teste para ver no browser se o Render está vivo
 app.get("/", (req, res) => {
