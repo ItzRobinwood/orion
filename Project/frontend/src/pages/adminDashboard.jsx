@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import "bootstrap/dist/css/bootstrap.min.css";
 
 export default function AdminDashboard() {
@@ -101,20 +101,20 @@ function Accounts() {
     };
 
     const reloadManagers = async () => {
-    try {
-        const res = await fetch("https://orion-dewp.onrender.com/api/users");
-        const data = await res.json();
-        setManagers(data.users.filter(u => u.id_tipo === 2));
-    } catch (err) {
-        console.error("Error loading managers:", err);
-    }
-};
+        try {
+            const res = await fetch("https://orion-dewp.onrender.com/api/users");
+            const data = await res.json();
+            setManagers(data.users.filter(u => u.id_tipo === 2));
+        } catch (err) {
+            console.error("Error loading managers:", err);
+        }
+    };
 
     useEffect(() => {
         reloadAdmins();
         reloadManagers();
     }, []);
-    
+
 
     return (
         <div className="d-flex flex-column gap-4">
@@ -330,9 +330,7 @@ function AdminsTable({ admins, setAdmins, reloadData }) {
         return Array.from({ length: 12 }, () => chars[Math.floor(Math.random() * chars.length)]).join("");
     };
 
-    /* Como agora a lista vem da base de dados, quando criares um utilizador com sucesso no formulário,
-     em vez de fazermos apenas um push manual no array do React,
-     o correto é chamar a função recarregarDados() para trazer a lista fresquinha do Neon.*/
+
     const handleCreate = async () => {
         if (!form.name || !form.email || !form.password) {
             alert("Please fill in name, email and password before creating.");
