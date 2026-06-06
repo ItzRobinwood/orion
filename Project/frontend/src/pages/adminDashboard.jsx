@@ -166,7 +166,7 @@ function Accounts() {
 
     return (
         <div className="d-flex flex-column gap-4">
-            <CompaniesTable accounts={accounts} setAccounts={setAccounts} />
+            <CompaniesTable accounts={accounts} setAccounts={setAccounts} reloadCompanies={reloadCompanies} />
             <AdminsTable admins={admins} setAdmins={setAdmins} reloadAdmins={reloadAdmins} />
             <ManagersTable managers={managers} setManagers={setManagers} reloadManagers={reloadManagers} />
         </div>
@@ -198,35 +198,35 @@ function CompaniesTable({ accounts, setAccounts, reloadCompanies }) {
     const addEClient = () => setEditForm((p) => ({ ...p, clients: [...p.clients, { name: "", email: "", phone: "" }] }));
     const removeEClient = (i) => setEditForm((p) => ({ ...p, clients: p.clients.filter((_, idx) => idx !== i) }));
 
-const handleCreate = async () => {
-    if (!form.company) return;
-    try {
-        const res = await fetch("https://orion-dewp.onrender.com/api/companies", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-                nome: form.company,
-                status: form.status === "Ativo",
-                nomeResponsavelSeg: form.securityManager.name,
-                emailResponsavelSeg: form.securityManager.email,
-                telefoneResponsavelSeg: form.securityManager.phone,
-                nomeContactoPerm: form.permanentContact.name,
-                emailContactoPerm: form.permanentContact.email,
-                telefoneContactoPerm: form.permanentContact.phone
-            })
-        });
-        const data = await res.json();
-        if (data.success) {
-            await reloadCompanies();
-            setForm(getEmptyForm());
-            setShowForm(false);
-        } else {
-            alert("Error: " + data.message);
+    const handleCreate = async () => {
+        if (!form.company) return;
+        try {
+            const res = await fetch("https://orion-dewp.onrender.com/api/companies", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    nome: form.company,
+                    status: form.status === "Ativo",
+                    nomeResponsavelSeg: form.securityManager.name,
+                    emailResponsavelSeg: form.securityManager.email,
+                    telefoneResponsavelSeg: form.securityManager.phone,
+                    nomeContactoPerm: form.permanentContact.name,
+                    emailContactoPerm: form.permanentContact.email,
+                    telefoneContactoPerm: form.permanentContact.phone
+                })
+            });
+            const data = await res.json();
+            if (data.success) {
+                await reloadCompanies();
+                setForm(getEmptyForm());
+                setShowForm(false);
+            } else {
+                alert("Error: " + data.message);
+            }
+        } catch (err) {
+            alert("Connection error: " + err.message);
         }
-    } catch (err) {
-        alert("Connection error: " + err.message);
-    }
-};
+    };
 
     const startEdit = (a) => {
         setEditingId(a.id);
@@ -243,7 +243,16 @@ const handleCreate = async () => {
             const res = await fetch(`https://orion-dewp.onrender.com/api/companies/${editingId}`, {
                 method: "PUT",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(editForm)
+                body: JSON.stringify({
+                    nome: editForm.company,
+                    status: editForm.status === "Ativo",
+                    nomeResponsavelSeg: editForm.securityManager.name,
+                    emailResponsavelSeg: editForm.securityManager.email,
+                    telefoneResponsavelSeg: editForm.securityManager.phone,
+                    nomeContactoPerm: editForm.permanentContact.name,
+                    emailContactoPerm: editForm.permanentContact.email,
+                    telefoneContactoPerm: editForm.permanentContact.phone
+                })
             });
             const data = await res.json();
             if (data.success) {

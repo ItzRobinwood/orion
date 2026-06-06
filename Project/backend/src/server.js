@@ -30,16 +30,13 @@ const seedRequestTypes = require("./seeders/seedRequestTypes");
 
 const app = express();
 
-// Configuração do CORS flexível para o grupo
 app.use(cors());
 app.use(express.json());
 
-// 🟢 CORREÇÃO 1: Adicionado o prefixo /api que o teu React exige
 app.use("/api", requestRoutes);
 app.use("/api", userRoutes);
 app.use('/api', companiesRoutes);
 
-// Rota de teste para ver no browser se o Render está vivo
 app.get("/", (req, res) => {
   res.send("CyberBox API está online e funcional! 🚀");
 });
@@ -48,12 +45,9 @@ applyAssociations();
 
 const PORT = process.env.PORT || 3000;
 
-// 🟢 CORREÇÃO 2: Removido o { alter: true } para evitar crashes no Neon/Render
-sequelize.sync().then(async () => {
+sequelize.sync({ alter: true }).then(async () => {
   console.log("Banco sincronizado com sucesso 🚀");
 
-  // 🟢 AVISO 3: Garante que dentro destes ficheiros de seed tens um 
-  // "if (jaExiste) return;" para não duplicar dados a cada restart do Render!
   await seedUserTypes();
   await seedRequestTypes();
 
