@@ -8,6 +8,7 @@ const Question = require("./questions");
 const MessageQuestion = require("./messagesQuestions");
 const EstadoPedido = require("./requestStatus");
 const Logs = require("./logs");
+const Incident = require("./incidentModel");
 
 
 function applyAssociations() {
@@ -160,6 +161,10 @@ Logs.belongsTo(User, {
 });
 
 //-------------------------------//
+
+
+User.hasMany(Incident, { foreignKey: "creatorId", as: "incidents" });
+Incident.belongsTo(User, { foreignKey: "creatorId", as: "creator" });
 
 }
 

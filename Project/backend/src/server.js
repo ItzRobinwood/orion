@@ -8,6 +8,7 @@ const sequelize = require("./config/database");
 require("./models/UserType");
 require("./models/User");
 require("./models/company");
+require("./models/incidentModel");
 require("./models/logs");
 require("./models/requestModel.js");
 require("./models/requestTypeModel.js");
@@ -15,6 +16,7 @@ require("./models/requestFilesModel.js");
 require("./models/questions.js");
 require("./models/messagesQuestions.js");
 require("./models/requestStatus.js");
+
 
 // routes
 const requestRoutes = require("./routes/requestRoutes");
