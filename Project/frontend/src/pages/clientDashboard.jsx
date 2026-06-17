@@ -597,7 +597,7 @@ function Requests() {
             try {
              // Mantenha o endereço do Render + a rota específica de cada pedido
             const [typesRes, requestsRes] = await Promise.all([
-                axios.get("https://orion-dewp.onrender.com/api/request"),
+                axios.get("https://orion-dewp.onrender.com/api/requests"),
                 axios.get("https://orion-dewp.onrender.com/api/requests")
             ]);
 
