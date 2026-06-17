@@ -76,20 +76,9 @@ function Dashboard() {
 }
 
 function Accounts() {
-    const [accounts, setAccounts] = useState([
-        {
-            id: 1,
-            company: "TechCorp",
-            clients: [{ name: "João Pereira", email: "joao@techcorp.com", phone: "+351 910 000 001" }],
-            securityManager: { name: "Carlos Silva", email: "carlos@techcorp.com", phone: "+351 910 000 002" },
-            permanentContact: { name: "Ana Costa", email: "ana@techcorp.com", phone: "+351 910 000 003" },
-            status: "Ativo",
-        },
-    ]);
+    const [accounts, setAccounts] = useState([]);
     const [admins, setAdmins] = useState([]);
-    const [managers, setManagers] = useState([
-        { id: 1, name: "Rui Gestor", email: "rui@cyberbox.pt", phone: "+351 910 000 020", password: "Yz7$nQ5!wR3&", status: "Ativo" },
-    ]);
+    const [managers, setManagers] = useState([]);
 
     const reloadAdmins = async () => {
         try {
@@ -118,8 +107,8 @@ function Accounts() {
                 .map(u => ({
                     ...u,
                     id: u.id_Utilizador,
-                    phone: u.telephone,              // ✅ mapear campo
-                    status: u.active ? "Ativo" : "Inativo"  // ✅ mapear estado
+                    phone: u.telephone,
+                    status: u.active ? "Ativo" : "Inativo"
                 }));
             setManagers(mapped);
         } catch (err) {
@@ -145,7 +134,6 @@ function Accounts() {
                     email: c.emailContactoPerm || "",
                     phone: c.telefoneContactoPerm || ""
                 },
-                // clientes são os users associados à empresa com id_tipo === 3
                 clients: (c.users || []).filter(u => u.id_tipo === 3).map(u => ({
                     name: u.name,
                     email: u.email,
@@ -161,9 +149,8 @@ function Accounts() {
     useEffect(() => {
         reloadAdmins();
         reloadManagers();
-        reloadCompanies(); // vai falhar até o endpoint existir
+        reloadCompanies();
     }, []);
-
 
     return (
         <div className="d-flex flex-column gap-4">
@@ -203,26 +190,21 @@ function CompaniesTable({ accounts, setAccounts, reloadCompanies }) {
         if (!form.company) return;
         try {
             const res = await axios.post("https://orion-dewp.onrender.com/api/companies", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    nome: form.company,
-                    status: form.status === "Ativo",
-                    nomeResponsavelSeg: form.securityManager.name,
-                    emailResponsavelSeg: form.securityManager.email,
-                    telefoneResponsavelSeg: form.securityManager.phone,
-                    nomeContactoPerm: form.permanentContact.name,
-                    emailContactoPerm: form.permanentContact.email,
-                    telefoneContactoPerm: form.permanentContact.phone
-                })
+                nome: form.company,
+                status: form.status === "Ativo",
+                nomeResponsavelSeg: form.securityManager.name,
+                emailResponsavelSeg: form.securityManager.email,
+                telefoneResponsavelSeg: form.securityManager.phone,
+                nomeContactoPerm: form.permanentContact.name,
+                emailContactoPerm: form.permanentContact.email,
+                telefoneContactoPerm: form.permanentContact.phone
             });
-            const data = await res.json();
-            if (data.success) {
+            if (res.data.success) {
                 await reloadCompanies();
                 setForm(getEmptyForm());
                 setShowForm(false);
             } else {
-                alert("Error: " + data.message);
+                alert("Error: " + res.data.message);
             }
         } catch (err) {
             alert("Connection error: " + err.message);
@@ -240,27 +222,21 @@ function CompaniesTable({ accounts, setAccounts, reloadCompanies }) {
     const saveEdit = async () => {
         if (!editForm.company) return;
         try {
-            // TODO: confirm endpoint URL and request body structure with backend team
             const res = await axios.put(`https://orion-dewp.onrender.com/api/companies/${editingId}`, {
-                method: "PUT",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    nome: editForm.company,
-                    status: editForm.status === "Ativo",
-                    nomeResponsavelSeg: editForm.securityManager.name,
-                    emailResponsavelSeg: editForm.securityManager.email,
-                    telefoneResponsavelSeg: editForm.securityManager.phone,
-                    nomeContactoPerm: editForm.permanentContact.name,
-                    emailContactoPerm: editForm.permanentContact.email,
-                    telefoneContactoPerm: editForm.permanentContact.phone
-                })
+                nome: editForm.company,
+                status: editForm.status === "Ativo",
+                nomeResponsavelSeg: editForm.securityManager.name,
+                emailResponsavelSeg: editForm.securityManager.email,
+                telefoneResponsavelSeg: editForm.securityManager.phone,
+                nomeContactoPerm: editForm.permanentContact.name,
+                emailContactoPerm: editForm.permanentContact.email,
+                telefoneContactoPerm: editForm.permanentContact.phone
             });
-            const data = await res.json();
-            if (data.success) {
+            if (res.data.success) {
                 await reloadCompanies();
                 cancelEdit();
             } else {
-                alert("Error: " + data.message);
+                alert("Error: " + res.data.message);
             }
         } catch (err) {
             alert("Connection error: " + err.message);
@@ -269,15 +245,11 @@ function CompaniesTable({ accounts, setAccounts, reloadCompanies }) {
 
     const handleDelete = async (id) => {
         try {
-            // TODO: confirm endpoint URL with backend team
-            const res = await axios.delete(`https://orion-dewp.onrender.com/api/companies/${id}`, {
-                method: "DELETE"
-            });
-            const data = await res.json();
-            if (data.success) {
+            const res = await axios.delete(`https://orion-dewp.onrender.com/api/companies/${id}`);
+            if (res.data.success) {
                 await reloadCompanies();
             } else {
-                alert("Error: " + data.message);
+                alert("Error: " + res.data.message);
             }
         } catch (err) {
             alert("Connection error: " + err.message);
@@ -348,89 +320,6 @@ function CompaniesTable({ accounts, setAccounts, reloadCompanies }) {
     );
 }
 
-function CompanyForm({ form, title, submitLabel, setField, setSubField, setClient, addClient, removeClient, onSubmit }) {
-    return (
-        <div className="border rounded p-3 mb-4 bg-white">
-            {title && <h6 className="mb-3">{title}</h6>}
-            <div className="row g-2 mb-3">
-                <div className="col-md-8">
-                    <label className="form-label fw-semibold" style={{ fontSize: 12 }}>Nome da Empresa *</label>
-                    <input className="form-control form-control-sm" placeholder="Ex: TechCorp Lda"
-                        value={form.company} onChange={(e) => setField("company", e.target.value)} />
-                </div>
-                <div className="col-md-4">
-                    <label className="form-label fw-semibold" style={{ fontSize: 12 }}>Estado</label>
-                    <select className="form-select form-select-sm" value={form.status} onChange={(e) => setField("status", e.target.value)}>
-                        <option>Ativo</option>
-                        <option>Inativo</option>
-                    </select>
-                </div>
-            </div>
-            <hr />
-            <div className="mb-3">
-                <div className="d-flex justify-content-between align-items-center mb-2">
-                    <label className="fw-semibold" style={{ fontSize: 13 }}>Clientes</label>
-                    <button type="button" className="btn btn-sm btn-outline-dark" onClick={addClient}>+ Adicionar Cliente</button>
-                </div>
-                {form.clients.map((client, i) => (
-                    <div className="row g-2 mb-2 align-items-end" key={i}>
-                        <div className="col-md-3">
-                            <label className="form-label" style={{ fontSize: 11 }}>Nome</label>
-                            <input className="form-control form-control-sm" placeholder="Nome"
-                                value={client.name} onChange={(e) => setClient(i, "name", e.target.value)} />
-                        </div>
-                        <div className="col-md-4">
-                            <label className="form-label" style={{ fontSize: 11 }}>Email</label>
-                            <input className="form-control form-control-sm" placeholder="email@empresa.com"
-                                value={client.email} onChange={(e) => setClient(i, "email", e.target.value)} />
-                        </div>
-                        <div className="col-md-3">
-                            <label className="form-label" style={{ fontSize: 11 }}>Telefone</label>
-                            <input className="form-control form-control-sm" placeholder="+351 910 000 000"
-                                value={client.phone} onChange={(e) => setClient(i, "phone", e.target.value)} />
-                        </div>
-                        <div className="col-md-2">
-                            {form.clients.length > 1 && (
-                                <button type="button" className="btn btn-sm btn-outline-danger w-100"
-                                    onClick={() => removeClient(i)}>Remover</button>
-                            )}
-                        </div>
-                    </div>
-                ))}
-            </div>
-            <hr />
-            <div className="mb-3">
-                <label className="fw-semibold d-block mb-2" style={{ fontSize: 13 }}>Responsável de Segurança</label>
-                <div className="row g-2">
-                    {["name", "email", "phone"].map((f) => (
-                        <div className="col-md-4" key={f}>
-                            <label className="form-label" style={{ fontSize: 11 }}>{f === "name" ? "Nome" : f === "email" ? "Email" : "Telefone"}</label>
-                            <input className="form-control form-control-sm"
-                                placeholder={f === "name" ? "Nome" : f === "email" ? "email@empresa.com" : "+351 910 000 000"}
-                                value={form.securityManager[f]} onChange={(e) => setSubField("securityManager", f, e.target.value)} />
-                        </div>
-                    ))}
-                </div>
-            </div>
-            <hr />
-            <div className="mb-3">
-                <label className="fw-semibold d-block mb-2" style={{ fontSize: 13 }}>Contacto Permanente</label>
-                <div className="row g-2">
-                    {["name", "email", "phone"].map((f) => (
-                        <div className="col-md-4" key={f}>
-                            <label className="form-label" style={{ fontSize: 11 }}>{f === "name" ? "Nome" : f === "email" ? "Email" : "Telefone"}</label>
-                            <input className="form-control form-control-sm"
-                                placeholder={f === "name" ? "Nome" : f === "email" ? "email@empresa.com" : "+351 910 000 000"}
-                                value={form.permanentContact[f]} onChange={(e) => setSubField("permanentContact", f, e.target.value)} />
-                        </div>
-                    ))}
-                </div>
-            </div>
-            <button type="button" className="btn btn-sm btn-success" onClick={onSubmit}>{submitLabel}</button>
-        </div>
-    );
-}
-
 function AdminsTable({ admins, setAdmins, reloadAdmins }) {
     const getEmptyForm = () => ({ name: "", email: "", phone: "", password: "", status: "Ativo" });
     const [showForm, setShowForm] = useState(false);
@@ -443,34 +332,25 @@ function AdminsTable({ admins, setAdmins, reloadAdmins }) {
         return Array.from({ length: 12 }, () => chars[Math.floor(Math.random() * chars.length)]).join("");
     };
 
-
     const handleCreate = async () => {
         if (!form.name || !form.email || !form.password) {
             alert("Please fill in name, email and password before creating.");
             return;
         }
-
         try {
             const res = await axios.post("https://orion-dewp.onrender.com/api/users", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    name: form.name,
-                    email: form.email,
-                    password: form.password,
-                    telephone: form.phone,
-                    id_tipo: 1
-                })
+                name: form.name,
+                email: form.email,
+                password: form.password,
+                telephone: form.phone,
+                id_tipo: 1
             });
-
-            const data = await res.json();
-
-            if (data.success) {
+            if (res.data.success) {
                 await reloadAdmins();
                 setForm(getEmptyForm());
                 setShowForm(false);
             } else {
-                alert("Error: " + data.message);
+                alert("Error: " + res.data.message);
             }
         } catch (err) {
             alert("Connection error: " + err.message);
@@ -483,25 +363,21 @@ function AdminsTable({ admins, setAdmins, reloadAdmins }) {
         setShowForm(false);
     };
     const cancelEdit = () => { setEditingId(null); setEditForm(null); };
+
     const saveEdit = async () => {
         if (!editForm.name || !editForm.email) return;
         try {
             const res = await axios.put(`https://orion-dewp.onrender.com/api/users/${editingId}`, {
-                method: "PUT",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    name: editForm.name,
-                    email: editForm.email,
-                    telephone: editForm.phone,
-                    password: editForm.password
-                })
+                name: editForm.name,
+                email: editForm.email,
+                telephone: editForm.phone,
+                status: editForm.status
             });
-            const data = await res.json();
-            if (data.success) {
+            if (res.data.success) {
                 await reloadAdmins();
                 cancelEdit();
             } else {
-                alert("Error: " + data.message);
+                alert("Error: " + res.data.message);
             }
         } catch (err) {
             alert("Connection error: " + err.message);
@@ -510,14 +386,11 @@ function AdminsTable({ admins, setAdmins, reloadAdmins }) {
 
     const handleDelete = async (id) => {
         try {
-            const res = await axios.delete(`https://orion-dewp.onrender.com/api/users/${id}`, {
-                method: "DELETE"
-            });
-            const data = await res.json();
-            if (data.success) {
+            const res = await axios.delete(`https://orion-dewp.onrender.com/api/users/${id}`);
+            if (res.data.success) {
                 await reloadAdmins();
             } else {
-                alert("Error: " + data.message);
+                alert("Error: " + res.data.message);
             }
         } catch (err) {
             alert("Connection error: " + err.message);
@@ -558,7 +431,7 @@ function AdminsTable({ admins, setAdmins, reloadAdmins }) {
                                     </div>
                                 </td>
                             </tr>
-                            {editingId === a.id && editForm && (
+                            {editingId === (a.id_Utilizador || a.id) && editForm && (
                                 <tr key={`edit-${a.id}`}>
                                     <td colSpan={5} className="p-0">
                                         <div className="border border-warning rounded m-2 p-3 bg-white">
@@ -577,148 +450,6 @@ function AdminsTable({ admins, setAdmins, reloadAdmins }) {
                     ))}
                     {admins.length === 0 && (
                         <tr><td colSpan={5} className="text-center text-muted py-3">Nenhum administrador criado.</td></tr>
-                    )}
-                </tbody>
-            </table>
-        </div>
-    );
-}
-
-function ManagersTable({ managers, setManagers, reloadManagers }) {
-    const getEmptyForm = () => ({ name: "", email: "", phone: "", password: "", status: "Ativo" });
-    const [showForm, setShowForm] = useState(false);
-    const [form, setForm] = useState(getEmptyForm());
-    const [editingId, setEditingId] = useState(null);
-    const [editForm, setEditForm] = useState(null);
-
-    const generatePassword = () => {
-        const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%";
-        return Array.from({ length: 12 }, () => chars[Math.floor(Math.random() * chars.length)]).join("");
-    };
-
-    const handleCreate = async () => {
-        if (!form.name || !form.email || !form.password) {
-            alert("Please fill in name, email and password before creating.");
-            return;
-        }
-        try {
-            const res = await axios.post("https://orion-dewp.onrender.com/api/users", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ name: form.name, email: form.email, password: form.password, telephone: form.phone, id_tipo: 2 })
-            });
-            const data = await res.json();
-            if (data.success) {
-                await reloadManagers();
-                setForm(getEmptyForm());
-                setShowForm(false);
-            } else {
-                alert("Error: " + data.message);
-            }
-        } catch (err) {
-            alert("Connection error: " + err.message);
-        }
-    };
-    const startEdit = (m) => {
-        setEditingId(m.id_Utilizador || m.id);
-        setEditForm({ ...m });
-        setShowForm(false);
-    };
-    const cancelEdit = () => { setEditingId(null); setEditForm(null); };
-    const saveEdit = async () => {
-        if (!editForm.name || !editForm.email) return;
-        try {
-            const res = await axios.put(`https://orion-dewp.onrender.com/api/users/${editingId}`, {
-                method: "PUT",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    name: editForm.name,
-                    email: editForm.email,
-                    telephone: editForm.phone,
-                    password: editForm.password
-                })
-            });
-            const data = await res.json();
-            if (data.success) {
-                await reloadManagers();
-                cancelEdit();
-            } else {
-                alert("Error: " + data.message);
-            }
-        } catch (err) {
-            alert("Connection error: " + err.message);
-        }
-    };
-
-    const handleDelete = async (id) => {
-        try {
-            const res = await axios.delete(`https://orion-dewp.onrender.com/api/users/${id}`, {
-                method: "DELETE"
-            });
-            const data = await res.json();
-            if (data.success) {
-                await reloadManagers();
-            } else {
-                alert("Error: " + data.message);
-            }
-        } catch (err) {
-            alert("Connection error: " + err.message);
-        }
-    };
-
-    const statusColor = (s) => s === "Ativo" ? "bg-success" : "bg-danger";
-
-    return (
-        <div className="card p-3">
-            <div className="d-flex justify-content-between align-items-center mb-3">
-                <h5 className="mb-0">Gestores</h5>
-                <button type="button" className="btn btn-sm btn-dark"
-                    onClick={() => { setShowForm(!showForm); cancelEdit(); setForm(getEmptyForm()); }}>
-                    {showForm ? "Cancelar" : "+ Novo Gestor"}
-                </button>
-            </div>
-            {showForm && (
-                <PersonForm form={form} setForm={setForm} title="Novo Gestor"
-                    submitLabel="Criar Gestor" generatePassword={generatePassword} onSubmit={handleCreate} />
-            )}
-            <table className="table table-hover mb-0">
-                <thead className="table-info">
-                    <tr><th>Nome</th><th>Email</th><th>Telefone</th><th>Estado</th><th>Ações</th></tr>
-                </thead>
-                <tbody>
-                    {managers.map((m) => (
-                        <>
-                            <tr key={m.id}>
-                                <td className="fw-semibold">{m.name}</td>
-                                <td>{m.email}</td>
-                                <td>{m.phone}</td>
-                                <td><span className={`badge ${statusColor(m.status)}`}>{m.status}</span></td>
-                                <td>
-                                    <div className="d-flex gap-1">
-                                        <button type="button" className="btn btn-sm btn-outline-secondary" onClick={() => startEdit(m)}>Editar</button>
-                                        <button type="button" className="btn btn-sm btn-outline-danger" onClick={() => handleDelete(m.id_Utilizador || m.id)}>Remover</button>
-                                    </div>
-                                </td>
-                            </tr>
-                            {editingId === m.id && editForm && (
-                                <tr key={`edit-${m.id}`}>
-                                    <td colSpan={5} className="p-0">
-                                        <div className="border border-warning rounded m-2 p-3 bg-white">
-                                            <div className="d-flex justify-content-between align-items-center mb-3">
-                                                <h6 className="mb-0">Editar — {m.name}</h6>
-                                                <button type="button" className="btn btn-sm btn-link text-secondary p-0" onClick={cancelEdit}>✕ Cancelar</button>
-                                            </div>
-                                            <PersonForm form={editForm} setForm={setEditForm} title=""
-                                                submitLabel="Guardar Alterações" generatePassword={generatePassword}
-                                                onSubmit={saveEdit} isEdit={true} />
-                                        </div>
-                                    </td>
-                                </tr>
-                            )}
-                        </>
-                    ))}
-                    {managers.length === 0 && (
-                        <tr><td colSpan={5} className="text-center text-muted py-3">Nenhum gestor criado.</td></tr>
                     )}
                 </tbody>
             </table>
