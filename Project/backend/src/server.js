@@ -37,7 +37,12 @@ const { buscarNoticiasOnline } = require('./services/newsScraper');
 
 const app = express();
 
-app.use(cors());
+app.use(cors({
+    origin: 'https://orion-dewp.vercel.app',
+    methods: ['GET', 'POST', 'PUT', 'DELETE'],
+    credentials: true
+}));
+
 app.use(express.json());
 
 app.use("/api", requestRoutes);
@@ -74,3 +79,6 @@ cron.schedule('0 * * * *', () => {
   process.exit(1);
 });
 
+const requestTypeRoutes = require("./routes/requestTypeRoutes");
+
+app.use("/api", requestTypeRoutes);

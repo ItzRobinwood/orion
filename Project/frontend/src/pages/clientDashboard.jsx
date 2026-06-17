@@ -404,7 +404,7 @@ function Docs() {
     }
     try {
         // 🟢 CORREÇÃO DEFINITIVA: Aponta para o seu servidor real (orion-dewp) com a rota certa
-        const response = await axios.post('"https://orion-dewp.onrender.com/api/requests', {
+        const response = await axios.post('https://orion-dewp.onrender.com/api/requests', {
             ...incident,
             creatorId: 1 
         });
@@ -565,10 +565,13 @@ function Requests() {
         const fetchData = async () => {
             try {
              // Mantenha o endereço do Render + a rota específica de cada pedido
-            const [typesRes, requestsRes] = await Promise.all([
-                axios.get("https://orion-dewp.onrender.com/api/requests"),
+           const [typesRes, requestsRes] = await Promise.all([
+                axios.get("https://orion-dewp.onrender.com/api/request-types"), // ✅ rota correta
                 axios.get("https://orion-dewp.onrender.com/api/requests")
             ]);
+
+            setRequestTypes(typesRes.data);  // → [{ id: 1, name: "ReportIncident" }, ...]
+            setRequests(requestsRes.data);
 
                 // No Axios, os dados vindos do servidor já estão em .data
                 setRequestTypes(typesRes.data);
