@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import "bootstrap/dist/css/bootstrap.min.css";
+import axios from 'axios';
 
 export default function AdminDashboard() {
     const [active, setActive] = useState("dashboard");
@@ -269,7 +270,7 @@ function CompaniesTable({ accounts, setAccounts, reloadCompanies }) {
     const handleDelete = async (id) => {
         try {
             // TODO: confirm endpoint URL with backend team
-            const res = await fetch(`https://orion-dewp.onrender.com/api/companies/${id}`, {
+            const res = await axios.delete(`https://orion-dewp.onrender.com/api/companies/${id}`, {
                 method: "DELETE"
             });
             const data = await res.json();
@@ -450,7 +451,7 @@ function AdminsTable({ admins, setAdmins, reloadAdmins }) {
         }
 
         try {
-            const res = await fetch("https://orion-dewp.onrender.com/api/users", {
+            const res = await axios.post("https://orion-dewp.onrender.com/api/users", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
@@ -485,7 +486,7 @@ function AdminsTable({ admins, setAdmins, reloadAdmins }) {
     const saveEdit = async () => {
         if (!editForm.name || !editForm.email) return;
         try {
-            const res = await fetch(`https://orion-dewp.onrender.com/api/users/${editingId}`, {
+            const res = await axios.put(`https://orion-dewp.onrender.com/api/users/${editingId}`, {
                 method: "PUT",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
@@ -509,7 +510,7 @@ function AdminsTable({ admins, setAdmins, reloadAdmins }) {
 
     const handleDelete = async (id) => {
         try {
-            const res = await fetch(`https://orion-dewp.onrender.com/api/users/${id}`, {
+            const res = await axios.delete(`https://orion-dewp.onrender.com/api/users/${id}`, {
                 method: "DELETE"
             });
             const data = await res.json();
@@ -601,7 +602,7 @@ function ManagersTable({ managers, setManagers, reloadManagers }) {
             return;
         }
         try {
-            const res = await fetch("https://orion-dewp.onrender.com/api/users", {
+            const res = await axios.post("https://orion-dewp.onrender.com/api/users", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ name: form.name, email: form.email, password: form.password, telephone: form.phone, id_tipo: 2 })
@@ -627,7 +628,7 @@ function ManagersTable({ managers, setManagers, reloadManagers }) {
     const saveEdit = async () => {
         if (!editForm.name || !editForm.email) return;
         try {
-            const res = await fetch(`https://orion-dewp.onrender.com/api/users/${editingId}`, {
+            const res = await axios.put(`https://orion-dewp.onrender.com/api/users/${editingId}`, {
                 method: "PUT",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
@@ -651,7 +652,7 @@ function ManagersTable({ managers, setManagers, reloadManagers }) {
 
     const handleDelete = async (id) => {
         try {
-            const res = await fetch(`https://orion-dewp.onrender.com/api/users/${id}`, {
+            const res = await axios.delete(`https://orion-dewp.onrender.com/api/users/${id}`, {
                 method: "DELETE"
             });
             const data = await res.json();
