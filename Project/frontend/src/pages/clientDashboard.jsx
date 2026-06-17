@@ -434,7 +434,7 @@ function Submit() {
     }
     try {
         // 🟢 CORREÇÃO DEFINITIVA: Aponta para o seu servidor real (orion-dewp) com a rota certa
-        const response = await axios.post('https://onrender.com', {
+        const response = await axios.post('"https://orion-dewp.onrender.com/api/requests', {
             ...incident,
             creatorId: 1 
         });
@@ -597,8 +597,8 @@ function Requests() {
             try {
              // Mantenha o endereço do Render + a rota específica de cada pedido
             const [typesRes, requestsRes] = await Promise.all([
-                axios.get("https://onrender.com"),
-                axios.get("https://onrender.com")
+                axios.get("https://orion-dewp.onrender.com/api/request"),
+                axios.get("https://orion-dewp.onrender.com/api/requests")
             ]);
 
                 // No Axios, os dados vindos do servidor já estão em .data
@@ -618,7 +618,7 @@ function Requests() {
         if (!form.type) return;
         try {
             // Convertido para axios.post. O JSON.stringify deixa de ser necessário!
-            const res = await axios.post("https://onrender.com", dados, 
+            const res = await axios.post("https://orion-dewp.onrender.com/api/requests", 
                 { 
                     type: form.type, 
                     notes: form.notes 
