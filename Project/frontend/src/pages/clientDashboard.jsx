@@ -427,30 +427,31 @@ function Submit() {
         </div>
         
         {/* Botão integrado com o Axios para desviar os dados para a tabela requests */}
-        <button className="btn btn-sm btn-success mt-3" onClick={async () => {
-            if (!incident.date || !incident.type || !incident.description) {
-                alert("Por favor, preencha todos os campos obrigatórios (*).");
-                return;
-            }
-            try {
-                const response = await axios.post('https://onrender.com', {
-                    ...incident,
-                    creatorId: 1 // ID do cliente logado no sistema
-                });
-                
-                if (response.data.success) {
-                    alert(response.data.message); // Exibe o alerta real de sucesso vindo do servidor
-                    
-                    // Limpa todo o formulário após salvar com sucesso
-                    setIncident({ date: "", type: "", description: "", impact: "", systems: "", actions: "" });
-                }
-            } catch (error) {
-                console.error("Erro ao enviar dados para a API:", error);
-                alert(error.response?.data?.message || "Erro de ligação ao servidor.");
-            }
-        }}>
-            Submeter Incidente
-        </button>
+        {/* 🟢 O botão do formulário de incidentes corrigido com o link certo do vosso servidor */}
+<button className="btn btn-sm btn-success mt-3" onClick={async () => {
+    if (!incident.date || !incident.type || !incident.description) {
+        alert("Por favor, preencha todos os campos obrigatórios (*).");
+        return;
+    }
+    try {
+        // 🚨 ALTERADO: O URL agora aponta diretamente para o vosso servidor (orion-dewp) e inclui o prefixo /api
+        const response = await axios.post('https://onrender.com', {
+            ...incident,
+            creatorId: 1 
+        });
+        
+        if (response.data.success) {
+            alert(response.data.message); 
+            setIncident({ date: "", type: "", description: "", impact: "", systems: "", actions: "" });
+        }
+    } catch (error) {
+        console.error("Erro na ligação à API:", error);
+        alert(error.response?.data?.message || "Erro de ligação ao servidor.");
+    }
+}}>
+    Submeter Incidente
+</button>
+
     </>
 )}
 
