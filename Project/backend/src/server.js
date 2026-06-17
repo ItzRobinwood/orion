@@ -38,7 +38,7 @@ const { buscarNoticiasOnline } = require('./services/newsScraper');
 const app = express();
 
 app.use(cors({
-    origin: 'https://orion-dewp.vercel.app',
+    origin: 'https://orion-seven-kappa.vercel.app',
     methods: ['GET', 'POST', 'PUT', 'DELETE'],
     credentials: true
 }));

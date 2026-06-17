@@ -571,11 +571,11 @@ function Requests() {
             ]);
 
             setRequestTypes(typesRes.data);  // → [{ id: 1, name: "ReportIncident" }, ...]
-            setRequests(requestsRes.data);
+            setRequests(requestsRes.data.requests);
 
                 // No Axios, os dados vindos do servidor já estão em .data
                 setRequestTypes(typesRes.data);
-                setRequests(requestsRes.data);
+                setRequests(requestsRes.data.requests);
             } catch (err) {
                 console.error("Erro ao carregar dados com Axios:", err);
             } finally {
