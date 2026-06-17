@@ -27,9 +27,9 @@ function Login() {
             if (userType === 1) {
                 navigate('/adminDashboard');
             } else if (userType === 2) {
-                navigate('/managerDashboard');
+                navigate('/clientrDashboard');
             } else if (userType === 3) {
-                navigate('/clientDashboard');
+                navigate('/managerDashboard');
             } else {
                 alert('Acesso não autorizado: Tipo de utilizador inválido.');
             }
