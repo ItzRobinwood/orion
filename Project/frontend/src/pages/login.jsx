@@ -8,11 +8,39 @@ function Login() {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
 
-    const handleLogin = (e) => {
-        e.preventDefault();
+    const handleLogin = async (e) => {
+    e.preventDefault();
 
-        navigate('/adminDashboard');
-    };
+    try {
+        const response = await fetch('URL_DA_API/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, password })
+        });
+
+        if (response.ok) {
+            const data = await response.json(); // Data from backend containing user info and token
+            
+            // 2. Extract the user's role sent by your Neon backend
+            const userType = data.idtipo; 
+
+            if (userType === 1) {
+                navigate('/adminDashboard');
+            } else if (userType === 2) {
+                navigate('/managerDashboard');
+            } else if (userType === 3) {
+                navigate('/clientDashboard');
+            } else {
+                alert('Acesso não autorizado: Tipo de utilizador inválido.');
+            }
+        } else {
+            alert('Credenciais inválidas.');
+        }
+    } catch (error) {
+        console.error("Login connection error:", error);
+        alert('Server connection failed.');
+    }
+};
 
     return (
         <div className="vh-100 d-flex">
