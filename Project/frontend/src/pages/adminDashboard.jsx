@@ -93,7 +93,7 @@ function Accounts() {
 
     const reloadAdmins = async () => {
         try {
-            const res = await fetch("https://orion-dewp.onrender.com/api/users");
+            const res = await axios.get("https://orion-dewp.onrender.com/api/users");
             const data = await res.json();
             const mapped = data.users
                 .filter(u => u.id_tipo === 1)
@@ -111,7 +111,7 @@ function Accounts() {
 
     const reloadManagers = async () => {
         try {
-            const res = await fetch("https://orion-dewp.onrender.com/api/users");
+            const res = await axios.get("https://orion-dewp.onrender.com/api/users");
             const data = await res.json();
             const mapped = data.users
                 .filter(u => u.id_tipo === 2)
@@ -129,7 +129,7 @@ function Accounts() {
 
     const reloadCompanies = async () => {
         try {
-            const res = await fetch("https://orion-dewp.onrender.com/api/companies");
+            const res = await axios.get("https://orion-dewp.onrender.com/api/companies");
             const data = await res.json();
             const mapped = data.companies.map(c => ({
                 id: c.id,
@@ -202,7 +202,7 @@ function CompaniesTable({ accounts, setAccounts, reloadCompanies }) {
     const handleCreate = async () => {
         if (!form.company) return;
         try {
-            const res = await fetch("https://orion-dewp.onrender.com/api/companies", {
+            const res = await axios.post("https://orion-dewp.onrender.com/api/companies", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
@@ -241,7 +241,7 @@ function CompaniesTable({ accounts, setAccounts, reloadCompanies }) {
         if (!editForm.company) return;
         try {
             // TODO: confirm endpoint URL and request body structure with backend team
-            const res = await fetch(`https://orion-dewp.onrender.com/api/companies/${editingId}`, {
+            const res = await axios.put(`https://orion-dewp.onrender.com/api/companies/${editingId}`, {
                 method: "PUT",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
