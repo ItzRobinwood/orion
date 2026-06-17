@@ -1,10 +1,11 @@
-// ✅ Correção: Importando os modelos diretamente dos seus ficheiros individuais
+// ✅ Modelos importados diretamente dos ficheiros individuais
 const Request = require('../models/requestModel');
 const RequestType = require('../models/requestTypeModel');
 const User = require('../models/User');
 
-
-// GET ALL REQUESTS
+// ==========================================
+// 1. LISTAR TODOS OS PEDIDOS (GET)
+// ==========================================
 const request_list = async (req, res) => {
     try {
         const requests = await Request.findAll({
@@ -16,7 +17,6 @@ const request_list = async (req, res) => {
             order: [['openedAt', 'DESC']]
         });
 
-        // 🟢 ALTERADO: Retorna no formato de objeto esperado pelo React
         return res.json({
             success: true,
             requests: requests
@@ -27,9 +27,9 @@ const request_list = async (req, res) => {
     }
 };
 
-//
-// GET REQUEST BY ID
-//
+// ==========================================
+// 2. DETALHAR UM PEDIDO POR ID (GET)
+// ==========================================
 const request_detail = async (req, res) => {
     try {
         const { id } = req.params;
@@ -43,19 +43,22 @@ const request_detail = async (req, res) => {
         });
 
         if (!request) {
-            return res.status(404).json({ message: 'Request not found' });
+            return res.status(404).json({ success: false, message: 'Pedido não encontrado.' });
         }
 
-        return res.json(request);
+        return res.json({
+            success: true,
+            request: request
+        });
 
     } catch (error) {
-        return res.status(500).json({ message: error.message });
+        return res.status(500).json({ success: false, message: error.message });
     }
 };
 
-//
-// CREATE REQUEST
-//
+// ==========================================
+// 3. CRIAR NOVO PEDIDO (POST)
+// ==========================================
 const request_create = async (req, res) => {
     try {
         const {
@@ -68,18 +71,18 @@ const request_create = async (req, res) => {
         } = req.body;
 
         if (!requestTypeId || !creatorId || !subject || !description) {
-            return res.status(400).json({ message: 'Missing required fields' });
+            return res.status(400).json({ success: false, message: 'Campos obrigatórios em falta.' });
         }
 
-        // ✅ Validação do subtype para pedidos do tipo "Others"
         const requestType = await RequestType.findByPk(requestTypeId);
 
         if (!requestType) {
-            return res.status(404).json({ message: 'Request type not found' });
+            return res.status(404).json({ success: false, message: 'Tipo de pedido não encontrado.' });
         }
 
+        // Validação do subtype para pedidos do tipo "Others"
         if (requestType.name === 'Others' && (!subtype || subtype.trim() === '')) {
-            return res.status(400).json({ message: 'Subtype é obrigatório para pedidos do tipo Others' });
+            return res.status(400).json({ success: false, message: 'Subtype é obrigatório para pedidos do tipo Others.' });
         }
 
         const newRequest = await Request.create({
@@ -93,16 +96,20 @@ const request_create = async (req, res) => {
             openedAt: new Date()
         });
 
-        return res.status(201).json(newRequest);
+        return res.status(201).json({
+            success: true,
+            message: 'Pedido criado com sucesso.',
+            request: newRequest
+        });
 
     } catch (error) {
-        return res.status(500).json({ message: error.message });
+        return res.status(500).json({ success: false, message: error.message });
     }
 };
 
-//
-// UPDATE REQUEST
-//
+// ==========================================
+// 4. ATUALIZAR PEDIDO (PUT)
+// ==========================================
 const request_update = async (req, res) => {
     try {
         const { id } = req.params;
@@ -112,39 +119,38 @@ const request_update = async (req, res) => {
         });
 
         if (!request) {
-            return res.status(404).json({ message: 'Request not found' });
+            return res.status(404).json({ success: false, message: 'Pedido não encontrado.' });
         }
 
-        // ✅ Validação do subtype caso o requestTypeId seja alterado ou já seja "Others"
         const newRequestTypeId = req.body.requestTypeId || request.requestTypeId;
         const requestType = await RequestType.findByPk(newRequestTypeId);
 
         if (requestType.name === 'Others') {
             const newSubtype = req.body.subtype || request.subtype;
             if (!newSubtype || newSubtype.trim() === '') {
-                return res.status(400).json({ message: 'Subtype é obrigatório para pedidos do tipo Others' });
+                return res.status(400).json({ success: false, message: 'Subtype é obrigatório para pedidos do tipo Others.' });
             }
             req.body.subtype = newSubtype.trim();
         } else {
-            // Se mudou de Others para outro tipo, limpa o subtype
             req.body.subtype = null;
         }
 
         await request.update(req.body);
 
         return res.json({
-            message: 'Request updated successfully',
+            success: true,
+            message: 'Pedido atualizado com sucesso.',
             request
         });
 
     } catch (error) {
-        return res.status(500).json({ message: error.message });
+        return res.status(500).json({ success: false, message: error.message });
     }
 };
 
-//
-// DELETE REQUEST
-//
+// ==========================================
+// 5. ELIMINAR PEDIDO (DELETE)
+// ==========================================
 const request_delete = async (req, res) => {
     try {
         const { id } = req.params;
@@ -152,21 +158,21 @@ const request_delete = async (req, res) => {
         const request = await Request.findByPk(id);
 
         if (!request) {
-            return res.status(404).json({ message: 'Request not found' });
+            return res.status(404).json({ success: false, message: 'Pedido não encontrado.' });
         }
 
         await request.destroy();
 
-        return res.json({ message: 'Request deleted successfully' });
+        return res.json({ success: true, message: 'Pedido eliminado com sucesso.' });
 
     } catch (error) {
-        return res.status(500).json({ message: error.message });
+        return res.status(500).json({ success: false, message: error.message });
     }
 };
 
-//
-// CLOSE REQUEST
-//
+// ==========================================
+// 6. FECHAR PEDIDO (PUT)
+// ==========================================
 const request_close = async (req, res) => {
     try {
         const { id } = req.params;
@@ -174,7 +180,7 @@ const request_close = async (req, res) => {
         const request = await Request.findByPk(id);
 
         if (!request) {
-            return res.status(404).json({ message: 'Request not found' });
+            return res.status(404).json({ success: false, message: 'Pedido não encontrado.' });
         }
 
         await request.update({
@@ -183,18 +189,16 @@ const request_close = async (req, res) => {
         });
 
         return res.json({
-            message: 'Request closed successfully',
+            success: true,
+            message: 'Pedido fechado com sucesso.',
             request
         });
 
     } catch (error) {
-        return res.status(500).json({ message: error.message });
+        return res.status(500).json({ success: false, message: error.message });
     }
 };
 
-//
-// EXPORT
-//
 module.exports = {
     request_list,
     request_detail,

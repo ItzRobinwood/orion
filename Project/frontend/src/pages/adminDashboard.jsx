@@ -94,7 +94,7 @@ function Accounts() {
     const reloadAdmins = async () => {
         try {
             const res = await axios.get("https://orion-dewp.onrender.com/api/users");
-            const data = await res.json();
+            const data = res.data;
             const mapped = data.users
                 .filter(u => u.id_tipo === 1)
                 .map(u => ({
@@ -112,7 +112,7 @@ function Accounts() {
     const reloadManagers = async () => {
         try {
             const res = await axios.get("https://orion-dewp.onrender.com/api/users");
-            const data = await res.json();
+            const data = res.data;
             const mapped = data.users
                 .filter(u => u.id_tipo === 2)
                 .map(u => ({
@@ -130,7 +130,7 @@ function Accounts() {
     const reloadCompanies = async () => {
         try {
             const res = await axios.get("https://orion-dewp.onrender.com/api/companies");
-            const data = await res.json();
+            const data = res.data;
             const mapped = data.companies.map(c => ({
                 id: c.id,
                 company: c.nome,
