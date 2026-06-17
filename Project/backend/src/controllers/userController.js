@@ -62,34 +62,28 @@ exports.loginUser = async (req, res) => {
     try {
         const { email, password } = req.body;
 
+        console.log("📧 Email recebido:", email);
+        console.log("🔑 Password recebida:", password);
+
         if (!email || !password) {
-            return res.status(400).json({
-                success: false,
-                message: "Email e palavra-passe são obrigatórios.",
-            });
+            return res.status(400).json({ success: false, message: "Email e palavra-passe são obrigatórios." });
         }
 
         const user = await User.findOne({ where: { email } });
+        console.log("👤 Utilizador encontrado:", user ? "SIM" : "NÃO");
+
         if (!user) {
-            return res.status(401).json({
-                success: false,
-                message: "Credenciais inválidas.",
-            });
+            return res.status(401).json({ success: false, message: "Credenciais inválidas." });
         }
 
-        if (!user.active) {
-            return res.status(403).json({
-                success: false,
-                message: "A sua conta ainda não foi ativada. Contacte o administrador.",
-            });
-        }
+        console.log("🔐 Active:", user.active);
+        console.log("🔐 Password na BD:", user.password);
 
         const isMatch = await bcrypt.compare(password, user.password);
+        console.log("✅ Password correta:", isMatch);
+
         if (!isMatch) {
-            return res.status(401).json({
-                success: false,
-                message: "Credenciais inválidas.",
-            });
+            return res.status(401).json({ success: false, message: "Credenciais inválidas." });
         }
 
         return res.json({
@@ -105,10 +99,8 @@ exports.loginUser = async (req, res) => {
         });
 
     } catch (error) {
-        return res.status(500).json({
-            success: false,
-            message: error.message,
-        });
+        console.log("❌ ERRO:", error.message);
+        return res.status(500).json({ success: false, message: error.message });
     }
 };
 
