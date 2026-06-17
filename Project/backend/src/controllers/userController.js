@@ -107,11 +107,9 @@ exports.loginUser = async (req, res) => {
 // ATUALIZAR UTILIZADOR
 exports.updateUser = async (req, res) => {
     try {
-        // 🟢 CORREÇÃO: Captura o ID a partir dos parâmetros da URL (/api/users/:id)
         const { id } = req.params; 
         const { name, email, telephone, status, password, newPassword } = req.body;
-
-        const user = await User.findByPk(id);
+        const user = await User.findOne({ where: { id_Utilizador: id } });
         if (!user) {
             return res.status(404).json({
                 success: false,
@@ -177,7 +175,9 @@ exports.getUsers = async (req, res) => {
 exports.deleteUser = async (req, res) => {
     try {
         const { id } = req.params; 
-        const user = await User.findByPk(id);
+        
+        const user = await User.findOne({ where: { id_Utilizador: id } });
+        
         if (!user) {
             return res.status(404).json({ success: false, message: "Utilizador não encontrado." });
         }
@@ -190,4 +190,3 @@ exports.deleteUser = async (req, res) => {
         return res.status(500).json({ success: false, message: error.message });
     }
 };
-
