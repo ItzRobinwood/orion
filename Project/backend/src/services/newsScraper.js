@@ -16,7 +16,7 @@ const FONTES = [
 ];
 
 const buscarNoticiasOnline = async () => {
-  console.log('🔄 A iniciar a recolha de notícias automáticas da internet...');
+  console.log('A iniciar a recolha de notícias automáticas da internet...');
 
   for (const fonte of FONTES) {
     try {
@@ -37,7 +37,7 @@ const buscarNoticiasOnline = async () => {
             tags: ['Cyber', 'Auto'],
             url: item.link
           });
-          console.log(`✅ Nova notícia guardada: "${item.title}"`);
+          console.log(`Nova notícia guardada: "${item.title}"`);
         }
       }
     } catch (erro) {

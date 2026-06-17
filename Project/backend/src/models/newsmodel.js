@@ -1,5 +1,5 @@
 const { DataTypes } = require('sequelize');
-const sequelize = require('../config/database'); // Ajusta o caminho para onde tens a tua config do Sequelize
+const sequelize = require('../config/database');
 
 const News = sequelize.define('News', {
   id: {
@@ -31,12 +31,10 @@ const News = sequelize.define('News', {
     type: DataTypes.STRING,
     allowNull: false,
     defaultValue: '',
-    // Transforma a string "Segurança,Malware" num array ['Segurança', 'Malware'] ao ler da BD
     get() {
       const rawValue = this.getDataValue('tags');
       return rawValue ? rawValue.split(',') : [];
     },
-    // Transforma o array do JavaScript numa string antes de salvar na BD
     set(val) {
       this.setDataValue('tags', Array.isArray(val) ? val.join(',') : val);
     }
@@ -47,7 +45,7 @@ const News = sequelize.define('News', {
   }
 }, {
   tableName: 'news',
-  timestamps: true // Cria automaticamente os campos createdAt e updatedAt
+  timestamps: true // createdAt e updatedAt
 });
 
 module.exports = News;
