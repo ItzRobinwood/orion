@@ -549,8 +549,7 @@ function Questions() {
 }
 
 /* ───────────────────────── REQUESTS ───────────────────────── */
-import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+
 
 function Requests() {
     const [requests, setRequests] = useState([]);
@@ -692,7 +691,6 @@ function Requests() {
     );
 }
 
-export default Requests;
 
 /* ───────────────────────── STAT CARD ───────────────────────── */
 function StatCard({ title, value, color }) {
