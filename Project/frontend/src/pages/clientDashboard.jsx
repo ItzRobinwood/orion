@@ -595,11 +595,11 @@ function Requests() {
     useEffect(() => {
         const fetchData = async () => {
             try {
-                // Executa os dois GETs em paralelo de forma eficiente
-                const [typesRes, requestsRes] = await Promise.all([
-                    axios.get("http://localhost:3001/request-types"),
-                    axios.get("http://localhost:3001/requests")
-                ]);
+             // Mantenha o endereço do Render + a rota específica de cada pedido
+            const [typesRes, requestsRes] = await Promise.all([
+                axios.get("https://onrender.com"),
+                axios.get("https://onrender.com")
+            ]);
 
                 // No Axios, os dados vindos do servidor já estão em .data
                 setRequestTypes(typesRes.data);
