@@ -12,6 +12,26 @@ const FONTES = [
     url: 'https://www.bleepingcomputer.com/feed/',
     categoria: 'Ransomware',
     autor: 'BleepingComputer'
+  },
+  {
+    url: 'https://www.cncs.gov.pt/pt/alertas/feed/',
+    categoria: 'Vulnerabilidades',
+    autor: 'CNCS Portugal'
+  },
+  {
+    url: 'https://www.welivesecurity.com/feed/',
+    categoria: 'Boas práticas',
+    autor: 'ESET WeLiveSecurity'
+  },
+  {
+    url: 'https://www.infosecurity-magazine.com/rss/news/',
+    categoria: 'Legislação',
+    autor: 'InfoSecurity Magazine'
+  },
+  {
+    url: 'https://www.darkreading.com/rss.xml',
+    categoria: 'Incidentes',
+    autor: 'Dark Reading'
   }
 ];
 
