@@ -4,6 +4,7 @@ const router = express.Router();
 
 const requestController = require("../controllers/requestController");
 
+// Garante que o teu routes/requestRoutes.js está assim:
 router.get('/requests', requestController.request_list);
 router.get('/requests/:id', requestController.request_detail);
 router.post('/requests/create', requestController.request_create);
