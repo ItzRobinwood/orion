@@ -1,6 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import { useState } from 'react';
 import '../index.css';
+import axios from 'axios';
 
 function Login() {
     const navigate = useNavigate();
@@ -12,7 +13,7 @@ const handleLogin = async (e) => {
     e.preventDefault();
 
     try {
-        const response = await fetch('https://orion-dewp.onrender.com/api/users/login', {
+        const response = await axios.post('https://orion-dewp.onrender.com/api/users/login', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ email, password })
