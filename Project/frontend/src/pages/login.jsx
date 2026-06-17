@@ -8,37 +8,36 @@ function Login() {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
 
-    const handleLogin = async (e) => {
+const handleLogin = async (e) => {
     e.preventDefault();
 
     try {
-        const response = await fetch('URL_DA_API/login', {
+        const response = await fetch('https://orion-dewp.onrender.com/api/users/login', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ email, password })
         });
 
-        if (response.ok) {
-            const data = await response.json(); // Data from backend containing user info and token
-            
-            // 2. Extract the user's role sent by your Neon backend
-            const userType = data.idtipo; 
+        const data = await response.json();
+
+        if (data.success) {
+            const userType = data.user.id_tipo;
 
             if (userType === 1) {
                 navigate('/adminDashboard');
             } else if (userType === 2) {
-                navigate('/clientrDashboard');
-            } else if (userType === 3) {
                 navigate('/managerDashboard');
+            } else if (userType === 3) {
+                navigate('/clientDashboard');
             } else {
                 alert('Acesso não autorizado: Tipo de utilizador inválido.');
             }
         } else {
-            alert('Credenciais inválidas.');
+            alert(data.message || 'Credenciais inválidas.');
         }
     } catch (error) {
         console.error("Login connection error:", error);
-        alert('Server connection failed.');
+        alert('Erro de ligação ao servidor.');
     }
 };
 
