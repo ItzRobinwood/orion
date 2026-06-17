@@ -790,29 +790,64 @@ function Tickets() {
 function Requests() {
     const [requests, setRequests] = useState([]);
     const [filter, setFilter] = useState("Todos");
+    const [loading, setLoading] = useState(true);
+
+    // Tradutor de estados do Sequelize ENUM ('open', 'in_progress', 'closed') para o teu Layout
+    const translateStatus = (dbStatus) => {
+        switch (dbStatus) {
+            case "open": return "Pendente";
+            case "in_progress": return "Em Execução";
+            case "closed": return "Concluídos";
+            default: return "Pendente";
+        }
+    };
 
     const reloadRequests = async () => {
         try {
-            const res = await fetch("https://orion-dewp.onrender.com/api/requests");
-            const data = await res.json();
-            setRequests(data.requests || data);
-        } catch (err) {
-            console.error("Error loading requests:", err);
+            setLoading(true);
 
-            // Fallback mock data matching your image screenshot layout perfectly
+            // Chamada Axios à tua API no Render
+            const response = await axios.get("https://orion-dewp.onrender.com/api/requests");
+            const data = response.data;
+
+            if (data.success && data.requests) {
+                // Mapeamos os relacionamentos que o teu Sequelize gerou
+                const mappedRequests = data.requests.map(r => ({
+                    id: r.id,
+                    title: r.subject, // Usa o campo 'subject' do teu modelo Request
+                    description: r.description,
+                    // Se o criador tiver empresa associada mostra o nome dele, senão usa um padrão
+                    company: r.creator?.name || "CyberBox Cliente", 
+                    // Formata a data 'openedAt' do teu modelo
+                    date: r.openedAt ? new Date(r.openedAt).toLocaleDateString("pt-PT") : "N/A",
+                    itemsCount: r.subtype ? 1 : 0, 
+                    // Tipo principal vem do include { model: RequestType }
+                    type: r.RequestType?.name || "Geral", 
+                    subtype: r.subtype,
+                    // Nome do utilizador atribuído obtido através do alias 'assignedTo'
+                    assignedTo: r.assignedTo?.nome || r.assignedTo?.name || "Sem atribuição",
+                    status: translateStatus(r.status)
+                }));
+                setRequests(mappedRequests);
+            }
+        } catch (err) {
+            console.error("Error loading requests with Axios:", err.message);
+            // Fallback de segurança para a interface não quebrar se a BD estiver vazia
             setRequests([
                 {
                     id: 1,
-                    title: "Auditoria de Segurança Completa",
+                    title: "Auditoria de Segurança Completa (Demo)",
                     description: "Pedido de auditoria completa aos sistemas de segurança da organização",
                     company: "TechCorp",
                     date: "03/06/2026",
                     itemsCount: 2,
-                    type: "Auditoria",
+                    type: "Pentest",
                     assignedTo: "Admin Principal",
                     status: "Em Execução"
                 }
             ]);
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -831,11 +866,15 @@ function Requests() {
         switch (status) {
             case "Pendente": return "bg-warning text-dark";
             case "Aprovados": return "bg-success";
-            case "Em Execução": return "bg-warning text-dark";
+            case "Em Execução": return "bg-info text-dark";
             case "Concluídos": return "bg-secondary";
             default: return "bg-primary";
         }
     };
+
+    if (loading) {
+        return <div className="text-center my-5 text-dark"><h5>A carregar gestão de pedidos com Axios... 🚀</h5></div>;
+    }
 
     return (
         <div className="d-flex flex-column gap-4 text-dark text-start">
@@ -844,7 +883,7 @@ function Requests() {
                 <p className="text-muted small">Gerir pedidos dos clientes</p>
             </div>
 
-            {/* --- 1. Summary Status Cards --- */}
+            {/* --- Summary Status Cards --- */}
             <div className="row g-3">
                 <div className="col">
                     <div className="card p-3 d-flex flex-row align-items-center gap-3 shadow-sm">
@@ -888,7 +927,7 @@ function Requests() {
                 </div>
             </div>
 
-            {/* --- 2. Filter Tab Menu --- */}
+            {/* --- Filter Tab Menu --- */}
             <div className="card p-3 shadow-sm">
                 <div className="d-flex align-items-center gap-2 mb-2 text-muted small fw-semibold">
                     <span>Filtros</span>
@@ -901,12 +940,13 @@ function Requests() {
                             className={`btn btn-sm px-3 ${filter === status ? "btn-primary" : "btn-light border text-secondary"}`}
                         >
                             {status}
+                            {countByStatus(status) > 0 && ` (${countByStatus(status)})`}
                         </button>
                     ))}
                 </div>
             </div>
 
-            {/* --- 3. Request Row Items View --- */}
+            {/* --- Request Row Items View --- */}
             <div className="d-flex flex-column gap-2">
                 {filteredRequests.map((request) => (
                     <div key={request.id} className="card p-3 shadow-sm bg-white d-flex flex-row justify-content-between align-items-center border-start border-4 border-info">
@@ -921,7 +961,7 @@ function Requests() {
                             <div className="d-flex align-items-center gap-3 text-secondary" style={{ fontSize: "12px" }}>
                                 <span>👤 {request.company}</span>
                                 <span>📅 {request.date}</span>
-                                <span>📋 {request.itemsCount} itens</span>
+                                {request.subtype && <span className="text-dark bg-light px-1 rounded">🏷️ Subtipo: {request.subtype}</span>}
                                 <span>🛠️ {request.type}</span>
                                 <span className="text-primary fw-medium">Atribuído: {request.assignedTo}</span>
                             </div>

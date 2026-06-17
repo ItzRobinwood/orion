@@ -3,9 +3,8 @@ const Request = require('../models/requestModel');
 const RequestType = require('../models/requestTypeModel');
 const User = require('../models/User');
 
-//
+
 // GET ALL REQUESTS
-//
 const request_list = async (req, res) => {
     try {
         const requests = await Request.findAll({
@@ -17,10 +16,14 @@ const request_list = async (req, res) => {
             order: [['openedAt', 'DESC']]
         });
 
-        return res.json(requests);
+        // 🟢 ALTERADO: Retorna no formato de objeto esperado pelo React
+        return res.json({
+            success: true,
+            requests: requests
+        });
 
     } catch (error) {
-        return res.status(500).json({ message: error.message });
+        return res.status(500).json({ success: false, message: error.message });
     }
 };
 
