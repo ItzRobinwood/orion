@@ -457,6 +457,143 @@ function AdminsTable({ admins, setAdmins, reloadAdmins }) {
     );
 }
 
+function ManagersTable({ managers, setManagers, reloadManagers }) {
+    const getEmptyForm = () => ({ name: "", email: "", phone: "", password: "", status: "Ativo" });
+    const [showForm, setShowForm] = useState(false);
+    const [form, setForm] = useState(getEmptyForm());
+    const [editingId, setEditingId] = useState(null);
+    const [editForm, setEditForm] = useState(null);
+
+    const generatePassword = () => {
+        const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%";
+        return Array.from({ length: 12 }, () => chars[Math.floor(Math.random() * chars.length)]).join("");
+    };
+
+    const handleCreate = async () => {
+        if (!form.name || !form.email || !form.password) {
+            alert("Please fill in name, email and password before creating.");
+            return;
+        }
+        try {
+            const res = await axios.post("https://orion-dewp.onrender.com/api/users", {
+                name: form.name,
+                email: form.email,
+                password: form.password,
+                telephone: form.phone,
+                id_tipo: 2
+            });
+            if (res.data.success) {
+                await reloadManagers();
+                setForm(getEmptyForm());
+                setShowForm(false);
+            } else {
+                alert("Error: " + res.data.message);
+            }
+        } catch (err) {
+            alert("Connection error: " + err.message);
+        }
+    };
+
+    const startEdit = (m) => {
+        setEditingId(m.id_Utilizador || m.id);
+        setEditForm({ ...m });
+        setShowForm(false);
+    };
+    const cancelEdit = () => { setEditingId(null); setEditForm(null); };
+
+    const saveEdit = async () => {
+        if (!editForm.name || !editForm.email) return;
+        try {
+            const res = await axios.put(`https://orion-dewp.onrender.com/api/users/${editingId}`, {
+                name: editForm.name,
+                email: editForm.email,
+                telephone: editForm.phone,
+                status: editForm.status
+            });
+            if (res.data.success) {
+                await reloadManagers();
+                cancelEdit();
+            } else {
+                alert("Error: " + res.data.message);
+            }
+        } catch (err) {
+            alert("Connection error: " + err.message);
+        }
+    };
+
+    const handleDelete = async (id) => {
+        try {
+            const res = await axios.delete(`https://orion-dewp.onrender.com/api/users/${id}`);
+            if (res.data.success) {
+                await reloadManagers();
+            } else {
+                alert("Error: " + res.data.message);
+            }
+        } catch (err) {
+            alert("Connection error: " + err.message);
+        }
+    };
+
+    const statusColor = (s) => s === "Ativo" ? "bg-success" : "bg-danger";
+
+    return (
+        <div className="card p-3">
+            <div className="d-flex justify-content-between align-items-center mb-3">
+                <h5 className="mb-0">Gestores</h5>
+                <button type="button" className="btn btn-sm btn-dark"
+                    onClick={() => { setShowForm(!showForm); cancelEdit(); setForm(getEmptyForm()); }}>
+                    {showForm ? "Cancelar" : "+ Novo Gestor"}
+                </button>
+            </div>
+            {showForm && (
+                <PersonForm form={form} setForm={setForm} title="Novo Gestor"
+                    submitLabel="Criar Gestor" generatePassword={generatePassword} onSubmit={handleCreate} />
+            )}
+            <table className="table table-hover mb-0">
+                <thead className="table-info">
+                    <tr><th>Nome</th><th>Email</th><th>Telefone</th><th>Estado</th><th>Ações</th></tr>
+                </thead>
+                <tbody>
+                    {managers.map((m) => (
+                        <>
+                            <tr key={m.id}>
+                                <td className="fw-semibold">{m.name}</td>
+                                <td>{m.email}</td>
+                                <td>{m.phone}</td>
+                                <td><span className={`badge ${statusColor(m.status)}`}>{m.status}</span></td>
+                                <td>
+                                    <div className="d-flex gap-1">
+                                        <button type="button" className="btn btn-sm btn-outline-secondary" onClick={() => startEdit(m)}>Editar</button>
+                                        <button type="button" className="btn btn-sm btn-outline-danger" onClick={() => handleDelete(m.id_Utilizador || m.id)}>Remover</button>
+                                    </div>
+                                </td>
+                            </tr>
+                            {editingId === (m.id_Utilizador || m.id) && editForm && (
+                                <tr key={`edit-${m.id}`}>
+                                    <td colSpan={5} className="p-0">
+                                        <div className="border border-warning rounded m-2 p-3 bg-white">
+                                            <div className="d-flex justify-content-between align-items-center mb-3">
+                                                <h6 className="mb-0">Editar — {m.name}</h6>
+                                                <button type="button" className="btn btn-sm btn-link text-secondary p-0" onClick={cancelEdit}>✕ Cancelar</button>
+                                            </div>
+                                            <PersonForm form={editForm} setForm={setEditForm} title=""
+                                                submitLabel="Guardar Alterações" generatePassword={generatePassword}
+                                                onSubmit={saveEdit} isEdit={true} />
+                                        </div>
+                                    </td>
+                                </tr>
+                            )}
+                        </>
+                    ))}
+                    {managers.length === 0 && (
+                        <tr><td colSpan={5} className="text-center text-muted py-3">Nenhum gestor criado.</td></tr>
+                    )}
+                </tbody>
+            </table>
+        </div>
+    );
+}
+
 function PersonForm({ form, setForm, title, submitLabel, generatePassword, onSubmit, isEdit = false }) {
     return (
         <div className="border rounded p-3 mb-4 bg-white">
