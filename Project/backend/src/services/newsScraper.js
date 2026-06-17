@@ -1,5 +1,5 @@
 const Parser = require('rss-parser');
-const News = require('../models/newsModel');
+const News = require('../models/newsmodel');
 const parser = new Parser();
 
 const FONTES = [
