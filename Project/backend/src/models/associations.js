@@ -14,157 +14,86 @@ const Incident = require("./incidentModel");
 function applyAssociations() {
 
   // UserType <-> User
-  UserType.hasMany(User, {
-    foreignKey: "id_tipo",
-  });
-  User.belongsTo(UserType, {
-    foreignKey: "id_tipo",
-  });
+  UserType.hasMany(User, { foreignKey: "id_tipo" });
+  User.belongsTo(UserType, { foreignKey: "id_tipo" });
 
   //------------------------------//
 
-// Company <-> User
-Company.hasMany(User, {
-    foreignKey: "id_empresa",
-    as: "users"
-});
-User.belongsTo(Company, {
-    foreignKey: "id_empresa",
-    as: "company"
-});
+  // Company <-> User
+  Company.hasMany(User, { foreignKey: "id_empresa", as: "users" });
+  User.belongsTo(Company, { foreignKey: "id_empresa", as: "company" });
 
   //------------------------------//
 
   // RequestType <-> Request
-  RequestType.hasMany(Request, {
-    foreignKey: "requestTypeId",
-  });
-  Request.belongsTo(RequestType, {
-    foreignKey: "requestTypeId",
-  });
+  RequestType.hasMany(Request, { foreignKey: "requestTypeId" });
+  Request.belongsTo(RequestType, { foreignKey: "requestTypeId" });
 
   //------------------------------//
 
   // User (creator) <-> Request
-  User.hasMany(Request, {
-    foreignKey: "creatorId",
-    as: "createdRequests",
-  });
-  Request.belongsTo(User, {
-    foreignKey: "creatorId",
-    as: "creator",
-  });
+  User.hasMany(Request, { foreignKey: "creatorId", sourceKey: "id_Utilizador", as: "createdRequests" });
+  Request.belongsTo(User, { foreignKey: "creatorId", targetKey: "id_Utilizador", as: "creator" });
 
   //------------------------------//
 
   // User (assignedTo) <-> Request
-  User.hasMany(Request, {
-    foreignKey: "assignedToId",
-    as: "assignedRequests",
-  });
-  Request.belongsTo(User, {
-    foreignKey: "assignedToId",
-    as: "assignedTo",
-  });
+  User.hasMany(Request, { foreignKey: "assignedToId", sourceKey: "id_Utilizador", as: "assignedRequests" });
+  Request.belongsTo(User, { foreignKey: "assignedToId", targetKey: "id_Utilizador", as: "assignedTo" });
 
   //------------------------------//
 
   // Request <-> RequestFile
-  Request.hasMany(RequestFile, {
-    foreignKey: "requestId",
-    as: "files",
-  });
-  RequestFile.belongsTo(Request, {
-    foreignKey: "requestId",
-  });
+  Request.hasMany(RequestFile, { foreignKey: "requestId", as: "files" });
+  RequestFile.belongsTo(Request, { foreignKey: "requestId" });
 
   //------------------------------//
 
   // User (creator) <-> Question
-User.hasMany(Question, {
-    foreignKey: "creatorId",
-    as: "createdQuestions"
-});
-Question.belongsTo(User, {
-    foreignKey: "creatorId",
-    as: "creator"
-});
+  User.hasMany(Question, { foreignKey: "creatorId", sourceKey: "id_Utilizador", as: "createdQuestions" });
+  Question.belongsTo(User, { foreignKey: "creatorId", targetKey: "id_Utilizador", as: "creator" });
 
-//-------------------------------//
+  //------------------------------//
 
-// User (assignedTo) <-> Question
-User.hasMany(Question, {
-    foreignKey: "assignedToId",
-    as: "assignedQuestions"
-});
-Question.belongsTo(User, {
-    foreignKey: "assignedToId",
-    as: "assignedTo"
-});
+  // User (assignedTo) <-> Question
+  User.hasMany(Question, { foreignKey: "assignedToId", sourceKey: "id_Utilizador", as: "assignedQuestions" });
+  Question.belongsTo(User, { foreignKey: "assignedToId", targetKey: "id_Utilizador", as: "assignedTo" });
 
-//-------------------------------//
+  //------------------------------//
 
-// Question <-> MessageQuestion
-Question.hasMany(MessageQuestion, {
-    foreignKey: "questionId",
-    as: "messages"
-});
-MessageQuestion.belongsTo(Question, {
-    foreignKey: "questionId"
-});
+  // Question <-> MessageQuestion
+  Question.hasMany(MessageQuestion, { foreignKey: "questionId", as: "messages" });
+  MessageQuestion.belongsTo(Question, { foreignKey: "questionId" });
 
-//-------------------------------//
+  //------------------------------//
 
-// User <-> MessageQuestion
-User.hasMany(MessageQuestion, {
-    foreignKey: "userId",
-    as: "sentMessages"
-});
-MessageQuestion.belongsTo(User, {
-    foreignKey: "userId",
-    as: "sender"
-});
-  
-//-------------------------------//
+  // User <-> MessageQuestion
+  User.hasMany(MessageQuestion, { foreignKey: "userId", sourceKey: "id_Utilizador", as: "sentMessages" });
+  MessageQuestion.belongsTo(User, { foreignKey: "userId", targetKey: "id_Utilizador", as: "sender" });
 
-// Request <-> EstadoPedido
-Request.hasMany(EstadoPedido, {
-    foreignKey: "requestId",
-    as: "states"
-});
-EstadoPedido.belongsTo(Request, {
-    foreignKey: "requestId"
-});
+  //------------------------------//
 
-//-------------------------------//
+  // Request <-> EstadoPedido
+  Request.hasMany(EstadoPedido, { foreignKey: "requestId", as: "states" });
+  EstadoPedido.belongsTo(Request, { foreignKey: "requestId" });
 
-// User <-> EstadoPedido
-User.hasMany(EstadoPedido, {
-    foreignKey: "userId",
-    as: "requestStates"
-});
-EstadoPedido.belongsTo(User, {
-    foreignKey: "userId",
-    as: "changedBy"
-});
+  //------------------------------//
 
-//-------------------------------//
+  // User <-> EstadoPedido
+  User.hasMany(EstadoPedido, { foreignKey: "userId", sourceKey: "id_Utilizador", as: "requestStates" });
+  EstadoPedido.belongsTo(User, { foreignKey: "userId", targetKey: "id_Utilizador", as: "changedBy" });
 
-// User <-> Logs
-User.hasMany(Logs, {
-    foreignKey: "userId",
-    as: "logs"
-});
-Logs.belongsTo(User, {
-    foreignKey: "userId",
-    as: "user"
-});
+  //------------------------------//
 
-//-------------------------------//
+  // User <-> Logs
+  User.hasMany(Logs, { foreignKey: "userId", sourceKey: "id_Utilizador", as: "logs" });
+  Logs.belongsTo(User, { foreignKey: "userId", targetKey: "id_Utilizador", as: "user" });
 
+  //------------------------------//
 
-User.hasMany(Incident, { foreignKey: "creatorId", as: "incidents" });
-Incident.belongsTo(User, { foreignKey: "creatorId", as: "creator" });
+  // User <-> Incident
+  User.hasMany(Incident, { foreignKey: "creatorId", sourceKey: "id_Utilizador", as: "incidents" });
+  Incident.belongsTo(User, { foreignKey: "creatorId", targetKey: "id_Utilizador", as: "creator" });
 
 }
 
