@@ -9,7 +9,10 @@ import Contacts from "./pages/contacts";
 import ClientArea from "./pages/clientArea";
 import Login from "./pages/login";
 import AdminDashboard from "./pages/adminDashboard";
+import ClientDashboard from "./pages/clientDashboard";
+import ManagerDashboard from "./pages/managerDashboard";
 import './App.css';
+
 
 
 function App() {
@@ -26,6 +29,8 @@ function App() {
         <Route path="/clientArea" element={<ClientArea />} />
         <Route path="/login" element={<Login />} />
         <Route path="/adminDashboard" element={<AdminDashboard />} />
+        <Route path="/clientDashboard" element={<ClientDashboard />} />
+        <Route path="/managerDashboard" element={<ManagerDashboard />} />
       </Routes>
     </BrowserRouter>
   );
