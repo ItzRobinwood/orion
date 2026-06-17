@@ -351,13 +351,15 @@ function Docs() {
                 <label className="form-label fw-semibold" style={{ fontSize: 12 }}>Tipo de Incidente *</label>
                 <select className="form-select form-select-sm"
                     value={incident.type} onChange={e => setIncident({ ...incident, type: e.target.value })}>
-                    <option value="">Selecionar...</option>
-                    <option>Acesso não autorizado</option>
-                    <option>Malware / Ransomware</option>
-                    <option>Phishing</option>
-                    <option>Negação de Serviço (DoS/DDoS)</option>
-                    <option>Fuga de informação</option>
-                    <option>Outro</option>
+                    {[
+                        { id: 1, name: "ReportIncident" },
+                        { id: 2, name: "Pentest" },
+                        { id: 3, name: "Documentation" },
+                        { id: 4, name: "Technological assets" },
+                        { id: 5, name: "Others" },
+                    ].map(t => (
+                        <option key={t.id} value={t.id}>{t.name}</option>
+                    ))}
                 </select>
             </div>
             <div className="col-md-12">
@@ -405,10 +407,11 @@ function Docs() {
     try {
         // 🟢 CORREÇÃO DEFINITIVA: Aponta para o seu servidor real (orion-dewp) com a rota certa
         const response = await axios.post('https://orion-dewp.onrender.com/api/requests', {
-            ...incident,
-            creatorId: 1 
+            requestTypeId: incident.type, // ✅ envia o ID numérico
+            notes: incident.description,
+            creatorId: 1
         });
-        
+                
         if (response.data.success) {
             alert(response.data.message); 
             // Limpa o ecrã
