@@ -1,6 +1,7 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import "bootstrap/dist/css/bootstrap.min.css";
 import axios from 'axios';
+
 
 export default function AdminDashboard() {
     const [active, setActive] = useState("dashboard");
@@ -79,6 +80,7 @@ function Accounts() {
     const [accounts, setAccounts] = useState([]);
     const [admins, setAdmins] = useState([]);
     const [managers, setManagers] = useState([]);
+    const [clients, setClients] = useState([]);
 
     const reloadAdmins = async () => {
         try {
@@ -116,6 +118,33 @@ function Accounts() {
         }
     };
 
+    // Esta função foi melhorada para aceitar opcionalmente os dados das empresas mais recentes
+    const reloadClients = async (currentAccounts = accounts) => {
+        try {
+            const res = await axios.get("https://orion-dewp.onrender.com/api/users");
+            const data = res.data;
+
+            const mapped = data.users
+                .filter(u => u.id_tipo === 3)
+                .map(u => {
+                    // Mapeia usando a lista de empresas atualizada
+                    const associatedCompany = currentAccounts.find(acc => acc.id === u.companyId);
+
+                    return {
+                        ...u,
+                        id: u.id_Utilizador,
+                        phone: u.telephone,
+                        status: u.active ? "Ativo" : "Inativo",
+                        companyName: associatedCompany ? associatedCompany.company : "Sem Empresa"
+                    };
+                });
+
+            setClients(mapped);
+        } catch (err) {
+            console.error("Error loading clients:", err);
+        }
+    };
+
     const reloadCompanies = async () => {
         try {
             const res = await axios.get("https://orion-dewp.onrender.com/api/companies");
@@ -140,16 +169,20 @@ function Accounts() {
                     phone: u.telephone
                 }))
             }));
+            
             setAccounts(mapped);
+            // IMPORTANTE: Passamos o mapeamento diretamente para atualizar os clientes na hora!
+            await reloadClients(mapped); 
         } catch (err) {
             console.error("Error loading companies:", err);
         }
     };
 
+    // 1. Primeiro ciclo de vida: Carrega dados independentes e as empresas
     useEffect(() => {
         reloadAdmins();
         reloadManagers();
-        reloadCompanies();
+        reloadCompanies(); 
     }, []);
 
     return (
@@ -157,14 +190,17 @@ function Accounts() {
             <CompaniesTable accounts={accounts} setAccounts={setAccounts} reloadCompanies={reloadCompanies} />
             <AdminsTable admins={admins} setAdmins={setAdmins} reloadAdmins={reloadAdmins} />
             <ManagersTable managers={managers} setManagers={setManagers} reloadManagers={reloadManagers} />
+            {/* Adicionada a prop accounts para o ClientsTable poder usar no dropdown de criação/edição */}
+            <ClientsTable clients={clients} setClients={setClients} reloadClients={reloadClients} accounts={accounts} />
         </div>
     );
 }
 
+
 function CompaniesTable({ accounts, setAccounts, reloadCompanies }) {
     const getEmptyForm = () => ({
-        company: "", status: "Ativo",
-        clients: [{ name: "", email: "", phone: "" }],
+        company: "",
+        status: "Ativo",
         securityManager: { name: "", email: "", phone: "" },
         permanentContact: { name: "", email: "", phone: "" },
     });
@@ -176,15 +212,9 @@ function CompaniesTable({ accounts, setAccounts, reloadCompanies }) {
 
     const setField = (f, v) => setForm((p) => ({ ...p, [f]: v }));
     const setSubField = (s, f, v) => setForm((p) => ({ ...p, [s]: { ...p[s], [f]: v } }));
-    const setClient = (i, f, v) => setForm((p) => { const c = [...p.clients]; c[i] = { ...c[i], [f]: v }; return { ...p, clients: c }; });
-    const addClient = () => setForm((p) => ({ ...p, clients: [...p.clients, { name: "", email: "", phone: "" }] }));
-    const removeClient = (i) => setForm((p) => ({ ...p, clients: p.clients.filter((_, idx) => idx !== i) }));
 
     const setEField = (f, v) => setEditForm((p) => ({ ...p, [f]: v }));
     const setESubField = (s, f, v) => setEditForm((p) => ({ ...p, [s]: { ...p[s], [f]: v } }));
-    const setEClient = (i, f, v) => setEditForm((p) => { const c = [...p.clients]; c[i] = { ...c[i], [f]: v }; return { ...p, clients: c }; });
-    const addEClient = () => setEditForm((p) => ({ ...p, clients: [...p.clients, { name: "", email: "", phone: "" }] }));
-    const removeEClient = (i) => setEditForm((p) => ({ ...p, clients: p.clients.filter((_, idx) => idx !== i) }));
 
     const handleCreate = async () => {
         if (!form.company) return;
@@ -213,7 +243,7 @@ function CompaniesTable({ accounts, setAccounts, reloadCompanies }) {
 
     const startEdit = (a) => {
         setEditingId(a.id);
-        setEditForm({ ...a, clients: a.clients.map(c => ({ ...c })) });
+        setEditForm({ ...a });
         setShowForm(false);
     };
 
@@ -244,6 +274,7 @@ function CompaniesTable({ accounts, setAccounts, reloadCompanies }) {
     };
 
     const handleDelete = async (id) => {
+        if (!window.confirm("Tens a certeza que desejas remover esta empresa?")) return;
         try {
             const res = await axios.delete(`https://orion-dewp.onrender.com/api/companies/${id}`);
             if (res.data.success) {
@@ -259,66 +290,410 @@ function CompaniesTable({ accounts, setAccounts, reloadCompanies }) {
     const statusColor = (s) => s === "Ativo" ? "bg-success" : s === "Pendente" ? "bg-warning text-dark" : "bg-danger";
 
     return (
-        <div className="card p-3">
+        <div className="card p-3 shadow-sm border-0">
             <div className="d-flex justify-content-between align-items-center mb-3">
-                <h5 className="mb-0">Empresas</h5>
+                <h5 className="mb-0 fw-bold">Empresas</h5>
                 <button type="button" className="btn btn-sm btn-dark"
                     onClick={() => { setShowForm(!showForm); cancelEdit(); setForm(getEmptyForm()); }}>
                     {showForm ? "Cancelar" : "+ Nova Empresa"}
                 </button>
             </div>
+
             {showForm && (
-                <CompanyForm form={form} title="Nova Empresa" submitLabel="Criar Empresa"
-                    setField={setField} setSubField={setSubField}
-                    setClient={setClient} addClient={addClient} removeClient={removeClient}
-                    onSubmit={handleCreate} />
+                <div className="bg-light p-3 border rounded mb-3">
+                    <CompanyForm form={form} title="Nova Empresa" submitLabel="Criar Empresa"
+                        setField={setField} setSubField={setSubField}
+                        onSubmit={handleCreate} />
+                </div>
             )}
-            <table className="table table-hover mb-0">
-                <thead className="table-dark">
-                    <tr><th>Empresa</th><th>Clientes</th><th>Resp. Segurança</th><th>Contacto Perm.</th><th>Estado</th><th>Ações</th></tr>
-                </thead>
-                <tbody>
-                    {accounts.map((a) => (
-                        <>
-                            <tr key={a.id}>
-                                <td className="fw-semibold">{a.company}</td>
-                                <td>{a.clients.length} cliente(s)</td>
-                                <td>{a.securityManager.name}</td>
-                                <td>{a.permanentContact.name}</td>
-                                <td><span className={`badge ${statusColor(a.status)}`}>{a.status}</span></td>
-                                <td>
-                                    <div className="d-flex gap-1">
-                                        <button type="button" className="btn btn-sm btn-outline-secondary" onClick={() => startEdit(a)}>Editar</button>
-                                        <button type="button" className="btn btn-sm btn-outline-danger" onClick={() => handleDelete(a.id)}>Remover</button>
-                                    </div>
-                                </td>
-                            </tr>
-                            {editingId === a.id && editForm && (
-                                <tr key={`edit-${a.id}`}>
-                                    <td colSpan={6} className="p-0">
-                                        <div className="border border-warning rounded m-2 p-3 bg-white">
-                                            <div className="d-flex justify-content-between align-items-center mb-3">
-                                                <h6 className="mb-0">Editar — {a.company}</h6>
-                                                <button type="button" className="btn btn-sm btn-link text-secondary p-0" onClick={cancelEdit}>✕ Cancelar</button>
-                                            </div>
-                                            <CompanyForm form={editForm} title="" submitLabel="Guardar Alterações"
-                                                setField={setEField} setSubField={setESubField}
-                                                setClient={setEClient} addClient={addEClient} removeClient={removeEClient}
-                                                onSubmit={saveEdit} />
+
+            <div className="table-responsive">
+                <table className="table table-hover align-middle mb-0">
+                    <thead className="table-dark">
+                        <tr>
+                            <th>Empresa</th>
+                            <th>Resp. Segurança</th>
+                            <th>Contacto Perm.</th>
+                            <th>Estado</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {accounts.map((a) => {
+                            // Criamos um array de elementos com chaves individuais para contornar o Fragment do React
+                            const rows = [
+                                <tr key={`row-${a.id}`}>
+                                    <td className="fw-semibold text-dark">{a.company}</td>
+                                    <td>{a.securityManager?.name || "—"}</td>
+                                    <td>{a.permanentContact?.name || "—"}</td>
+                                    <td><span className={`badge ${statusColor(a.status)}`}>{a.status}</span></td>
+                                    <td>
+                                        <div className="d-flex gap-1">
+                                            <button type="button" className="btn btn-sm btn-outline-secondary" onClick={() => startEdit(a)}>Editar</button>
+                                            <button type="button" className="btn btn-sm btn-outline-danger" onClick={() => handleDelete(a.id)}>Remover</button>
                                         </div>
                                     </td>
                                 </tr>
-                            )}
-                        </>
-                    ))}
-                    {accounts.length === 0 && (
-                        <tr><td colSpan={6} className="text-center text-muted py-3">Nenhuma empresa criada.</td></tr>
-                    )}
-                </tbody>
-            </table>
+                            ];
+
+                            // Se estiver em modo de edição, adiciona a linha do formulário logo a seguir
+                            if (editingId === a.id && editForm) {
+                                rows.push(
+                                    <tr key={`edit-${a.id}`}>
+                                        <td colSpan={5} className="p-0">
+                                            <div className="border border-warning rounded m-2 p-3 bg-white">
+                                                <div className="d-flex justify-content-between align-items-center mb-3">
+                                                    <h6 className="mb-0 fw-bold text-warning">Editar — {a.company}</h6>
+                                                    <button type="button" className="btn btn-sm btn-link text-secondary p-0 text-decoration-none" onClick={cancelEdit}>✕ Cancelar</button>
+                                                </div>
+                                                <CompanyForm form={editForm} title="" submitLabel="Guardar Alterações"
+                                                    setField={setEField} setSubField={setESubField}
+                                                    onSubmit={saveEdit} />
+                                            </div>
+                                        </td>
+                                    </tr>
+                                );
+                            }
+
+                            return rows;
+                        })}
+
+                        {accounts.length === 0 && (
+                            <tr><td colSpan={5} className="text-center text-muted py-4">Nenhuma empresa criada.</td></tr>
+                        )}
+                    </tbody>
+                </table>
+            </div>
         </div>
     );
 }
+
+
+function ClientsTable({ clients, setClients, reloadClients, accounts }) {
+    // 1. O estado inicial agora inclui o campo companyId vazio
+    const getEmptyForm = () => ({
+        name: "",
+        email: "",
+        phone: "",
+        password: "",
+        status: "Ativo",
+        companyId: ""
+    });
+
+    const [showForm, setShowForm] = useState(false);
+    const [form, setForm] = useState(getEmptyForm());
+    const [editingId, setEditingId] = useState(null);
+    const [editForm, setEditForm] = useState(null);
+
+    const generatePassword = () => {
+        const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$";
+        return Array.from({ length: 12 }, () => chars[Math.floor(Math.random() * chars.length)]).join("");
+    };
+
+    // 2. Ação de Criar Cliente com Chave Estrangeira da Empresa
+    const handleCreate = async () => {
+        if (!form.name || !form.email || !form.password || !form.companyId) {
+            alert("Por favor, preencha o nome, email, password e selecione uma empresa.");
+            return;
+        }
+        try {
+            const res = await axios.post("https://orion-dewp.onrender.com/api/users", {
+                name: form.name,
+                email: form.email,
+                password: form.password,
+                telephone: form.phone,
+                id_tipo: 3, // Tipo 3 para Clientes
+                companyId: parseInt(form.companyId) // Envia o ID da Empresa selecionada
+            });
+
+            if (res.data.success) {
+                await reloadClients(); // Atualiza a lista geral
+                setForm(getEmptyForm());
+                setShowForm(false);
+            } else {
+                alert("Error: " + res.data.message);
+            }
+        } catch (err) {
+            alert("Connection error: " + err.message);
+        }
+    };
+
+    const startEdit = (c) => {
+        setEditingId(c.id_Utilizador || c.id);
+        setEditForm({
+            ...c,
+            companyId: c.companyId || "" // Garante que o ID antigo fica selecionado no dropdown
+        });
+        setShowForm(false);
+    };
+
+    const cancelEdit = () => { setEditingId(null); setEditForm(null); };
+
+    // 3. Ação de Guardar Alterações do Cliente
+    const saveEdit = async () => {
+        if (!editForm.name || !editForm.email || !editForm.companyId) {
+            alert("Nome, Email e Empresa são obrigatórios.");
+            return;
+        }
+        try {
+            const res = await axios.put(`https://orion-dewp.onrender.com/api/users/${editingId}`, {
+                name: editForm.name,
+                email: editForm.email,
+                telephone: editForm.phone,
+                status: editForm.status,
+                companyId: parseInt(editForm.companyId) // Atualiza a associação da empresa
+            });
+
+            if (res.data.success) {
+                await reloadClients();
+                cancelEdit();
+            } else {
+                alert("Error: " + res.data.message);
+            }
+        } catch (err) {
+            alert("Connection error: " + err.message);
+        }
+    };
+
+    const handleDelete = async (id) => {
+        if (!window.confirm("Tem a certeza que deseja remover este cliente?")) return;
+        try {
+            const res = await axios.delete(`https://orion-dewp.onrender.com/api/users/${id}`);
+            if (res.data.success) {
+                await reloadClients();
+            } else {
+                alert("Error: " + res.data.message);
+            }
+        } catch (err) {
+            alert("Connection error: " + err.message);
+        }
+    };
+
+    const statusColor = (s) => s === "Ativo" ? "bg-success" : "bg-danger";
+
+    return (
+        <div className="card p-3 shadow-sm border-0">
+            <div className="d-flex justify-content-between align-items-center mb-3">
+                <h5 className="mb-0 fw-bold">Clientes</h5>
+                <button type="button" className="btn btn-sm btn-dark"
+                    onClick={() => { setShowForm(!showForm); cancelEdit(); setForm(getEmptyForm()); }}>
+                    {showForm ? "Cancelar" : "+ Novo Cliente"}
+                </button>
+            </div>
+
+            {/* Formulário de Criação */}
+            {showForm && (
+                <ClientPersonForm
+                    form={form}
+                    setForm={setForm}
+                    title="Novo Cliente Corporativo"
+                    submitLabel="Criar Cliente"
+                    generatePassword={generatePassword}
+                    onSubmit={handleCreate}
+                    accounts={accounts}
+                />
+            )}
+
+            <div className="table-responsive">
+                <table className="table table-hover mb-0 align-middle">
+                    <thead className="table-success">
+                        <tr>
+                            <th>Nome</th>
+                            <th>Email</th>
+                            <th>Telefone</th>
+                            <th>Empresa</th>
+                            <th>Estado</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {clients.map((c) => (
+                            <React.Fragment key={c.id_Utilizador || c.id}>
+                                <tr>
+                                    <td className="fw-semibold">{c.name}</td>
+                                    <td>{c.email}</td>
+                                    <td>{c.phone || "—"}</td>
+                                    <td>
+                                        <span className="badge bg-light text-dark border">
+                                            {c.companyName || "Sem empresa"}
+                                        </span>
+                                    </td>
+                                    <td><span className={`badge ${statusColor(c.status)}`}>{c.status}</span></td>
+                                    <td>
+                                        <div className="d-flex gap-1">
+                                            <button type="button" className="btn btn-sm btn-outline-secondary" onClick={() => startEdit(c)}>Editar</button>
+                                            <button type="button" className="btn btn-sm btn-outline-danger" onClick={() => handleDelete(c.id_Utilizador || c.id)}>Remover</button>
+                                        </div>
+                                    </td>
+                                </tr>
+
+                                {/* Linha de Edição Inline */}
+                                {editingId === (c.id_Utilizador || c.id) && editForm && (
+                                    <tr>
+                                        <td colSpan={6} className="p-0">
+                                            <div className="border border-warning rounded m-2 p-3 bg-white">
+                                                <div className="d-flex justify-content-between align-items-center mb-3">
+                                                    <h6 className="mb-0 fw-bold text-warning">Editar Cliente — {c.name}</h6>
+                                                    <button type="button" className="btn btn-sm btn-link text-secondary p-0 text-decoration-none" onClick={cancelEdit}>✕ Cancelar</button>
+                                                </div>
+                                                <ClientPersonForm
+                                                    form={editForm}
+                                                    setForm={setEditForm}
+                                                    title=""
+                                                    submitLabel="Guardar Alterações"
+                                                    generatePassword={generatePassword}
+                                                    onSubmit={saveEdit}
+                                                    isEdit={true}
+                                                    accounts={accounts}
+                                                />
+                                            </div>
+                                        </td>
+                                    </tr>
+                                )}
+                            </React.Fragment>
+                        ))}
+                        {clients.length === 0 && (
+                            <tr><td colSpan={6} className="text-center text-muted py-3">Nenhum cliente cadastrado.</td></tr>
+                        )}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    );
+}
+function CompanyForm({ form, title, submitLabel, setField, setSubField, onSubmit }) {
+    return (
+        <>
+            {title && <h6 className="mb-3">{title}</h6>}
+
+            <div className="row g-2 mb-3">
+                <div className="col-md-6">
+                    <label className="form-label fw-semibold" style={{ fontSize: 12 }}>Nome da Empresa *</label>
+                    <input className="form-control form-control-sm" placeholder="Ex: TechCorp Lda"
+                        value={form.company} onChange={(e) => setField("company", e.target.value)} />
+                </div>
+                <div className="col-md-3">
+                    <label className="form-label fw-semibold" style={{ fontSize: 12 }}>Estado</label>
+                    <select className="form-select form-select-sm"
+                        value={form.status} onChange={(e) => setField("status", e.target.value)}>
+                        <option value="Ativo">Ativo</option>
+                        <option value="Pendente">Pendente</option>
+                        <option value="Inativo">Inativo</option>
+                    </select>
+                </div>
+            </div>
+            <hr />
+
+            <div className="mb-3">
+                <label className="fw-semibold d-block mb-2" style={{ fontSize: 13 }}>Responsável de Segurança</label>
+                <div className="row g-2">
+                    {["name", "email", "phone"].map((f) => (
+                        <div className="col-md-4" key={f}>
+                            <label className="form-label" style={{ fontSize: 11 }}>
+                                {f === "name" ? "Nome" : f === "email" ? "Email" : "Telefone"}
+                            </label>
+                            <input className="form-control form-control-sm"
+                                placeholder={f === "name" ? "Nome" : f === "email" ? "email@empresa.com" : "+351 910 000 000"}
+                                value={form.securityManager[f]}
+                                onChange={(e) => setSubField("securityManager", f, e.target.value)} />
+                        </div>
+                    ))}
+                </div>
+            </div>
+            <hr />
+
+            <div className="mb-3">
+                <label className="fw-semibold d-block mb-2" style={{ fontSize: 13 }}>Contacto Permanente</label>
+                <div className="row g-2">
+                    {["name", "email", "phone"].map((f) => (
+                        <div className="col-md-4" key={f}>
+                            <label className="form-label" style={{ fontSize: 11 }}>
+                                {f === "name" ? "Nome" : f === "email" ? "Email" : "Telefone"}
+                            </label>
+                            <input className="form-control form-control-sm"
+                                placeholder={f === "name" ? "Nome" : f === "email" ? "email@empresa.com" : "+351 910 000 000"}
+                                value={form.permanentContact[f]}
+                                onChange={(e) => setSubField("permanentContact", f, e.target.value)} />
+                        </div>
+                    ))}
+                </div>
+            </div>
+
+            <button className="btn btn-sm btn-success" onClick={onSubmit}>
+                {submitLabel}
+            </button>
+        </>
+    );
+}
+
+// ==========================================
+// SUB-FORMULÁRIO ADAPTADO COM DROPDOWN
+// ==========================================
+function ClientPersonForm({ form, setForm, title, submitLabel, generatePassword, onSubmit, isEdit = false, accounts }) {
+    return (
+        <div className="border rounded p-3 mb-4 bg-white">
+            {title && <h6 className="mb-3 text-secondary fw-bold">{title}</h6>}
+            <div className="row g-3">
+                {[
+                    { f: "name", label: "Nome Completo", type: "text", ph: "Nome do cliente" },
+                    { f: "email", label: "Email", type: "email", ph: "cliente@empresa.com" },
+                    { f: "phone", label: "Telefone", type: "tel", ph: "+351 9xx xxx xxx" },
+                ].map(({ f, label, type, ph }) => (
+                    <div className="col-md-4" key={f}>
+                        <label className="form-label fw-semibold mb-1" style={{ fontSize: 12 }}>{label}</label>
+                        <input type={type} className="form-control form-control-sm" placeholder={ph}
+                            value={form[f] || ""} onChange={(e) => setForm({ ...form, [f]: e.target.value })} />
+                    </div>
+                ))}
+
+                {/* DROPDOWN PARA ESCOLHER A EMPRESA */}
+                <div className="col-md-4">
+                    <label className="form-label fw-semibold mb-1 text-primary" style={{ fontSize: 12 }}>Empresa Pertencente *</label>
+                    <select
+                        className="form-select form-select-sm border-primary-subtle"
+                        value={form.companyId}
+                        onChange={(e) => setForm({ ...form, companyId: e.target.value })}
+                    >
+                        <option value="">-- Selecione uma Empresa --</option>
+                        {accounts.map((acc) => (
+                            <option key={acc.id} value={acc.id}>
+                                {acc.company}
+                            </option>
+                        ))}
+                    </select>
+                </div>
+
+                {!isEdit ? (
+                    <div className="col-md-4">
+                        <label className="form-label fw-semibold mb-1" style={{ fontSize: 12 }}>Password</label>
+                        <div className="input-group input-group-sm">
+                            <input type="text" className="form-control form-control-sm" placeholder="Gere a password"
+                                value={form.password || ""} onChange={(e) => setForm({ ...form, password: e.target.value })} />
+                            <button type="button" className="btn btn-outline-secondary"
+                                onClick={() => setForm({ ...form, password: generatePassword() })}>Gerar</button>
+                        </div>
+                    </div>
+                ) : (
+                    <div className="col-md-4">
+                        <label className="form-label fw-semibold mb-1" style={{ fontSize: 12 }}>Password</label>
+                        <input type="password" className="form-control form-control-sm bg-light" value="placeholder" disabled />
+                    </div>
+                )}
+
+                <div className="col-md-4">
+                    <label className="form-label fw-semibold mb-1" style={{ fontSize: 12 }}>Estado</label>
+                    <select className="form-select form-select-sm"
+                        value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value })}>
+                        <option>Ativo</option>
+                        <option>Inativo</option>
+                    </select>
+                </div>
+            </div>
+            <button type="button" className="btn btn-sm btn-success mt-3" onClick={onSubmit}>{submitLabel}</button>
+        </div>
+    );
+}
+
 
 function AdminsTable({ admins, setAdmins, reloadAdmins }) {
     const getEmptyForm = () => ({ name: "", email: "", phone: "", password: "", status: "Ativo" });
@@ -685,12 +1060,12 @@ function Requests() {
                     title: r.subject, // Usa o campo 'subject' do teu modelo Request
                     description: r.description,
                     // Se o criador tiver empresa associada mostra o nome dele, senão usa um padrão
-                    company: r.creator?.name || "CyberBox Cliente", 
+                    company: r.creator?.name || "CyberBox Cliente",
                     // Formata a data 'openedAt' do teu modelo
                     date: r.openedAt ? new Date(r.openedAt).toLocaleDateString("pt-PT") : "N/A",
-                    itemsCount: r.subtype ? 1 : 0, 
+                    itemsCount: r.subtype ? 1 : 0,
                     // Tipo principal vem do include { model: RequestType }
-                    type: r.RequestType?.name || "Geral", 
+                    type: r.RequestType?.name || "Geral",
                     subtype: r.subtype,
                     // Nome do utilizador atribuído obtido através do alias 'assignedTo'
                     assignedTo: r.assignedTo?.nome || r.assignedTo?.name || "Sem atribuição",
