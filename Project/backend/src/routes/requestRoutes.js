@@ -11,5 +11,6 @@ router.post('/requests/create', requestController.request_create);
 router.put('/requests/:id', requestController.request_update);
 router.delete('/requests/:id', requestController.request_delete);
 router.put('/requests/:id/close', requestController.request_close);
+router.post('/requests/create', requestController.request_create);
 
 module.exports = router;
