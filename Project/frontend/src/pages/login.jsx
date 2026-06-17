@@ -1,6 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import { useState } from 'react';
 import '../index.css';
+import axios from 'axios';
 
 function Login() {
     const navigate = useNavigate();
@@ -12,13 +13,14 @@ const handleLogin = async (e) => {
     e.preventDefault();
 
     try {
-        const response = await fetch('https://orion-dewp.onrender.com/api/users/login', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email, password })
+        // 🟢 CORREÇÃO 1: No Axios passamos o objeto direto, sem "body", "headers" ou "JSON.stringify"
+        const response = await axios.post('https://orion-dewp.onrender.com/api/users/login', {
+            email,
+            password
         });
 
-        const data = await response.json();
+        // 🟢 CORREÇÃO 2: No Axios os dados já vêm prontos dentro de .data
+        const data = response.data;
 
         if (data.success) {
             const userType = data.user.id_tipo;
@@ -37,9 +39,13 @@ const handleLogin = async (e) => {
         }
     } catch (error) {
         console.error("Login connection error:", error);
-        alert('Erro de ligação ao servidor.');
+        
+        // 💡 Dica extra: Exibe a mensagem real que o seu backend enviou no erro
+        const mensagemErro = error.response?.data?.message || 'Erro de ligação ao servidor.';
+        alert(mensagemErro);
     }
 };
+
 
     return (
         <div className="vh-100 d-flex">

@@ -1,4 +1,5 @@
-import { useState, useEffect } from "react";
+import axios from 'axios';
+import { useState, useRef } from "react";
 import "bootstrap/dist/css/bootstrap.min.css";
 
 export default function ClientDashboard() {
@@ -334,69 +335,97 @@ function Docs() {
             )}
 
             {/* ── Report de Incidente ── */}
-            {subTab === "incident" && (
-                <>
-                    <p className="text-muted mb-3" style={{ fontSize: 13 }}>
-                        Formulário baseado no modelo do{" "}
-                        <a href="https://www.cncs.gov.pt" target="_blank" rel="noreferrer">cncs.gov.pt</a>.
-                    </p>
-                    <div className="row g-3">
-                        <div className="col-md-6">
-                            <label className="form-label fw-semibold" style={{ fontSize: 12 }}>Data do Incidente *</label>
-                            <input type="date" className="form-control form-control-sm"
-                                value={incident.date} onChange={e => setIncident({ ...incident, date: e.target.value })} />
-                        </div>
-                        <div className="col-md-6">
-                            <label className="form-label fw-semibold" style={{ fontSize: 12 }}>Tipo de Incidente *</label>
-                            <select className="form-select form-select-sm"
-                                value={incident.type} onChange={e => setIncident({ ...incident, type: e.target.value })}>
-                                <option value="">Selecionar...</option>
-                                <option>Acesso não autorizado</option>
-                                <option>Malware / Ransomware</option>
-                                <option>Phishing</option>
-                                <option>Negação de Serviço (DoS/DDoS)</option>
-                                <option>Fuga de informação</option>
-                                <option>Outro</option>
-                            </select>
-                        </div>
-                        <div className="col-md-12">
-                            <label className="form-label fw-semibold" style={{ fontSize: 12 }}>Descrição do Incidente *</label>
-                            <textarea className="form-control form-control-sm" rows={3}
-                                placeholder="Descreva o incidente de forma detalhada..."
-                                value={incident.description} onChange={e => setIncident({ ...incident, description: e.target.value })} />
-                        </div>
-                        <div className="col-md-6">
-                            <label className="form-label fw-semibold" style={{ fontSize: 12 }}>Impacto</label>
-                            <select className="form-select form-select-sm"
-                                value={incident.impact} onChange={e => setIncident({ ...incident, impact: e.target.value })}>
-                                <option value="">Selecionar...</option>
-                                <option>Baixo</option><option>Médio</option>
-                                <option>Alto</option><option>Crítico</option>
-                            </select>
-                        </div>
-                        <div className="col-md-6">
-                            <label className="form-label fw-semibold" style={{ fontSize: 12 }}>Sistemas Afetados</label>
-                            <input className="form-control form-control-sm" placeholder="Ex: Servidor Web, Email..."
-                                value={incident.systems} onChange={e => setIncident({ ...incident, systems: e.target.value })} />
-                        </div>
-                        <div className="col-md-12">
-                            <label className="form-label fw-semibold" style={{ fontSize: 12 }}>Ações Tomadas</label>
-                            <textarea className="form-control form-control-sm" rows={2}
-                                placeholder="Que medidas foram tomadas imediatamente?"
-                                value={incident.actions} onChange={e => setIncident({ ...incident, actions: e.target.value })} />
-                        </div>
-                        <div className="col-md-12">
-                            <label className="form-label fw-semibold" style={{ fontSize: 12 }}>Anexar Evidências</label>
-                            <input type="file" className="form-control form-control-sm"
-                                onChange={e => handleUpload(e, "Incidente")} />
-                        </div>
-                    </div>
-                    <button className="btn btn-sm btn-success mt-3"
-                        onClick={() => alert("Incidente submetido com sucesso!")}>
-                        Submeter Incidente
-                    </button>
-                </>
-            )}
+           {subTab === "incident" && (
+    <>
+        <p className="text-muted mb-3" style={{ fontSize: 13 }}>
+            Formulário baseado no modelo do{" "}
+            <a href="https://www.cncs.gov.pt" target="_blank" rel="noreferrer">cncs.gov.pt</a>.
+        </p>
+        <div className="row g-3">
+            <div className="col-md-6">
+                <label className="form-label fw-semibold" style={{ fontSize: 12 }}>Data do Incidente *</label>
+                <input type="date" className="form-control form-control-sm"
+                    value={incident.date} onChange={e => setIncident({ ...incident, date: e.target.value })} />
+            </div>
+            <div className="col-md-6">
+                <label className="form-label fw-semibold" style={{ fontSize: 12 }}>Tipo de Incidente *</label>
+                <select className="form-select form-select-sm"
+                    value={incident.type} onChange={e => setIncident({ ...incident, type: e.target.value })}>
+                    <option value="">Selecionar...</option>
+                    <option>Acesso não autorizado</option>
+                    <option>Malware / Ransomware</option>
+                    <option>Phishing</option>
+                    <option>Negação de Serviço (DoS/DDoS)</option>
+                    <option>Fuga de informação</option>
+                    <option>Outro</option>
+                </select>
+            </div>
+            <div className="col-md-12">
+                <label className="form-label fw-semibold" style={{ fontSize: 12 }}>Descrição do Incidente *</label>
+                <textarea className="form-control form-control-sm" rows={3}
+                    placeholder="Descreva o incidente de forma detalhada..."
+                    value={incident.description} onChange={e => setIncident({ ...incident, description: e.target.value })} />
+            </div>
+            <div className="col-md-6">
+                <label className="form-label fw-semibold" style={{ fontSize: 12 }}>Impacto</label>
+                <select className="form-select form-select-sm"
+                    value={incident.impact} onChange={e => setIncident({ ...incident, impact: e.target.value })}>
+                    <option value="">Selecionar...</option>
+                    <option>Baixo</option>
+                    <option>Médio</option>
+                    <option>Alto</option>
+                    <option>Crítico</option>
+                </select>
+            </div>
+            <div className="col-md-6">
+                <label className="form-label fw-semibold" style={{ fontSize: 12 }}>Sistemas Afetados</label>
+                <input className="form-control form-control-sm"
+                    placeholder="Ex: Servidor Web, Email..."
+                    value={incident.systems} onChange={e => setIncident({ ...incident, systems: e.target.value })} />
+            </div>
+            <div className="col-md-12">
+                <label className="form-label fw-semibold" style={{ fontSize: 12 }}>Ações Tomadas</label>
+                <textarea className="form-control form-control-sm" rows={2}
+                    placeholder="Que medidas foram tomadas imediatamente?"
+                    value={incident.actions} onChange={e => setIncident({ ...incident, actions: e.target.value })} />
+            </div>
+            <div className="col-md-12">
+                <label className="form-label fw-semibold" style={{ fontSize: 12 }}>Anexar Evidências</label>
+                <input type="file" className="form-control form-control-sm"
+                    onChange={e => handleUpload(e, "Incidente")} />
+            </div>
+        </div>
+        
+        
+<button className="btn btn-sm btn-success mt-3" onClick={async () => {
+    if (!incident.date || !incident.type || !incident.description) {
+        alert("Por favor, preencha todos os campos obrigatórios (*).");
+        return;
+    }
+    try {
+        // 🟢 CORREÇÃO DEFINITIVA: Aponta para o seu servidor real (orion-dewp) com a rota certa
+        const response = await axios.post('"https://orion-dewp.onrender.com/api/requests', {
+            ...incident,
+            creatorId: 1 
+        });
+        
+        if (response.data.success) {
+            alert(response.data.message); 
+            // Limpa o ecrã
+            setIncident({ date: "", type: "", description: "", impact: "", systems: "", actions: "" });
+        }
+    } catch (error) {
+        console.error("Erro na ligação à API:", error);
+        alert(error.response?.data?.message || "Erro de ligação ao servidor.");
+    }
+}}>
+    Submeter Incidente
+</button>
+
+
+    </>
+)}
+
 
             {/* ── Outras tabs de upload ── */}
             {["internal", "pentest", "evidence"].includes(subTab) && (
@@ -515,6 +544,8 @@ function Tickets() {
 }
 
 /* ───────────────────────── REQUESTS ───────────────────────── */
+
+
 function Requests() {
     const [requests, setRequests] = useState([]);
     const [requestTypes, setRequestTypes] = useState([]);
@@ -522,21 +553,28 @@ function Requests() {
     const [showForm, setShowForm] = useState(false);
     const [loading, setLoading] = useState(true);
 
-    const statusColor = { Aprovado: "success", "Em análise": "info", Pendente: "warning", Rejeitado: "danger" };
+    const statusColor = { 
+        Aprovado: "success", 
+        "Em análise": "info", 
+        Pendente: "warning", 
+        Rejeitado: "danger" 
+    };
 
+    // Busca os tipos de pedido e os pedidos do cliente ao carregar usando Axios
     useEffect(() => {
         const fetchData = async () => {
             try {
-                const [typesRes, requestsRes] = await Promise.all([
-                    fetch("http://localhost:3001/request-types"),
-                    fetch("http://localhost:3001/requests"),
-                ]);
-                const types = await typesRes.json();
-                const reqs  = await requestsRes.json();
-                setRequestTypes(types);
-                setRequests(reqs);
+             // Mantenha o endereço do Render + a rota específica de cada pedido
+            const [typesRes, requestsRes] = await Promise.all([
+                axios.get("https://orion-dewp.onrender.com/api/request"),
+                axios.get("https://orion-dewp.onrender.com/api/requests")
+            ]);
+
+                // No Axios, os dados vindos do servidor já estão em .data
+                setRequestTypes(typesRes.data);
+                setRequests(requestsRes.data);
             } catch (err) {
-                console.error("Erro ao carregar dados:", err);
+                console.error("Erro ao carregar dados com Axios:", err);
             } finally {
                 setLoading(false);
             }
@@ -544,37 +582,53 @@ function Requests() {
         fetchData();
     }, []);
 
+    // Submete o novo pedido usando Axios
     const handleSubmit = async () => {
         if (!form.type) return;
         try {
-            const res = await fetch("http://localhost:3001/requests", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                credentials: "include",
-                body: JSON.stringify({ type: form.type, notes: form.notes }),
-            });
-            const newRequest = await res.json();
+            // Convertido para axios.post. O JSON.stringify deixa de ser necessário!
+            const res = await axios.post("https://orion-dewp.onrender.com/api/requests", 
+                { 
+                    type: form.type, 
+                    notes: form.notes 
+                },
+                {
+                    // Equivalente ao credentials: "include" do fetch (envia cookies/sessões)
+                    withCredentials: true 
+                }
+            );
+
+            // O novo objeto criado vem dentro de res.data
+            const newRequest = res.data;
+            
             setRequests([...requests, newRequest]);
             setForm({ type: "", notes: "" });
             setShowForm(false);
         } catch (err) {
-            console.error("Erro ao submeter pedido:", err);
+            console.error("Erro ao submeter pedido com Axios:", err);
+            alert("Não foi possível submeter o pedido.");
         }
     };
 
-    if (loading) return <div className="card p-3"><p className="text-muted">A carregar...</p></div>;
+    if (loading) {
+        return (
+            <div className="card p-3">
+                <p className="text-muted mb-0">A carregar...</p>
+            </div>
+        );
+    }
 
     return (
-        <div className="card p-3">
+        <div className="card p-3 shadow-sm">
             <div className="d-flex justify-content-between align-items-center mb-3">
-                <h6 className="mb-0">Pedidos</h6>
+                <h6 className="mb-0 fw-bold">Pedidos</h6>
                 <button className="btn btn-sm btn-dark" onClick={() => setShowForm(!showForm)}>
                     {showForm ? "Cancelar" : "+ Novo Pedido"}
                 </button>
             </div>
 
             {showForm && (
-                <div className="border p-3 mb-3 bg-light">
+                <div className="border p-3 mb-3 bg-light rounded">
                     <div className="mb-2">
                         <label className="form-label fw-semibold" style={{ fontSize: 12 }}>Tipo de Pedido *</label>
                         <select className="form-select form-select-sm"
@@ -595,27 +649,41 @@ function Requests() {
                 </div>
             )}
 
-            <table className="table">
-                <thead>
-                    <tr><th>ID</th><th>Tipo</th><th>Data</th><th>Estado</th><th>Notas</th></tr>
-                </thead>
-                <tbody>
-                    {requests.map(r => (
-                        <tr key={r.id}>
-                            <td style={{ color: "#0d6efd", fontWeight: 600 }}>#{r.id}</td>
-                            <td>{r.type_name || r.type}</td>
-                            <td style={{ fontSize: 13, color: "#6b7280" }}>{r.date}</td>
-                            <td><span className={`badge bg-${statusColor[r.status]}`}>{r.status}</span></td>
-                            <td style={{ fontSize: 13, color: "#6b7280" }}>
-                                {r.notes || <span className="text-muted fst-italic">—</span>}
-                            </td>
-                        </tr>
-                    ))}
-                </tbody>
-            </table>
+            <div className="table-responsive">
+                <table className="table table-hover mb-0 align-middle">
+                    <thead>
+                        <tr><th>ID</th><th>Tipo</th><th>Data</th><th>Estado</th><th>Notas</th></tr>
+                    </thead>
+                    <tbody>
+                        {requests.map(r => (
+                            <tr key={r.id}>
+                                <td style={{ color: "#0d6efd", fontWeight: 600 }}>#{r.id}</td>
+                                <td>{r.type_name || r.type}</td>
+                                <td style={{ fontSize: 13, color: "#6b7280" }}>{r.date}</td>
+                                <td>
+                                    <span className={`badge bg-${statusColor[r.status] || 'secondary'}`}>
+                                        {r.status}
+                                    </span>
+                                </td>
+                                <td style={{ fontSize: 13, color: "#6b7280" }}>
+                                    {r.notes || <span className="text-muted fst-italic">—</span>}
+                                </td>
+                            </tr>
+                        ))}
+                        {requests.length === 0 && (
+                            <tr>
+                                <td colSpan={5} className="text-center text-muted py-3">
+                                    Nenhum pedido registado.
+                                </td>
+                            </tr>
+                        )}
+                    </tbody>
+                </table>
+            </div>
         </div>
     );
 }
+
 
 /* ───────────────────────── STAT CARD ───────────────────────── */
 function StatCard({ title, value, color }) {

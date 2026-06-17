@@ -1,11 +1,11 @@
-// ✅ Correção: Importando os modelos diretamente dos seus ficheiros individuais
+// ✅ Modelos importados diretamente dos ficheiros individuais
 const Request = require('../models/requestModel');
 const RequestType = require('../models/requestTypeModel');
 const User = require('../models/User');
 
-//
-// GET ALL REQUESTS
-//
+// ==========================================
+// 1. LISTAR TODOS OS PEDIDOS (GET /api/requests)
+// ==========================================
 const request_list = async (req, res) => {
     try {
         const requests = await Request.findAll({
@@ -17,16 +17,36 @@ const request_list = async (req, res) => {
             order: [['openedAt', 'DESC']]
         });
 
-        return res.json(requests);
+        // 🟢 Transforma os dados no formato exato que a tabela do cliente espera ler
+        const mappedRequests = requests.map(r => {
+            // Converte o ENUM do banco para o texto esperado pelas cores do bootstrap do frontend
+            let statusReact = "Pendente";
+            if (r.status === "in_progress") statusReact = "Em análise";
+            if (r.status === "closed") statusReact = "Aprovado";
+
+            return {
+                id: r.id,
+                type: r.RequestType ? r.RequestType.name : "Geral",
+                type_name: r.RequestType ? r.RequestType.name : "Geral",
+                date: r.openedAt ? new Date(r.openedAt).toLocaleDateString("pt-PT") : "",
+                status: statusReact, // Entrega o termo em português que o React usa nas cores
+                notes: r.description // O frontend chama 'notes', mapeamos a 'description' da BD
+            };
+        });
+
+        return res.json({
+            success: true,
+            requests: mappedRequests
+        });
 
     } catch (error) {
-        return res.status(500).json({ message: error.message });
+        return res.status(500).json({ success: false, message: error.message });
     }
 };
 
-//
-// GET REQUEST BY ID
-//
+// ==========================================
+// 2. DETALHAR UM PEDIDO POR ID (GET /api/requests/:id)
+// ==========================================
 const request_detail = async (req, res) => {
     try {
         const { id } = req.params;
@@ -40,66 +60,95 @@ const request_detail = async (req, res) => {
         });
 
         if (!request) {
-            return res.status(404).json({ message: 'Request not found' });
+            return res.status(404).json({ success: false, message: 'Pedido não encontrado.' });
         }
 
-        return res.json(request);
+        return res.json({
+            success: true,
+            request: request
+        });
 
     } catch (error) {
-        return res.status(500).json({ message: error.message });
+        return res.status(500).json({ success: false, message: error.message });
     }
 };
 
-//
-// CREATE REQUEST
-//
+// ==========================================
+// 3. CRIAR NOVO PEDIDO (POST /api/requests/create ou /api/requests)
+// ==========================================
 const request_create = async (req, res) => {
     try {
+        // Extrai tanto os campos originais do backend como os campos que o React envia
         const {
-            requestTypeId,
+            requestTypeId, type,       // Aceita 'requestTypeId' ou 'type'
             creatorId,
             assignedToId,
             subject,
-            description,
+            description, notes,        // Aceita 'description' ou 'notes'
             subtype
         } = req.body;
 
-        if (!requestTypeId || !creatorId || !subject || !description) {
-            return res.status(400).json({ message: 'Missing required fields' });
+        // Mapeamento inteligente: se vier do React, usa as variáveis dele
+        const finalRequestTypeId = requestTypeId || type;
+        const finalDescription = description || notes;
+        const finalSubject = subject || "Pedido via Portal";
+
+        // Validação de campos obrigatórios
+        if (!finalRequestTypeId || !finalDescription) {
+            return res.status(400).json({ 
+                success: false, 
+                message: 'Por favor, selecione o tipo de pedido e preencha a descrição.' 
+            });
         }
 
-        // ✅ Validação do subtype para pedidos do tipo "Others"
-        const requestType = await RequestType.findByPk(requestTypeId);
-
+        // Verificar se o tipo de pedido existe na Base de Dados
+        const requestType = await RequestType.findByPk(finalRequestTypeId);
         if (!requestType) {
-            return res.status(404).json({ message: 'Request type not found' });
+            return res.status(404).json({ 
+                success: false, 
+                message: 'O tipo de pedido selecionado é inválido.' 
+            });
         }
 
+        // Validação inteligente para o tipo "Others"
         if (requestType.name === 'Others' && (!subtype || subtype.trim() === '')) {
-            return res.status(400).json({ message: 'Subtype é obrigatório para pedidos do tipo Others' });
+            return res.status(400).json({ 
+                success: false, 
+                message: 'É obrigatório especificar o subtipo quando escolhe a opção "Outros".' 
+            });
         }
 
+        // Criar o registo na Base de Dados com o Sequelize
         const newRequest = await Request.create({
-            requestTypeId,
-            creatorId,
-            assignedToId: assignedToId || null,
-            subject,
-            description,
-            subtype: requestType.name === 'Others' ? subtype.trim() : null,
-            status: 'open',
-            openedAt: new Date()
+            requestTypeId: Number(finalRequestTypeId),
+            creatorId: creatorId || 1, // Fallback caso o frontend não passe o ID do user logado
+            assignedToId: assignedToId || null, 
+            subject: finalSubject,
+            description: finalDescription,
+            subtype: requestType.name === 'Others' ? subtype.trim() : null, 
+            status: 'open', 
+            openedAt: new Date() 
         });
 
-        return res.status(201).json(newRequest);
+        return res.status(201).json({
+            success: true,
+            message: 'Pedido criado com sucesso! 🚀',
+            request: newRequest
+        });
 
     } catch (error) {
-        return res.status(500).json({ message: error.message });
+        console.error("Erro ao criar pedido:", error.message);
+        return res.status(500).json({ 
+            success: false, 
+            message: 'Erro interno no servidor ao tentar criar o pedido.',
+            error: error.message 
+        });
     }
 };
 
-//
-// UPDATE REQUEST
-//
+// ==========================================
+// 4. ATUALIZAR PEDIDO (PUT /api/requests/:id)
+// ==========================================
 const request_update = async (req, res) => {
     try {
         const { id } = req.params;
@@ -109,39 +158,38 @@ const request_update = async (req, res) => {
         });
 
         if (!request) {
-            return res.status(404).json({ message: 'Request not found' });
+            return res.status(404).json({ success: false, message: 'Pedido não encontrado.' });
         }
 
-        // ✅ Validação do subtype caso o requestTypeId seja alterado ou já seja "Others"
         const newRequestTypeId = req.body.requestTypeId || request.requestTypeId;
         const requestType = await RequestType.findByPk(newRequestTypeId);
 
         if (requestType.name === 'Others') {
             const newSubtype = req.body.subtype || request.subtype;
             if (!newSubtype || newSubtype.trim() === '') {
-                return res.status(400).json({ message: 'Subtype é obrigatório para pedidos do tipo Others' });
+                return res.status(400).json({ success: false, message: 'Subtype é obrigatório para pedidos do tipo Others.' });
             }
             req.body.subtype = newSubtype.trim();
         } else {
-            // Se mudou de Others para outro tipo, limpa o subtype
             req.body.subtype = null;
         }
 
         await request.update(req.body);
 
         return res.json({
-            message: 'Request updated successfully',
+            success: true,
+            message: 'Pedido atualizado com sucesso.',
             request
         });
 
     } catch (error) {
-        return res.status(500).json({ message: error.message });
+        return res.status(500).json({ success: false, message: error.message });
     }
 };
 
-//
-// DELETE REQUEST
-//
+// ==========================================
+// 5. ELIMINAR PEDIDO (DELETE /api/requests/:id)
+// ==========================================
 const request_delete = async (req, res) => {
     try {
         const { id } = req.params;
@@ -149,21 +197,21 @@ const request_delete = async (req, res) => {
         const request = await Request.findByPk(id);
 
         if (!request) {
-            return res.status(404).json({ message: 'Request not found' });
+            return res.status(404).json({ success: false, message: 'Pedido não encontrado.' });
         }
 
         await request.destroy();
 
-        return res.json({ message: 'Request deleted successfully' });
+        return res.json({ success: true, message: 'Pedido eliminado com sucesso.' });
 
     } catch (error) {
-        return res.status(500).json({ message: error.message });
+        return res.status(500).json({ success: false, message: error.message });
     }
 };
 
-//
-// CLOSE REQUEST
-//
+// ==========================================
+// 6. FECHAR PEDIDO (PUT /api/requests/:id/close)
+// ==========================================
 const request_close = async (req, res) => {
     try {
         const { id } = req.params;
@@ -171,7 +219,7 @@ const request_close = async (req, res) => {
         const request = await Request.findByPk(id);
 
         if (!request) {
-            return res.status(404).json({ message: 'Request not found' });
+            return res.status(404).json({ success: false, message: 'Pedido não encontrado.' });
         }
 
         await request.update({
@@ -180,18 +228,17 @@ const request_close = async (req, res) => {
         });
 
         return res.json({
-            message: 'Request closed successfully',
+            success: true,
+            message: 'Pedido fechado com sucesso.',
             request
         });
 
     } catch (error) {
-        return res.status(500).json({ message: error.message });
+        return res.status(500).json({ success: false, message: error.message });
     }
 };
 
-//
-// EXPORT
-//
+// Exportação unificada de todas as funções do controlador
 module.exports = {
     request_list,
     request_detail,
