@@ -549,6 +549,9 @@ function Questions() {
 }
 
 /* ───────────────────────── REQUESTS ───────────────────────── */
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
+
 function Requests() {
     const [requests, setRequests] = useState([]);
     const [requestTypes, setRequestTypes] = useState([]);
@@ -556,22 +559,28 @@ function Requests() {
     const [showForm, setShowForm] = useState(false);
     const [loading, setLoading] = useState(true);
 
-    const statusColor = { Aprovado: "success", "Em análise": "info", Pendente: "warning", Rejeitado: "danger" };
+    const statusColor = { 
+        Aprovado: "success", 
+        "Em análise": "info", 
+        Pendente: "warning", 
+        Rejeitado: "danger" 
+    };
 
-    // Busca os tipos de pedido e os pedidos do cliente ao carregar
+    // Busca os tipos de pedido e os pedidos do cliente ao carregar usando Axios
     useEffect(() => {
         const fetchData = async () => {
             try {
+                // Executa os dois GETs em paralelo de forma eficiente
                 const [typesRes, requestsRes] = await Promise.all([
-                    fetch("http://localhost:3001/request-types"),
-                    fetch("http://localhost:3001/requests"),        // pedidos do cliente
+                    axios.get("http://localhost:3001/request-types"),
+                    axios.get("http://localhost:3001/requests")
                 ]);
-                const types    = await typesRes.json();
-                const reqs     = await requestsRes.json();
-                setRequestTypes(types);
-                setRequests(reqs);
+
+                // No Axios, os dados vindos do servidor já estão em .data
+                setRequestTypes(typesRes.data);
+                setRequests(requestsRes.data);
             } catch (err) {
-                console.error("Erro ao carregar dados:", err);
+                console.error("Erro ao carregar dados com Axios:", err);
             } finally {
                 setLoading(false);
             }
@@ -579,37 +588,53 @@ function Requests() {
         fetchData();
     }, []);
 
+    // Submete o novo pedido usando Axios
     const handleSubmit = async () => {
         if (!form.type) return;
         try {
-            const res = await fetch("http://localhost:3001/requests", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                credentials: "include",
-                body: JSON.stringify({ type: form.type, notes: form.notes }),
-            });
-            const newRequest = await res.json();
+            // Convertido para axios.post. O JSON.stringify deixa de ser necessário!
+            const res = await axios.post("http://localhost:3001/requests", 
+                { 
+                    type: form.type, 
+                    notes: form.notes 
+                },
+                {
+                    // Equivalente ao credentials: "include" do fetch (envia cookies/sessões)
+                    withCredentials: true 
+                }
+            );
+
+            // O novo objeto criado vem dentro de res.data
+            const newRequest = res.data;
+            
             setRequests([...requests, newRequest]);
             setForm({ type: "", notes: "" });
             setShowForm(false);
         } catch (err) {
-            console.error("Erro ao submeter pedido:", err);
+            console.error("Erro ao submeter pedido com Axios:", err);
+            alert("Não foi possível submeter o pedido.");
         }
     };
 
-    if (loading) return <div className="card p-3"><p className="text-muted">A carregar...</p></div>;
+    if (loading) {
+        return (
+            <div className="card p-3">
+                <p className="text-muted mb-0">A carregar...</p>
+            </div>
+        );
+    }
 
     return (
-        <div className="card p-3">
+        <div className="card p-3 shadow-sm">
             <div className="d-flex justify-content-between align-items-center mb-3">
-                <h6 className="mb-0">Pedidos</h6>
+                <h6 className="mb-0 fw-bold">Pedidos</h6>
                 <button className="btn btn-sm btn-dark" onClick={() => setShowForm(!showForm)}>
                     {showForm ? "Cancelar" : "+ Novo Pedido"}
                 </button>
             </div>
 
             {showForm && (
-                <div className="border p-3 mb-3 bg-light">
+                <div className="border p-3 mb-3 bg-light rounded">
                     <div className="mb-2">
                         <label className="form-label fw-semibold" style={{ fontSize: 12 }}>Tipo de Pedido *</label>
                         <select className="form-select form-select-sm"
@@ -632,27 +657,42 @@ function Requests() {
                 </div>
             )}
 
-            <table className="table">
-                <thead>
-                    <tr><th>ID</th><th>Tipo</th><th>Data</th><th>Estado</th><th>Notas</th></tr>
-                </thead>
-                <tbody>
-                    {requests.map(r => (
-                        <tr key={r.id}>
-                            <td style={{ color: "#0d6efd", fontWeight: 600 }}>#{r.id}</td>
-                            <td>{r.type_name || r.type}</td>
-                            <td style={{ fontSize: 13, color: "#6b7280" }}>{r.date}</td>
-                            <td><span className={`badge bg-${statusColor[r.status]}`}>{r.status}</span></td>
-                            <td style={{ fontSize: 13, color: "#6b7280" }}>
-                                {r.notes || <span className="text-muted fst-italic">—</span>}
-                            </td>
-                        </tr>
-                    ))}
-                </tbody>
-            </table>
+            <div className="table-responsive">
+                <table className="table table-hover mb-0 align-middle">
+                    <thead>
+                        <tr><th>ID</th><th>Tipo</th><th>Data</th><th>Estado</th><th>Notas</th></tr>
+                    </thead>
+                    <tbody>
+                        {requests.map(r => (
+                            <tr key={r.id}>
+                                <td style={{ color: "#0d6efd", fontWeight: 600 }}>#{r.id}</td>
+                                <td>{r.type_name || r.type}</td>
+                                <td style={{ fontSize: 13, color: "#6b7280" }}>{r.date}</td>
+                                <td>
+                                    <span className={`badge bg-${statusColor[r.status] || 'secondary'}`}>
+                                        {r.status}
+                                    </span>
+                                </td>
+                                <td style={{ fontSize: 13, color: "#6b7280" }}>
+                                    {r.notes || <span className="text-muted fst-italic">—</span>}
+                                </td>
+                            </tr>
+                        ))}
+                        {requests.length === 0 && (
+                            <tr>
+                                <td colSpan={5} className="text-center text-muted py-3">
+                                    Nenhum pedido registado.
+                                </td>
+                            </tr>
+                        )}
+                    </tbody>
+                </table>
+            </div>
         </div>
     );
 }
+
+export default Requests;
 
 /* ───────────────────────── STAT CARD ───────────────────────── */
 function StatCard({ title, value, color }) {
