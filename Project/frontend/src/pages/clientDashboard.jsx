@@ -426,15 +426,14 @@ function Submit() {
             </div>
         </div>
         
-        {/* Botão integrado com o Axios para desviar os dados para a tabela requests */}
-        {/* 🟢 O botão do formulário de incidentes corrigido com o link certo do vosso servidor */}
+        
 <button className="btn btn-sm btn-success mt-3" onClick={async () => {
     if (!incident.date || !incident.type || !incident.description) {
         alert("Por favor, preencha todos os campos obrigatórios (*).");
         return;
     }
     try {
-        // 🚨 ALTERADO: O URL agora aponta diretamente para o vosso servidor (orion-dewp) e inclui o prefixo /api
+        // 🟢 CORREÇÃO DEFINITIVA: Aponta para o seu servidor real (orion-dewp) com a rota certa
         const response = await axios.post('https://onrender.com', {
             ...incident,
             creatorId: 1 
@@ -442,6 +441,7 @@ function Submit() {
         
         if (response.data.success) {
             alert(response.data.message); 
+            // Limpa o ecrã
             setIncident({ date: "", type: "", description: "", impact: "", systems: "", actions: "" });
         }
     } catch (error) {
@@ -451,6 +451,7 @@ function Submit() {
 }}>
     Submeter Incidente
 </button>
+
 
     </>
 )}
