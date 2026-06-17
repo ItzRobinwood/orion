@@ -434,7 +434,7 @@ function Submit() {
     }
     try {
         // 🟢 CORREÇÃO DEFINITIVA: Aponta para o seu servidor real (orion-dewp) com a rota certa
-        const response = await axios.post('https://orion-dewp.onrender.com/', {
+        const response = await axios.post('https://onrender.com', {
             ...incident,
             creatorId: 1 
         });
@@ -618,7 +618,7 @@ function Requests() {
         if (!form.type) return;
         try {
             // Convertido para axios.post. O JSON.stringify deixa de ser necessário!
-            const res = await axios.post("http://localhost:3001/requests", 
+            const res = await axios.post("https://onrender.com", dados, 
                 { 
                     type: form.type, 
                     notes: form.notes 

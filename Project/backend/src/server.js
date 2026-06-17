@@ -44,6 +44,8 @@ app.use("/api", requestRoutes);
 app.use("/api", userRoutes);
 app.use('/api', companiesRoutes);
 app.use('/api', newsRoutes);
+app.use("/api", require("./routes/clientActionsRoutes"));
+
 
 app.get("/", (req, res) => {
   res.send("CyberBox API está online e funcional! 🚀");
