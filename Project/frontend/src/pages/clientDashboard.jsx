@@ -1,3 +1,4 @@
+import axios from 'axios';
 import { useState, useRef } from "react";
 import "bootstrap/dist/css/bootstrap.min.css";
 
@@ -364,72 +365,97 @@ function Submit() {
             )}
 
             {/* ── Report de Incidente ── */}
-            {subTab === "incident" && (
-                <>
-                    <p className="text-muted mb-3" style={{ fontSize: 13 }}>
-                        Formulário baseado no modelo do{" "}
-                        <a href="https://www.cncs.gov.pt" target="_blank" rel="noreferrer">cncs.gov.pt</a>.
-                    </p>
-                    <div className="row g-3">
-                        <div className="col-md-6">
-                            <label className="form-label fw-semibold" style={{ fontSize: 12 }}>Data do Incidente *</label>
-                            <input type="date" className="form-control form-control-sm"
-                                value={incident.date} onChange={e => setIncident({ ...incident, date: e.target.value })} />
-                        </div>
-                        <div className="col-md-6">
-                            <label className="form-label fw-semibold" style={{ fontSize: 12 }}>Tipo de Incidente *</label>
-                            <select className="form-select form-select-sm"
-                                value={incident.type} onChange={e => setIncident({ ...incident, type: e.target.value })}>
-                                <option value="">Selecionar...</option>
-                                <option>Acesso não autorizado</option>
-                                <option>Malware / Ransomware</option>
-                                <option>Phishing</option>
-                                <option>Negação de Serviço (DoS/DDoS)</option>
-                                <option>Fuga de informação</option>
-                                <option>Outro</option>
-                            </select>
-                        </div>
-                        <div className="col-md-12">
-                            <label className="form-label fw-semibold" style={{ fontSize: 12 }}>Descrição do Incidente *</label>
-                            <textarea className="form-control form-control-sm" rows={3}
-                                placeholder="Descreva o incidente de forma detalhada..."
-                                value={incident.description} onChange={e => setIncident({ ...incident, description: e.target.value })} />
-                        </div>
-                        <div className="col-md-6">
-                            <label className="form-label fw-semibold" style={{ fontSize: 12 }}>Impacto</label>
-                            <select className="form-select form-select-sm"
-                                value={incident.impact} onChange={e => setIncident({ ...incident, impact: e.target.value })}>
-                                <option value="">Selecionar...</option>
-                                <option>Baixo</option>
-                                <option>Médio</option>
-                                <option>Alto</option>
-                                <option>Crítico</option>
-                            </select>
-                        </div>
-                        <div className="col-md-6">
-                            <label className="form-label fw-semibold" style={{ fontSize: 12 }}>Sistemas Afetados</label>
-                            <input className="form-control form-control-sm"
-                                placeholder="Ex: Servidor Web, Email..."
-                                value={incident.systems} onChange={e => setIncident({ ...incident, systems: e.target.value })} />
-                        </div>
-                        <div className="col-md-12">
-                            <label className="form-label fw-semibold" style={{ fontSize: 12 }}>Ações Tomadas</label>
-                            <textarea className="form-control form-control-sm" rows={2}
-                                placeholder="Que medidas foram tomadas imediatamente?"
-                                value={incident.actions} onChange={e => setIncident({ ...incident, actions: e.target.value })} />
-                        </div>
-                        <div className="col-md-12">
-                            <label className="form-label fw-semibold" style={{ fontSize: 12 }}>Anexar Evidências</label>
-                            <input type="file" className="form-control form-control-sm"
-                                onChange={e => handleUpload(e, "Incidente")} />
-                        </div>
-                    </div>
-                    <button className="btn btn-sm btn-success mt-3"
-                        onClick={() => alert("Incidente submetido com sucesso!")}>
-                        Submeter Incidente
-                    </button>
-                </>
-            )}
+           {subTab === "incident" && (
+    <>
+        <p className="text-muted mb-3" style={{ fontSize: 13 }}>
+            Formulário baseado no modelo do{" "}
+            <a href="https://www.cncs.gov.pt" target="_blank" rel="noreferrer">cncs.gov.pt</a>.
+        </p>
+        <div className="row g-3">
+            <div className="col-md-6">
+                <label className="form-label fw-semibold" style={{ fontSize: 12 }}>Data do Incidente *</label>
+                <input type="date" className="form-control form-control-sm"
+                    value={incident.date} onChange={e => setIncident({ ...incident, date: e.target.value })} />
+            </div>
+            <div className="col-md-6">
+                <label className="form-label fw-semibold" style={{ fontSize: 12 }}>Tipo de Incidente *</label>
+                <select className="form-select form-select-sm"
+                    value={incident.type} onChange={e => setIncident({ ...incident, type: e.target.value })}>
+                    <option value="">Selecionar...</option>
+                    <option>Acesso não autorizado</option>
+                    <option>Malware / Ransomware</option>
+                    <option>Phishing</option>
+                    <option>Negação de Serviço (DoS/DDoS)</option>
+                    <option>Fuga de informação</option>
+                    <option>Outro</option>
+                </select>
+            </div>
+            <div className="col-md-12">
+                <label className="form-label fw-semibold" style={{ fontSize: 12 }}>Descrição do Incidente *</label>
+                <textarea className="form-control form-control-sm" rows={3}
+                    placeholder="Descreva o incidente de forma detalhada..."
+                    value={incident.description} onChange={e => setIncident({ ...incident, description: e.target.value })} />
+            </div>
+            <div className="col-md-6">
+                <label className="form-label fw-semibold" style={{ fontSize: 12 }}>Impacto</label>
+                <select className="form-select form-select-sm"
+                    value={incident.impact} onChange={e => setIncident({ ...incident, impact: e.target.value })}>
+                    <option value="">Selecionar...</option>
+                    <option>Baixo</option>
+                    <option>Médio</option>
+                    <option>Alto</option>
+                    <option>Crítico</option>
+                </select>
+            </div>
+            <div className="col-md-6">
+                <label className="form-label fw-semibold" style={{ fontSize: 12 }}>Sistemas Afetados</label>
+                <input className="form-control form-control-sm"
+                    placeholder="Ex: Servidor Web, Email..."
+                    value={incident.systems} onChange={e => setIncident({ ...incident, systems: e.target.value })} />
+            </div>
+            <div className="col-md-12">
+                <label className="form-label fw-semibold" style={{ fontSize: 12 }}>Ações Tomadas</label>
+                <textarea className="form-control form-control-sm" rows={2}
+                    placeholder="Que medidas foram tomadas imediatamente?"
+                    value={incident.actions} onChange={e => setIncident({ ...incident, actions: e.target.value })} />
+            </div>
+            <div className="col-md-12">
+                <label className="form-label fw-semibold" style={{ fontSize: 12 }}>Anexar Evidências</label>
+                <input type="file" className="form-control form-control-sm"
+                    onChange={e => handleUpload(e, "Incidente")} />
+            </div>
+        </div>
+        
+        
+<button className="btn btn-sm btn-success mt-3" onClick={async () => {
+    if (!incident.date || !incident.type || !incident.description) {
+        alert("Por favor, preencha todos os campos obrigatórios (*).");
+        return;
+    }
+    try {
+        // 🟢 CORREÇÃO DEFINITIVA: Aponta para o seu servidor real (orion-dewp) com a rota certa
+        const response = await axios.post('"https://orion-dewp.onrender.com/api/requests', {
+            ...incident,
+            creatorId: 1 
+        });
+        
+        if (response.data.success) {
+            alert(response.data.message); 
+            // Limpa o ecrã
+            setIncident({ date: "", type: "", description: "", impact: "", systems: "", actions: "" });
+        }
+    } catch (error) {
+        console.error("Erro na ligação à API:", error);
+        alert(error.response?.data?.message || "Erro de ligação ao servidor.");
+    }
+}}>
+    Submeter Incidente
+</button>
+
+
+    </>
+)}
+
 
             {/* ── Outras tabs de upload ── */}
             {["internal", "pentest", "evidence"].includes(subTab) && (
@@ -569,11 +595,11 @@ function Requests() {
     useEffect(() => {
         const fetchData = async () => {
             try {
-                // Executa os dois GETs em paralelo de forma eficiente
-                const [typesRes, requestsRes] = await Promise.all([
-                    axios.get("http://localhost:3001/request-types"),
-                    axios.get("http://localhost:3001/requests")
-                ]);
+             // Mantenha o endereço do Render + a rota específica de cada pedido
+            const [typesRes, requestsRes] = await Promise.all([
+                axios.get("https://orion-dewp.onrender.com/api/requests"),
+                axios.get("https://orion-dewp.onrender.com/api/requests")
+            ]);
 
                 // No Axios, os dados vindos do servidor já estão em .data
                 setRequestTypes(typesRes.data);
@@ -592,7 +618,7 @@ function Requests() {
         if (!form.type) return;
         try {
             // Convertido para axios.post. O JSON.stringify deixa de ser necessário!
-            const res = await axios.post("http://localhost:3001/requests", 
+            const res = await axios.post("https://orion-dewp.onrender.com/api/requests", 
                 { 
                     type: form.type, 
                     notes: form.notes 
