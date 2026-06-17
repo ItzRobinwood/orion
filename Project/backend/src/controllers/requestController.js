@@ -4,7 +4,7 @@ const RequestType = require('../models/requestTypeModel');
 const User = require('../models/User');
 
 // ==========================================
-// 1. LISTAR TODOS OS PEDIDOS (GET)
+// 1. LISTAR TODOS OS PEDIDOS (GET /api/requests)
 // ==========================================
 const request_list = async (req, res) => {
     try {
@@ -17,9 +17,26 @@ const request_list = async (req, res) => {
             order: [['openedAt', 'DESC']]
         });
 
+        // 🟢 Transforma os dados no formato exato que a tabela do cliente espera ler
+        const mappedRequests = requests.map(r => {
+            // Converte o ENUM do banco para o texto esperado pelas cores do bootstrap do frontend
+            let statusReact = "Pendente";
+            if (r.status === "in_progress") statusReact = "Em análise";
+            if (r.status === "closed") statusReact = "Aprovado";
+
+            return {
+                id: r.id,
+                type: r.RequestType ? r.RequestType.name : "Geral",
+                type_name: r.RequestType ? r.RequestType.name : "Geral",
+                date: r.openedAt ? new Date(r.openedAt).toLocaleDateString("pt-PT") : "",
+                status: statusReact, // Entrega o termo em português que o React usa nas cores
+                notes: r.description // O frontend chama 'notes', mapeamos a 'description' da BD
+            };
+        });
+
         return res.json({
             success: true,
-            requests: requests
+            requests: mappedRequests
         });
 
     } catch (error) {
@@ -28,7 +45,7 @@ const request_list = async (req, res) => {
 };
 
 // ==========================================
-// 2. DETALHAR UM PEDIDO POR ID (GET)
+// 2. DETALHAR UM PEDIDO POR ID (GET /api/requests/:id)
 // ==========================================
 const request_detail = async (req, res) => {
     try {
@@ -56,35 +73,36 @@ const request_detail = async (req, res) => {
     }
 };
 
-const Request = require('../models/requestModel');
-const RequestType = require('../models/requestTypeModel');
-const User = require('../models/User');
-
 // ==========================================
-// CRIAR NOVO PEDIDO (POST /api/requests/create)
+// 3. CRIAR NOVO PEDIDO (POST /api/requests/create ou /api/requests)
 // ==========================================
 const request_create = async (req, res) => {
     try {
-        // 1. Extrair os dados que o Frontend vai enviar no corpo da requisição (req.body)
+        // Extrai tanto os campos originais do backend como os campos que o React envia
         const {
-            requestTypeId,
+            requestTypeId, type,       // Aceita 'requestTypeId' ou 'type'
             creatorId,
             assignedToId,
             subject,
-            description,
+            description, notes,        // Aceita 'description' ou 'notes'
             subtype
         } = req.body;
 
-        // 2. Validação de campos obrigatórios do sistema
-        if (!requestTypeId || !creatorId || !subject || !description) {
+        // Mapeamento inteligente: se vier do React, usa as variáveis dele
+        const finalRequestTypeId = requestTypeId || type;
+        const finalDescription = description || notes;
+        const finalSubject = subject || "Pedido via Portal";
+
+        // Validação de campos obrigatórios
+        if (!finalRequestTypeId || !finalDescription) {
             return res.status(400).json({ 
                 success: false, 
-                message: 'Por favor, preencha todos os campos obrigatórios (Tipo, Criador, Assunto e Descrição).' 
+                message: 'Por favor, selecione o tipo de pedido e preencha a descrição.' 
             });
         }
 
-        // 3. Verificar se o tipo de pedido existe na Base de Dados
-        const requestType = await RequestType.findByPk(requestTypeId);
+        // Verificar se o tipo de pedido existe na Base de Dados
+        const requestType = await RequestType.findByPk(finalRequestTypeId);
         if (!requestType) {
             return res.status(404).json({ 
                 success: false, 
@@ -92,8 +110,7 @@ const request_create = async (req, res) => {
             });
         }
 
-        // 4. Validação inteligente para o tipo "Others"
-        // Se for "Others", o campo 'subtype' passa a ser estritamente obrigatório
+        // Validação inteligente para o tipo "Others"
         if (requestType.name === 'Others' && (!subtype || subtype.trim() === '')) {
             return res.status(400).json({ 
                 success: false, 
@@ -101,19 +118,18 @@ const request_create = async (req, res) => {
             });
         }
 
-        // 5. Criar o registo na Base de Dados com o Sequelize
+        // Criar o registo na Base de Dados com o Sequelize
         const newRequest = await Request.create({
-            requestTypeId,
-            creatorId,
-            assignedToId: assignedToId || null, // Se não for atribuído a ninguém, fica Null
-            subject,
-            description,
-            subtype: requestType.name === 'Others' ? subtype.trim() : null, // Limpa o subtipo se não for "Others"
-            status: 'open', // Todos os pedidos novos começam abertos
-            openedAt: new Date() // Regista a data e hora exata de abertura
+            requestTypeId: Number(finalRequestTypeId),
+            creatorId: creatorId || 1, // Fallback caso o frontend não passe o ID do user logado
+            assignedToId: assignedToId || null, 
+            subject: finalSubject,
+            description: finalDescription,
+            subtype: requestType.name === 'Others' ? subtype.trim() : null, 
+            status: 'open', 
+            openedAt: new Date() 
         });
 
-        // 6. Resposta padronizada em formato JSON para o Axios
         return res.status(201).json({
             success: true,
             message: 'Pedido criado com sucesso! 🚀',
@@ -130,15 +146,8 @@ const request_create = async (req, res) => {
     }
 };
 
-// Não se esqueça de exportar a função no final do ficheiro:
-module.exports = {
-    // ... as suas outras funções (request_list, etc) ...
-    request_create
-};
-
-
 // ==========================================
-// 4. ATUALIZAR PEDIDO (PUT)
+// 4. ATUALIZAR PEDIDO (PUT /api/requests/:id)
 // ==========================================
 const request_update = async (req, res) => {
     try {
@@ -179,7 +188,7 @@ const request_update = async (req, res) => {
 };
 
 // ==========================================
-// 5. ELIMINAR PEDIDO (DELETE)
+// 5. ELIMINAR PEDIDO (DELETE /api/requests/:id)
 // ==========================================
 const request_delete = async (req, res) => {
     try {
@@ -201,7 +210,7 @@ const request_delete = async (req, res) => {
 };
 
 // ==========================================
-// 6. FECHAR PEDIDO (PUT)
+// 6. FECHAR PEDIDO (PUT /api/requests/:id/close)
 // ==========================================
 const request_close = async (req, res) => {
     try {
@@ -229,6 +238,7 @@ const request_close = async (req, res) => {
     }
 };
 
+// Exportação unificada de todas as funções do controlador
 module.exports = {
     request_list,
     request_detail,
