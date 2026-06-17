@@ -17,12 +17,12 @@ require("./models/questions.js");
 require("./models/messagesQuestions.js");
 require("./models/requestStatus.js");
 
-
 // routes
 const requestRoutes = require("./routes/requestRoutes");
 const userRoutes = require("./routes/userRoutes");
 const companiesRoutes = require('./routes/companiesRoutes');
 const newsRoutes = require('./routes/newsRoutes');
+const requestTypeRoutes = require("./routes/requestTypeRoutes"); // ✅ movido para aqui
 
 // associations
 const applyAssociations = require("./models/associations");
@@ -38,7 +38,7 @@ const { buscarNoticiasOnline } = require('./services/newsScraper');
 const app = express();
 
 app.use(cors({
-    origin: 'https://orion-seven-kappa.vercel.app',
+    origin: ['https://orion-seven-kappa.vercel.app', 'http://localhost:5173'],
     methods: ['GET', 'POST', 'PUT', 'DELETE'],
     credentials: true
 }));
@@ -49,8 +49,7 @@ app.use("/api", requestRoutes);
 app.use("/api", userRoutes);
 app.use('/api', companiesRoutes);
 app.use('/api', newsRoutes);
-
-
+app.use("/api", requestTypeRoutes); // ✅ movido para aqui
 
 app.get("/", (req, res) => {
   res.send("CyberBox API está online e funcional! 🚀");
@@ -67,9 +66,9 @@ sequelize.sync({ alter: true }).then(async () => {
   await seedRequestTypes();
 
   buscarNoticiasOnline();
-cron.schedule('0 * * * *', () => {
-  buscarNoticiasOnline();
-});
+  cron.schedule('0 * * * *', () => {
+    buscarNoticiasOnline();
+  });
 
   app.listen(PORT, () => {
     console.log(`Servidor rodando na porta ${PORT} 🚀`);
@@ -78,7 +77,3 @@ cron.schedule('0 * * * *', () => {
   console.error("Erro fatal ao conectar à base de dados:", err.message);
   process.exit(1);
 });
-
-const requestTypeRoutes = require("./routes/requestTypeRoutes");
-
-app.use("/api", requestTypeRoutes);
