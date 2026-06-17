@@ -1,34 +1,30 @@
-import { useState, useRef } from "react";
+import { useState, useEffect } from "react";
 import "bootstrap/dist/css/bootstrap.min.css";
 
 export default function ClientDashboard() {
     const [active, setActive] = useState("dashboard");
 
     const nav = [
-        { id: "dashboard",  label: "Dashboard"         },
-        { id: "report",     label: "Avaliação de Risco" },
-        { id: "docs",       label: "Documentação"       },
-        { id: "submit",     label: "Submeter Ficheiros" },
-        { id: "questions",  label: "Questões / Pedidos" },
-        { id: "requests",   label: "Pedidos" },
+        { id: "dashboard", label: "Dashboard"          },
+        { id: "report",    label: "Avaliação de Risco" },
+        { id: "docs",      label: "Documentação"       },
+        { id: "tickets",   label: "Tickets"            },
+        { id: "requests",  label: "Pedidos"            },
     ];
 
     const renderContent = () => {
         switch (active) {
-            case "dashboard":  return <Dashboard setActive={setActive} />;
-            case "report":     return <Report />;
-            case "docs":       return <Docs />;
-            case "submit":     return <Submit />;
-            case "questions":  return <Questions />;
-            case "requests":   return <Requests />;
-            default:           return null;
+            case "dashboard": return <Dashboard setActive={setActive} />;
+            case "report":    return <Report />;
+            case "docs":      return <Docs />;
+            case "tickets":   return <Tickets />;
+            case "requests":  return <Requests />;
+            default:          return null;
         }
     };
 
     return (
         <div className="d-flex vh-100">
-
-            {/* SIDEBAR */}
             <div className="bg-dark text-white p-3 d-flex flex-column" style={{ width: 250 }}>
                 <h4 className="mb-1">CyberBox</h4>
                 <small className="text-secondary mb-4">Portal do Cliente</small>
@@ -53,10 +49,7 @@ export default function ClientDashboard() {
                 </div>
             </div>
 
-            {/* MAIN */}
             <div className="flex-grow-1 bg-light p-4 overflow-auto">
-
-                {/* TOPBAR */}
                 <div className="d-flex justify-content-between align-items-center mb-4">
                     <h4 className="m-0">{nav.find(n => n.id === active)?.label}</h4>
                     <div className="d-flex align-items-center gap-2">
@@ -64,7 +57,6 @@ export default function ClientDashboard() {
                         <img src="https://i.pravatar.cc/40" className="rounded-circle" alt="cliente" />
                     </div>
                 </div>
-
                 {renderContent()}
             </div>
         </div>
@@ -76,10 +68,10 @@ function Dashboard({ setActive }) {
     return (
         <>
             <div className="row g-3 mb-4">
-                <StatCard title="Nível de Risco"     value="Médio"  color="warning" />
-                <StatCard title="Documentos"         value="12"     color="primary" />
-                <StatCard title="Pedidos Ativos"     value="3"      color="info"    />
-                <StatCard title="Incidentes Abertos" value="1"      color="danger"  />
+                <StatCard title="Nível de Risco"     value="Médio" color="warning" />
+                <StatCard title="Documentos"         value="12"    color="primary" />
+                <StatCard title="Pedidos Ativos"     value="3"     color="info"    />
+                <StatCard title="Incidentes Abertos" value="1"     color="danger"  />
             </div>
 
             <div className="row g-3">
@@ -107,10 +99,10 @@ function Dashboard({ setActive }) {
                         <h6 className="mb-3">Acesso Rápido</h6>
                         <div className="d-flex flex-column gap-2">
                             {[
-                                { label: "Ver Avaliação de Risco", tab: "report"    },
-                                { label: "Submeter Ficheiro",      tab: "submit"    },
-                                { label: "Colocar Questão",        tab: "questions" },
-                                { label: "Ver Estado de Pedidos",  tab: "requests"  },
+                                { label: "Ver Avaliação de Risco", tab: "report"   },
+                                { label: "Submeter Ficheiro",      tab: "docs"     },
+                                { label: "Colocar Ticket",         tab: "tickets"  },
+                                { label: "Ver Estado de Pedidos",  tab: "requests" },
                             ].map(({ label, tab }) => (
                                 <button key={tab} className="btn btn-outline-dark btn-sm text-start"
                                     onClick={() => setActive(tab)}>
@@ -128,16 +120,15 @@ function Dashboard({ setActive }) {
 /* ───────────────────────── REPORT ───────────────────────── */
 function Report() {
     const reports = [
-        { id: 1, title: "Relatório de Risco Q1 2026", date: "01/04/2026", risk: "Médio",  score: 62 },
-        { id: 2, title: "Relatório de Risco Q4 2025", date: "01/01/2026", risk: "Alto",   score: 78 },
-        { id: 3, title: "Relatório de Risco Q3 2025", date: "01/10/2025", risk: "Baixo",  score: 35 },
+        { id: 1, title: "Relatório de Risco Q1 2026", date: "01/04/2026", risk: "Médio", score: 62 },
+        { id: 2, title: "Relatório de Risco Q4 2025", date: "01/01/2026", risk: "Alto",  score: 78 },
+        { id: 3, title: "Relatório de Risco Q3 2025", date: "01/10/2025", risk: "Baixo", score: 35 },
     ];
 
     const riskColor = { Alto: "danger", Médio: "warning", Baixo: "success" };
 
     return (
         <>
-            {/* Score atual */}
             <div className="card p-4 mb-4">
                 <div className="row align-items-center">
                     <div className="col-md-4 text-center">
@@ -148,10 +139,10 @@ function Report() {
                     <div className="col-md-8">
                         <h6 className="mb-3">Áreas de Risco</h6>
                         {[
-                            { label: "Segurança de Rede",        value: 70 },
-                            { label: "Gestão de Acessos",        value: 55 },
-                            { label: "Proteção de Dados",        value: 80 },
-                            { label: "Continuidade de Negócio",  value: 45 },
+                            { label: "Segurança de Rede",       value: 70 },
+                            { label: "Gestão de Acessos",       value: 55 },
+                            { label: "Proteção de Dados",       value: 80 },
+                            { label: "Continuidade de Negócio", value: 45 },
                         ].map(({ label, value }) => (
                             <div className="mb-2" key={label}>
                                 <div className="d-flex justify-content-between mb-1" style={{ fontSize: 13 }}>
@@ -159,8 +150,7 @@ function Report() {
                                 </div>
                                 <div className="progress" style={{ height: 6 }}>
                                     <div className="progress-bar"
-                                        style={{ width: `${value}%`, background: value > 65 ? "#dc3545" : value > 45 ? "#ffc107" : "#198754" }}>
-                                    </div>
+                                        style={{ width: `${value}%`, background: value > 65 ? "#dc3545" : value > 45 ? "#ffc107" : "#198754" }} />
                                 </div>
                             </div>
                         ))}
@@ -168,7 +158,6 @@ function Report() {
                 </div>
             </div>
 
-            {/* Histórico */}
             <div className="card p-3">
                 <h6 className="mb-3">Histórico de Relatórios</h6>
                 <table className="table">
@@ -194,68 +183,38 @@ function Report() {
 
 /* ───────────────────────── DOCS ───────────────────────── */
 function Docs() {
-    const docs = [
-        { id: 1, name: "Política de Segurança v3",   type: "PDF",  date: "02/03/2026", size: "1.1 MB" },
-        { id: 2, name: "Relatório NIS2 - Q1 2026",   type: "PDF",  date: "10/04/2026", size: "2.4 MB" },
-        { id: 3, name: "Guia de Boas Práticas",      type: "DOCX", date: "15/02/2026", size: "0.8 MB" },
-        { id: 4, name: "Plano de Resposta a Incidentes", type: "PDF", date: "01/01/2026", size: "3.2 MB" },
-    ];
-
-    return (
-        <div className="card p-3">
-            <h6 className="mb-3">Documentação Disponível</h6>
-            <table className="table">
-                <thead>
-                    <tr><th>Nome</th><th>Tipo</th><th>Tamanho</th><th>Data</th><th>Ação</th></tr>
-                </thead>
-                <tbody>
-                    {docs.map(d => (
-                        <tr key={d.id}>
-                            <td style={{ fontWeight: 600 }}>{d.name}</td>
-                            <td><span className="badge bg-secondary">{d.type}</span></td>
-                            <td style={{ fontSize: 13, color: "#6b7280" }}>{d.size}</td>
-                            <td style={{ fontSize: 13, color: "#6b7280" }}>{d.date}</td>
-                            <td><button className="btn btn-sm btn-outline-dark">Download</button></td>
-                        </tr>
-                    ))}
-                </tbody>
-            </table>
-        </div>
-    );
-}
-
-/* ───────────────────────── SUBMIT ───────────────────────── */
-function Submit() {
-    const [subTab, setSubTab] = useState("assets");
+    const [subTab, setSubTab] = useState("docs");
     const [assets, setAssets] = useState([]);
     const [incident, setIncident] = useState({
         date: "", type: "", description: "", impact: "", systems: "", actions: "",
     });
     const [uploads, setUploads] = useState([]);
-    const fileRef = useRef();
 
-    /* ── Upload Excel e parse ── */
+    const docs = [
+        { id: 1, name: "Política de Segurança v3",       type: "PDF",  date: "02/03/2026", size: "1.1 MB" },
+        { id: 2, name: "Relatório NIS2 - Q1 2026",       type: "PDF",  date: "10/04/2026", size: "2.4 MB" },
+        { id: 3, name: "Guia de Boas Práticas",          type: "DOCX", date: "15/02/2026", size: "0.8 MB" },
+        { id: 4, name: "Plano de Resposta a Incidentes", type: "PDF",  date: "01/01/2026", size: "3.2 MB" },
+    ];
+
     const handleExcel = (e) => {
         const file = e.target.files[0];
         if (!file) return;
-
         const reader = new FileReader();
         reader.onload = (evt) => {
-            /* Usa SheetJS se disponível, caso contrário parse manual CSV/TSV */
             try {
-                /* tenta importar xlsx dinamicamente */
                 import("https://cdn.sheetjs.com/xlsx-0.20.1/package/xlsx.mjs").then(XLSX => {
                     const wb = XLSX.read(evt.target.result, { type: "array" });
                     const ws = wb.Sheets[wb.SheetNames[0]];
                     const rows = XLSX.utils.sheet_to_json(ws);
                     setAssets(rows.map((r, i) => ({
                         id: i + 1,
-                        name:     r["Nome"] || r["Name"] || r["Ativo"] || "-",
-                        type:     r["Tipo"] || r["Type"] || "-",
-                        ip:       r["IP"] || r["Endereço IP"] || "-",
+                        name:     r["Nome"]       || r["Name"]     || r["Ativo"]    || "-",
+                        type:     r["Tipo"]       || r["Type"]     || "-",
+                        ip:       r["IP"]         || r["Endereço IP"] || "-",
                         location: r["Localização"] || r["Location"] || "-",
-                        owner:    r["Responsável"] || r["Owner"] || "-",
-                        risk:     r["Risco"] || r["Risk"] || "-",
+                        owner:    r["Responsável"] || r["Owner"]   || "-",
+                        risk:     r["Risco"]      || r["Risk"]     || "-",
                     })));
                 });
             } catch {
@@ -275,17 +234,16 @@ function Submit() {
     };
 
     const subTabs = [
-        { id: "assets",    label: "Ativos Tecnológicos" },
-        { id: "incident",  label: "Report de Incidente" },
-        { id: "internal",  label: "Documentação Interna" },
-        { id: "pentest",   label: "Pen Tests" },
-        { id: "evidence",  label: "Outras Evidências" },
+        { id: "docs",     label: "Documentação Disponível" },
+        { id: "assets",   label: "Ativos Tecnológicos"     },
+        { id: "incident", label: "Report de Incidente"     },
+        { id: "internal", label: "Documentação Interna"    },
+        { id: "pentest",  label: "Pen Tests"               },
+        { id: "evidence", label: "Outras Evidências"       },
     ];
 
     return (
         <div className="card p-3">
-            <h6 className="mb-3">Submeter Ficheiros</h6>
-
             <ul className="nav nav-tabs mb-3">
                 {subTabs.map(t => (
                     <li className="nav-item" key={t.id}>
@@ -296,6 +254,26 @@ function Submit() {
                     </li>
                 ))}
             </ul>
+
+            {/* ── Documentação Disponível ── */}
+            {subTab === "docs" && (
+                <table className="table">
+                    <thead>
+                        <tr><th>Nome</th><th>Tipo</th><th>Tamanho</th><th>Data</th><th>Ação</th></tr>
+                    </thead>
+                    <tbody>
+                        {docs.map(d => (
+                            <tr key={d.id}>
+                                <td style={{ fontWeight: 600 }}>{d.name}</td>
+                                <td><span className="badge bg-secondary">{d.type}</span></td>
+                                <td style={{ fontSize: 13, color: "#6b7280" }}>{d.size}</td>
+                                <td style={{ fontSize: 13, color: "#6b7280" }}>{d.date}</td>
+                                <td><button className="btn btn-sm btn-outline-dark">Download</button></td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+            )}
 
             {/* ── Ativos Tecnológicos ── */}
             {subTab === "assets" && (
@@ -311,30 +289,24 @@ function Submit() {
                                 style={{ maxWidth: 300 }} onChange={handleExcel} />
                             <button className="btn btn-sm btn-outline-dark"
                                 onClick={() => setAssets([
-                                    { id: 1, name: "Servidor Web",   type: "Servidor",  ip: "192.168.1.10", location: "Datacenter A", owner: "IT Dept", risk: "Alto"  },
-                                    { id: 2, name: "Firewall Principal", type: "Rede",  ip: "10.0.0.1",     location: "Rack 1",       owner: "IT Dept", risk: "Médio" },
-                                    { id: 3, name: "Workstation-01", type: "Endpoint",  ip: "192.168.1.50", location: "Escritório",   owner: "João P.", risk: "Baixo" },
+                                    { id: 1, name: "Servidor Web",      type: "Servidor", ip: "192.168.1.10", location: "Datacenter A", owner: "IT Dept", risk: "Alto"  },
+                                    { id: 2, name: "Firewall Principal", type: "Rede",     ip: "10.0.0.1",    location: "Rack 1",       owner: "IT Dept", risk: "Médio" },
+                                    { id: 3, name: "Workstation-01",    type: "Endpoint", ip: "192.168.1.50", location: "Escritório",   owner: "João P.", risk: "Baixo" },
                                 ])}>
                                 Carregar Exemplo
                             </button>
                         </div>
                     </div>
-
                     {assets.length > 0 && (
                         <>
                             <div className="d-flex justify-content-between align-items-center mb-2">
                                 <span style={{ fontSize: 13, color: "#6b7280" }}>{assets.length} ativos importados</span>
-                                <button className="btn btn-sm btn-outline-danger" onClick={() => setAssets([])}>
-                                    Limpar
-                                </button>
+                                <button className="btn btn-sm btn-outline-danger" onClick={() => setAssets([])}>Limpar</button>
                             </div>
                             <div style={{ overflowX: "auto" }}>
                                 <table className="table table-sm">
                                     <thead>
-                                        <tr>
-                                            <th>#</th><th>Nome</th><th>Tipo</th><th>IP</th>
-                                            <th>Localização</th><th>Responsável</th><th>Risco</th>
-                                        </tr>
+                                        <tr><th>#</th><th>Nome</th><th>Tipo</th><th>IP</th><th>Localização</th><th>Responsável</th><th>Risco</th></tr>
                                     </thead>
                                     <tbody>
                                         {assets.map(a => (
@@ -355,9 +327,7 @@ function Submit() {
                                     </tbody>
                                 </table>
                             </div>
-                            <button className="btn btn-sm btn-success mt-2">
-                                Guardar na Base de Dados
-                            </button>
+                            <button className="btn btn-sm btn-success mt-2">Guardar na Base de Dados</button>
                         </>
                     )}
                 </>
@@ -400,16 +370,13 @@ function Submit() {
                             <select className="form-select form-select-sm"
                                 value={incident.impact} onChange={e => setIncident({ ...incident, impact: e.target.value })}>
                                 <option value="">Selecionar...</option>
-                                <option>Baixo</option>
-                                <option>Médio</option>
-                                <option>Alto</option>
-                                <option>Crítico</option>
+                                <option>Baixo</option><option>Médio</option>
+                                <option>Alto</option><option>Crítico</option>
                             </select>
                         </div>
                         <div className="col-md-6">
                             <label className="form-label fw-semibold" style={{ fontSize: 12 }}>Sistemas Afetados</label>
-                            <input className="form-control form-control-sm"
-                                placeholder="Ex: Servidor Web, Email..."
+                            <input className="form-control form-control-sm" placeholder="Ex: Servidor Web, Email..."
                                 value={incident.systems} onChange={e => setIncident({ ...incident, systems: e.target.value })} />
                         </div>
                         <div className="col-md-12">
@@ -438,13 +405,13 @@ function Submit() {
                         <h6 className="mb-2">
                             {subTab === "internal" ? "Documentação Interna" : subTab === "pentest" ? "Pen Tests" : "Outras Evidências"}
                         </h6>
-                        <p className="text-muted mb-2" style={{ fontSize: 13 }}>
-                            Seleciona o ficheiro que pretendes submeter.
-                        </p>
+                        <p className="text-muted mb-2" style={{ fontSize: 13 }}>Seleciona o ficheiro que pretendes submeter.</p>
                         <input type="file" className="form-control form-control-sm" style={{ maxWidth: 400 }}
-                            onChange={e => handleUpload(e, subTab === "internal" ? "Documentação Interna" : subTab === "pentest" ? "Pen Test" : "Evidência")} />
+                            onChange={e => handleUpload(e,
+                                subTab === "internal" ? "Documentação Interna" :
+                                subTab === "pentest"  ? "Pen Test" : "Evidência"
+                            )} />
                     </div>
-
                     {uploads.filter(u =>
                         (subTab === "internal" && u.category === "Documentação Interna") ||
                         (subTab === "pentest"  && u.category === "Pen Test") ||
@@ -475,19 +442,18 @@ function Submit() {
     );
 }
 
-/* ───────────────────────── QUESTIONS ───────────────────────── */
-function Questions() {
-    const [questions, setQuestions] = useState([
+/* ───────────────────────── TICKETS ───────────────────────── */
+function Tickets() {
+    const [tickets, setTickets] = useState([
         { id: 1, subject: "Dúvida sobre NIS2", message: "Quais são os requisitos mínimos?", date: "10/05/2026", status: "Respondido", reply: "Os requisitos mínimos incluem..." },
         { id: 2, subject: "Relatório em falta", message: "O relatório Q4 não está disponível.", date: "15/05/2026", status: "Pendente", reply: "" },
     ]);
-
     const [form, setForm] = useState({ subject: "", message: "" });
     const [showForm, setShowForm] = useState(false);
 
     const handleSubmit = () => {
         if (!form.subject || !form.message) return;
-        setQuestions([...questions, {
+        setTickets([...tickets, {
             id: Date.now(), ...form,
             date: new Date().toLocaleDateString("pt-PT"),
             status: "Pendente", reply: "",
@@ -499,9 +465,9 @@ function Questions() {
     return (
         <div className="card p-3">
             <div className="d-flex justify-content-between align-items-center mb-3">
-                <h6 className="mb-0">Questões e Pedidos de Esclarecimento</h6>
+                <h6 className="mb-0">Tickets</h6>
                 <button className="btn btn-sm btn-dark" onClick={() => setShowForm(!showForm)}>
-                    {showForm ? "Cancelar" : "+ Nova Questão"}
+                    {showForm ? "Cancelar" : "+ Novo Ticket"}
                 </button>
             </div>
 
@@ -509,7 +475,7 @@ function Questions() {
                 <div className="border p-3 mb-3 bg-light">
                     <div className="mb-2">
                         <label className="form-label fw-semibold" style={{ fontSize: 12 }}>Assunto *</label>
-                        <input className="form-control form-control-sm" placeholder="Assunto da questão"
+                        <input className="form-control form-control-sm" placeholder="Assunto do ticket"
                             value={form.subject} onChange={e => setForm({ ...form, subject: e.target.value })} />
                     </div>
                     <div className="mb-2">
@@ -527,7 +493,7 @@ function Questions() {
                     <tr><th>Assunto</th><th>Mensagem</th><th>Data</th><th>Estado</th><th>Resposta</th></tr>
                 </thead>
                 <tbody>
-                    {questions.map(q => (
+                    {tickets.map(q => (
                         <tr key={q.id}>
                             <td style={{ fontWeight: 600 }}>{q.subject}</td>
                             <td style={{ fontSize: 13, color: "#6b7280", maxWidth: 200 }}>{q.message}</td>
@@ -558,16 +524,15 @@ function Requests() {
 
     const statusColor = { Aprovado: "success", "Em análise": "info", Pendente: "warning", Rejeitado: "danger" };
 
-    // Busca os tipos de pedido e os pedidos do cliente ao carregar
     useEffect(() => {
         const fetchData = async () => {
             try {
                 const [typesRes, requestsRes] = await Promise.all([
                     fetch("http://localhost:3001/request-types"),
-                    fetch("http://localhost:3001/requests"),        // pedidos do cliente
+                    fetch("http://localhost:3001/requests"),
                 ]);
-                const types    = await typesRes.json();
-                const reqs     = await requestsRes.json();
+                const types = await typesRes.json();
+                const reqs  = await requestsRes.json();
                 setRequestTypes(types);
                 setRequests(reqs);
             } catch (err) {
@@ -626,9 +591,7 @@ function Requests() {
                             placeholder="Informação adicional sobre o pedido..."
                             value={form.notes} onChange={e => setForm({ ...form, notes: e.target.value })} />
                     </div>
-                    <button className="btn btn-sm btn-success" onClick={handleSubmit}>
-                        Submeter Pedido
-                    </button>
+                    <button className="btn btn-sm btn-success" onClick={handleSubmit}>Submeter Pedido</button>
                 </div>
             )}
 
