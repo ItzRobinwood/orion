@@ -26,7 +26,7 @@ const requestTypeRoutes = require("./routes/requestTypeRoutes"); // ✅ movido p
 
 // associations
 // 🔴 CORREÇÃO AQUI: Adicionadas as chavetas { } para extrair a função corretamente!
-const { applyAssociations } = require('./models/associations');
+const applyAssociations  = require('./models/associations');
 
 // seeds
 const seedUserTypes = require("./seeders/seedUserTypes");
@@ -57,7 +57,7 @@ app.get("/", (req, res) => {
 });
 
 // Agora isto já vai funcionar sem dar "is not a function" 🎉
-applyAssociations();
+// applyAssociations();
 
 const PORT = process.env.PORT || 3000;
 
