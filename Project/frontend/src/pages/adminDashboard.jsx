@@ -1049,13 +1049,172 @@ function PersonForm({ form, setForm, title, submitLabel, generatePassword, onSub
 }
 
 function Tickets() {
+    const [questions, setQuestions] = useState([]);
+    const [filter, setFilter] = useState("Todos");
+    const [loading, setLoading] = useState(true);
+    const [replyingId, setReplyingId] = useState(null);
+    const [replyText, setReplyText] = useState("");
+
+    const reloadQuestions = async () => {
+        try {
+            setLoading(true);
+            const res = await axios.get("https://orion-dewp.onrender.com/api/questions");
+            if (res.data.success) {
+                setQuestions(res.data.questions);
+            }
+        } catch (err) {
+            console.error("Erro ao carregar questões:", err);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        reloadQuestions();
+    }, []);
+
+    const handleReply = async (id) => {
+        if (!replyText.trim()) return;
+        try {
+            await axios.post(`https://orion-dewp.onrender.com/api/questions/${id}/reply`, {
+                message: replyText,
+                userId: 1 // substituir pelo id do admin logado
+            });
+            setReplyText("");
+            setReplyingId(null);
+            await reloadQuestions();
+        } catch (err) {
+            alert("Erro ao enviar resposta.");
+        }
+    };
+
+    const handleClose = async (id) => {
+        if (!window.confirm("Fechar este ticket?")) return;
+        try {
+            await axios.put(`https://orion-dewp.onrender.com/api/questions/${id}/close`);
+            await reloadQuestions();
+        } catch (err) {
+            alert("Erro ao fechar ticket.");
+        }
+    };
+
+    const filtered = filter === "Todos"
+        ? questions
+        : questions.filter(q => q.status === filter);
+
+    const statusColor = (s) => s === "Respondido" ? "bg-success" : s === "Pendente" ? "bg-warning text-dark" : "bg-secondary";
+
+    if (loading) return <div className="text-center my-5"><h5>A carregar tickets...</h5></div>;
+
     return (
-        <div className="card p-3">
-            <h5>Tickets</h5>
-            <ul className="list-group mt-3">
-                <li className="list-group-item">#T001 - VPN falhou</li>
-                <li className="list-group-item">#T002 - Relatório em falta</li>
-            </ul>
+        <div className="d-flex flex-column gap-4 text-dark">
+            <div>
+                <h3 className="fw-bold mb-1">Tickets</h3>
+                <p className="text-muted small">Questões submetidas pelos clientes</p>
+            </div>
+
+            {/* Contadores */}
+            <div className="row g-3">
+                <div className="col">
+                    <div className="card p-3 shadow-sm">
+                        <div className="text-muted small">Total</div>
+                        <h4 className="fw-bold m-0">{questions.length}</h4>
+                    </div>
+                </div>
+                <div className="col">
+                    <div className="card p-3 shadow-sm">
+                        <div className="text-muted small">Pendentes</div>
+                        <h4 className="fw-bold text-warning m-0">{questions.filter(q => q.status === "Pendente").length}</h4>
+                    </div>
+                </div>
+                <div className="col">
+                    <div className="card p-3 shadow-sm">
+                        <div className="text-muted small">Respondidos</div>
+                        <h4 className="fw-bold text-success m-0">{questions.filter(q => q.status === "Respondido").length}</h4>
+                    </div>
+                </div>
+            </div>
+
+            {/* Filtros */}
+            <div className="card p-3 shadow-sm">
+                <div className="d-flex gap-2">
+                    {["Todos", "Pendente", "Respondido"].map(f => (
+                        <button key={f} onClick={() => setFilter(f)}
+                            className={`btn btn-sm px-3 ${filter === f ? "btn-primary" : "btn-light border text-secondary"}`}>
+                            {f}
+                        </button>
+                    ))}
+                </div>
+            </div>
+
+            {/* Lista de tickets */}
+            <div className="d-flex flex-column gap-2">
+                {filtered.map(q => (
+                    <div key={q.id} className="card p-3 shadow-sm border-start border-4 border-warning">
+                        <div className="d-flex justify-content-between align-items-start">
+                            <div className="flex-grow-1">
+                                <div className="d-flex align-items-center gap-2 mb-1">
+                                    <h6 className="fw-bold m-0">#{q.id} — {q.subject}</h6>
+                                    <span className={`badge ${statusColor(q.status)}`} style={{ fontSize: 10 }}>
+                                        {q.status}
+                                    </span>
+                                </div>
+                                <div className="text-muted small mb-2">
+                                    👤 {q.createdBy} · 📅 {q.date} · 💬 {q.messagesCount} mensagem(ns)
+                                </div>
+                                {q.lastReply !== "Sem resposta" && (
+                                    <div className="text-muted small fst-italic">
+                                        Última resposta: {q.lastReply}
+                                    </div>
+                                )}
+
+                                {/* Caixa de resposta inline */}
+                                {replyingId === q.id && (
+                                    <div className="mt-3">
+                                        <textarea
+                                            className="form-control form-control-sm mb-2"
+                                            rows={3}
+                                            placeholder="Escreve a tua resposta..."
+                                            value={replyText}
+                                            onChange={(e) => setReplyText(e.target.value)}
+                                        />
+                                        <div className="d-flex gap-2">
+                                            <button className="btn btn-sm btn-success"
+                                                onClick={() => handleReply(q.id)}>
+                                                Enviar Resposta
+                                            </button>
+                                            <button className="btn btn-sm btn-outline-secondary"
+                                                onClick={() => { setReplyingId(null); setReplyText(""); }}>
+                                                Cancelar
+                                            </button>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Ações */}
+                            <div className="d-flex flex-column gap-1 ms-3">
+                                <button className="btn btn-sm btn-outline-primary"
+                                    onClick={() => { setReplyingId(replyingId === q.id ? null : q.id); setReplyText(""); }}>
+                                    {replyingId === q.id ? "Cancelar" : "Responder"}
+                                </button>
+                                {q.status !== "Fechado" && (
+                                    <button className="btn btn-sm btn-outline-danger"
+                                        onClick={() => handleClose(q.id)}>
+                                        Fechar
+                                    </button>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                ))}
+
+                {filtered.length === 0 && (
+                    <div className="text-center text-muted p-4 bg-white border rounded">
+                        Nenhum ticket encontrado.
+                    </div>
+                )}
+            </div>
         </div>
     );
 }
