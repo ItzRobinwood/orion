@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import Navbar from "../components/navbar";
 import Footer from "../components/footer";
+import axios from 'axios';
 
 const CATEGORY_STYLES = {
   Ameaças:          { color: "#dc2626", bg: "#fff0f0", border: "#dc2626" },
@@ -61,17 +62,21 @@ function NewsSection() {
   const [lastUpdate, setLastUpdate] = useState(null);
 
   const fetchNews = useCallback(async () => {
-    setLoading(true); setError(null);
-    try {
-      const res = await fetch("http://localhost:3000/api/news");
-      if (!res.ok) throw new Error("Erro no servidor");
-      const data = await res.json();
-      setPosts(data);
-      setLastUpdate(new Date().toLocaleString("pt-PT"));
-    } catch (e) {
-      setError("Não foi possível carregar as notícias. Tenta novamente.");
-    } finally { setLoading(false); }
-  }, []);
+  setLoading(true);
+  setError(null);
+
+  try {
+    const { data } = await axios.get("http://localhost:3000/api/news");
+
+    setPosts(data);
+    setLastUpdate(new Date().toLocaleString("pt-PT"));
+  } catch (error) {
+    setError("Não foi possível carregar as notícias. Tenta novamente.");
+    console.error(error);
+  } finally {
+    setLoading(false);
+  }
+}, []);
 
   useEffect(() => { fetchNews(); }, [fetchNews]);
 
