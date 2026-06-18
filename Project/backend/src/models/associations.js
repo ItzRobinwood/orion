@@ -1,3 +1,15 @@
+const UserType = require("./UserType");
+const User = require("./User");
+const Company = require("./company");
+const Request = require("./requestModel");
+const RequestType = require("./requestTypeModel");
+const RequestFile = require("./requestFilesModel");
+const Question = require("./questions");
+const MessageQuestion = require("./messagesQuestions");
+const EstadoPedido = require("./requestStatus");
+const Logs = require("./logs");
+const Incident = require("./incidentModel");
+
 function applyAssociations() {
 
   // UserType <-> User
@@ -84,3 +96,5 @@ function applyAssociations() {
   Incident.belongsTo(User, { foreignKey: "creatorId", as: "creator" });
 
 }
+
+module.exports = applyAssociations;

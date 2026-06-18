@@ -55,6 +55,17 @@ export default function AdminDashboard() {
     );
 }
 
+function Card({ title, value, color }) {
+    return (
+        <div className="col-md-3">
+            <div className={`card text-bg-${color} p-3`}>
+                <h6>{title}</h6>
+                <h3>{value}</h3>
+            </div>
+        </div>
+    );
+}
+
 function Dashboard() {
     return (
         <>
@@ -812,7 +823,7 @@ function AdminsTable({ admins, setAdmins, reloadAdmins }) {
                 </thead>
                 <tbody>
                     {admins.map((a) => (
-                        <>
+                        <React.Fragment key={a.id_Utilizador || a.id}>
                             <tr key={a.id}>
                                 <td className="fw-semibold">{a.name}</td>
                                 <td>{a.email}</td>
@@ -840,7 +851,7 @@ function AdminsTable({ admins, setAdmins, reloadAdmins }) {
                                     </td>
                                 </tr>
                             )}
-                        </>
+                        </React.Fragment>
                     ))}
                     {admins.length === 0 && (
                         <tr><td colSpan={5} className="text-center text-muted py-3">Nenhum administrador criado.</td></tr>
@@ -949,7 +960,7 @@ function ManagersTable({ managers, setManagers, reloadManagers }) {
                 </thead>
                 <tbody>
                     {managers.map((m) => (
-                        <>
+                        <React.Fragment key={m.id_Utilizador || m.id}>
                             <tr key={m.id}>
                                 <td className="fw-semibold">{m.name}</td>
                                 <td>{m.email}</td>
@@ -977,7 +988,7 @@ function ManagersTable({ managers, setManagers, reloadManagers }) {
                                     </td>
                                 </tr>
                             )}
-                        </>
+                        </React.Fragment>
                     ))}
                     {managers.length === 0 && (
                         <tr><td colSpan={5} className="text-center text-muted py-3">Nenhum gestor criado.</td></tr>
@@ -1272,16 +1283,7 @@ function Settings() {
     );
 }
 
-function Card({ title, value, color }) {
-    return (
-        <div className="col-md-3">
-            <div className={`card text-bg-${color} p-3`}>
-                <h6>{title}</h6>
-                <h3>{value}</h3>
-            </div>
-        </div>
-    );
-}
+
 
 function Content() {
     const [pages, setPages] = useState([
