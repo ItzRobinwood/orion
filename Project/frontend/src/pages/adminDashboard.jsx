@@ -118,17 +118,22 @@ function Accounts() {
         }
     };
 
-    // Esta função foi melhorada para aceitar opcionalmente os dados das empresas mais recentes
-    const reloadClients = async (currentAccounts = accounts) => {
+    // 🔴 CORREÇÃO: Removemos o "= accounts" traiçoeiro do parâmetro
+// 1. Função que carrega e mapeia os clientes cruzando com as empresas
+    const reloadClients = async (currentAccounts) => {
         try {
             const res = await axios.get("https://orion-dewp.onrender.com/api/users");
             const data = res.data;
 
+            // Se não for passado um array fresco por parâmetro, usa o estado atual
+            const targetAccounts = currentAccounts || accounts;
+
             const mapped = data.users
                 .filter(u => u.id_tipo === 3)
                 .map(u => {
-                    // Mapeia usando a lista de empresas atualizada
-                    const associatedCompany = currentAccounts.find(acc => acc.id === u.id_empresa);
+                    const associatedCompany = targetAccounts.find(acc =>
+                        Number(acc.id) === Number(u.id_empresa)
+                    );
 
                     return {
                         ...u,
@@ -145,6 +150,7 @@ function Accounts() {
         }
     };
 
+    // 2. Função que carrega as empresas e despoleta a primeira carga de clientes
     const reloadCompanies = async () => {
         try {
             const res = await axios.get("https://orion-dewp.onrender.com/api/companies");
@@ -171,30 +177,26 @@ function Accounts() {
             }));
 
             setAccounts(mapped);
-            // IMPORTANTE: Passamos o mapeamento diretamente para atualizar os clientes na hora!
+            // Passamos o mapeamento logo aqui para a primeira renderização vir correta
             await reloadClients(mapped);
         } catch (err) {
             console.error("Error loading companies:", err);
         }
     };
 
-    // 1. Primeiro ciclo de vida: Carrega dados independentes e as empresas
+    // 3. CICLO DE VIDA ÚNICO: Dispara apenas UMA VEZ quando a página monta
     useEffect(() => {
         reloadAdmins();
         reloadManagers();
         reloadCompanies();
-    }, []);
+    }, []); // 🔴 Mantém as dependências vazias aqui para evitar loops de requests à API!
 
-    return (
-        <div className="d-flex flex-column gap-4">
-            <CompaniesTable accounts={accounts} setAccounts={setAccounts} reloadCompanies={reloadCompanies} />
-            <AdminsTable admins={admins} setAdmins={setAdmins} reloadAdmins={reloadAdmins} />
-            <ManagersTable managers={managers} setManagers={setManagers} reloadManagers={reloadManagers} />
-            {/* Adicionada a prop accounts para o ClientsTable poder usar no dropdown de criação/edição */}
-            <ClientsTable clients={clients} setClients={setClients} reloadClients={reloadClients} accounts={accounts} />
-        </div>
-    );
-}
+    // 4. SINCRONIZAÇÃO: Atualiza os nomes na tabela sempre que a lista de empresas mudar localmente
+    useEffect(() => {
+        if (accounts.length > 0) {
+            reloadClients(accounts);
+        }
+    }, [accounts]);
 
 
 function CompaniesTable({ accounts, setAccounts, reloadCompanies }) {
@@ -407,7 +409,7 @@ function ClientsTable({ clients, setClients, reloadClients, accounts }) {
             });
 
             if (res.data.success) {
-                await reloadClients(); // Atualiza a lista geral
+                await reloadClients(accounts); // Atualiza a lista geral
                 setForm(getEmptyForm());
                 setShowForm(false);
             } else {
@@ -445,7 +447,7 @@ function ClientsTable({ clients, setClients, reloadClients, accounts }) {
             });
 
             if (res.data.success) {
-                await reloadClients();
+                await reloadClients(accounts);
                 cancelEdit();
             } else {
                 alert("Error: " + res.data.message);
@@ -460,7 +462,7 @@ function ClientsTable({ clients, setClients, reloadClients, accounts }) {
         try {
             const res = await axios.delete(`https://orion-dewp.onrender.com/api/users/${id}`);
             if (res.data.success) {
-                await reloadClients();
+                await reloadClients(accounts);
             } else {
                 alert("Error: " + res.data.message);
             }
@@ -1028,10 +1030,12 @@ function Tickets() {
     );
 }
 
-function Requests() {
+function Requests({ managers = [] }) { // Recebe os managers passados pelo painel pai
     const [requests, setRequests] = useState([]);
     const [filter, setFilter] = useState("Todos");
     const [loading, setLoading] = useState(true);
+    // Estado para saber qual card está em modo de atribuição de gestor
+    const [activeAssignId, setActiveAssignId] = useState(null);
 
     // Tradutor de estados do Sequelize ENUM ('open', 'in_progress', 'closed') para o teu Layout
     const translateStatus = (dbStatus) => {
@@ -1047,48 +1051,53 @@ function Requests() {
         try {
             setLoading(true);
 
-            // Chamada Axios à tua API no Render
             const response = await axios.get("https://orion-dewp.onrender.com/api/requests");
             const data = response.data;
 
-            if (data.success && data.requests) {
-                // Mapeamos os relacionamentos que o teu Sequelize gerou
+            if (data && data.success && data.requests) {
                 const mappedRequests = data.requests.map(r => ({
                     id: r.id,
-                    title: r.subject, // Usa o campo 'subject' do teu modelo Request
-                    description: r.description,
-                    // Se o criador tiver empresa associada mostra o nome dele, senão usa um padrão
-                    company: r.creator?.name || "CyberBox Cliente",
-                    // Formata a data 'openedAt' do teu modelo
-                    date: r.openedAt ? new Date(r.openedAt).toLocaleDateString("pt-PT") : "N/A",
-                    itemsCount: r.subtype ? 1 : 0,
-                    // Tipo principal vem do include { model: RequestType }
-                    type: r.RequestType?.name || "Geral",
-                    subtype: r.subtype,
-                    // Nome do utilizador atribuído obtido através do alias 'assignedTo'
-                    assignedTo: r.assignedTo?.nome || r.assignedTo?.name || "Sem atribuição",
-                    status: translateStatus(r.status)
+                    title: r.type || "Geral", 
+                    description: r.notes || "Sem descrição", 
+                    company: "CyberBox Cliente", 
+                    date: r.date || "N/A", 
+                    itemsCount: 0,
+                    type: r.type_name || "Geral",
+                    subtype: null,
+                    // 🟢 Mapeia os dados reais que vêm do teu novo backend
+                    assignedToId: r.assignedToId || "",
+                    assignedToName: r.assignedToName || "Sem atribuição",
+                    status: r.status || "Pendente" 
                 }));
+
                 setRequests(mappedRequests);
+            } else {
+                setRequests([]);
             }
+
         } catch (err) {
-            console.error("Error loading requests with Axios:", err.message);
-            // Fallback de segurança para a interface não quebrar se a BD estiver vazia
-            setRequests([
-                {
-                    id: 1,
-                    title: "Auditoria de Segurança Completa (Demo)",
-                    description: "Pedido de auditoria completa aos sistemas de segurança da organização",
-                    company: "TechCorp",
-                    date: "03/06/2026",
-                    itemsCount: 2,
-                    type: "Pentest",
-                    assignedTo: "Admin Principal",
-                    status: "Em Execução"
-                }
-            ]);
+            console.error("Erro ao carregar pedidos:", err.message);
+            setRequests([]);
         } finally {
             setLoading(false);
+        }
+    };
+
+    // Função para disparar o PUT para a API quando mudas o gestor
+    const handleAssignManager = async (requestId, managerId) => {
+        try {
+            const res = await axios.put(`https://orion-dewp.onrender.com/api/requests/${requestId}/assign`, {
+                managerId: managerId ? parseInt(managerId) : null
+            });
+
+            if (res.data.success) {
+                await reloadRequests(); // Recarrega os dados reais
+                setActiveAssignId(null); // Fecha a dropdown do card
+            } else {
+                alert("Erro ao atribuir gestor: " + res.data.message);
+            }
+        } catch (err) {
+            alert("Erro de ligação: " + err.message);
         }
     };
 
@@ -1106,7 +1115,6 @@ function Requests() {
     const getStatusBadgeClass = (status) => {
         switch (status) {
             case "Pendente": return "bg-warning text-dark";
-            case "Aprovados": return "bg-success";
             case "Em Execução": return "bg-info text-dark";
             case "Concluídos": return "bg-secondary";
             default: return "bg-primary";
@@ -1145,14 +1153,6 @@ function Requests() {
                 <div className="col">
                     <div className="card p-3 d-flex flex-row align-items-center gap-3 shadow-sm">
                         <div>
-                            <div className="text-muted small">Aprovados</div>
-                            <h4 className="fw-bold text-success m-0">{countByStatus("Aprovados")}</h4>
-                        </div>
-                    </div>
-                </div>
-                <div className="col">
-                    <div className="card p-3 d-flex flex-row align-items-center gap-3 shadow-sm">
-                        <div>
                             <div className="text-muted small">Em Execução</div>
                             <h4 className="fw-bold text-warning m-0">{countByStatus("Em Execução")}</h4>
                         </div>
@@ -1174,7 +1174,7 @@ function Requests() {
                     <span>Filtros</span>
                 </div>
                 <div className="d-flex gap-2">
-                    {["Todos", "Pendente", "Aprovados", "Em Execução", "Concluídos"].map((status) => (
+                    {["Todos", "Pendente", "Em Execução", "Concluídos"].map((status) => (
                         <button
                             key={status}
                             onClick={() => setFilter(status)}
@@ -1199,18 +1199,51 @@ function Requests() {
                                 </span>
                             </div>
                             <p className="text-muted small m-0 mb-2">{request.description}</p>
-                            <div className="d-flex align-items-center gap-3 text-secondary" style={{ fontSize: "12px" }}>
+                            
+                            <div className="d-flex align-items-center flex-wrap gap-3 text-secondary" style={{ fontSize: "12px" }}>
                                 <span>👤 {request.company}</span>
                                 <span>📅 {request.date}</span>
                                 {request.subtype && <span className="text-dark bg-light px-1 rounded">🏷️ Subtipo: {request.subtype}</span>}
                                 <span>🛠️ {request.type}</span>
-                                <span className="text-primary fw-medium">Atribuído: {request.assignedTo}</span>
+                                
+                                {/* 🟢 GESTÃO DO BOTÃO / DROPDOWN DENTRO DOS INFOS DO CARD */}
+                                {activeAssignId === request.id ? (
+                                    <div className="d-flex align-items-center gap-1">
+                                        <select
+                                            className="form-select form-select-sm border-primary w-auto"
+                                            defaultValue={request.assignedToId || ""}
+                                            onChange={(e) => handleAssignManager(request.id, e.target.value)}
+                                        >
+                                            <option value="">⚠️ Sem atribuição</option>
+                                            {managers && managers.map((m) => (
+                                                <option key={m.id} value={m.id}>
+                                                    👤 {m.name || m.nome}
+                                                </option>
+                                            ))}
+                                        </select>
+                                        <button
+                                            type="button"
+                                            className="btn btn-sm btn-outline-danger px-2"
+                                            onClick={() => setActiveAssignId(null)}
+                                        >
+                                            ✕
+                                        </button>
+                                    </div>
+                                ) : (
+                                    <div className="d-flex align-items-center gap-2">
+                                        <span className="text-primary fw-medium">
+                                            Atribuído: {request.assignedToId ? request.assignedToName : "Sem atribuição"}
+                                        </span>
+                                        <button
+                                            type="button"
+                                            className="btn btn-sm btn-dark px-2"
+                                            onClick={() => setActiveAssignId(request.id)}
+                                        >
+                                            {request.assignedToId ? "Alterar" : "Atribuir"}
+                                        </button>
+                                    </div>
+                                )}
                             </div>
-                        </div>
-                        <div>
-                            <button className="btn btn-sm btn-link text-primary fs-5 p-0">
-                                👁️
-                            </button>
                         </div>
                     </div>
                 ))}
@@ -1224,6 +1257,7 @@ function Requests() {
         </div>
     );
 }
+
 
 function Docs() {
     return (
@@ -1341,4 +1375,5 @@ function Content() {
             </table>
         </div>
     );
+}
 }

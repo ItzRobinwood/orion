@@ -162,8 +162,8 @@ exports.updateUser = async (req, res) => {
 exports.getUsers = async (req, res) => {
     try {
         const users = await User.findAll({
-            attributes: ['id_Utilizador', 'name', 'email', 'telephone', 'active', 'id_tipo']
-            // Buscamos apenas os campos necessários, sem expor a password encriptada por segurança
+            // 🔴 CORREÇÃO: Adicionado 'id_empresa' para que o React consiga cruzar os dados!
+            attributes: ['id_Utilizador', 'name', 'email', 'telephone', 'active', 'id_tipo', 'id_empresa']
         });
 
         return res.json({

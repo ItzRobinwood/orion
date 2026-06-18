@@ -22,5 +22,6 @@ router.post('/requests', upload.single('file'), requestController.request_create
 router.put('/requests/:id', requestController.request_update);
 router.delete('/requests/:id', requestController.request_delete);
 router.put('/requests/:id/close', requestController.request_close);
+router.put('/requests/:id/assign', requestController.assign_manager);
 
 module.exports = router;
