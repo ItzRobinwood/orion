@@ -1,5 +1,5 @@
 const { DataTypes } = require('sequelize');
-const sequelize = require('../config/database');
+const sequelize = require('../config/database'); // Ajusta para o teu caminho real
 
 const Request = sequelize.define('Request', {
     id: {
@@ -7,47 +7,47 @@ const Request = sequelize.define('Request', {
         primaryKey: true,
         autoIncrement: true
     },
-
+    requestTypeId: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+        field: 'requestTypeId' // Garante o camelCase idêntico à base de dados
+    },
+    creatorId: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+        field: 'creatorId'
+    },
+    assignedToId: {
+        type: DataTypes.INTEGER,
+        allowNull: true,
+        field: 'assignedToId'
+    },
     subject: {
         type: DataTypes.STRING,
-        allowNull: false,
-        validate: {
-            notEmpty: true
-        }
-    },
-
-    description: {
-        type: DataTypes.TEXT,
-        allowNull: false,
-        validate: {
-            notEmpty: true
-        }
-    },
-
-    status: {
-        type: DataTypes.ENUM('open', 'in_progress', 'closed'),
-        defaultValue: 'open',
         allowNull: false
     },
-
+    description: {
+        type: DataTypes.TEXT,
+        allowNull: false
+    },
     subtype: {
         type: DataTypes.STRING,
         allowNull: true
     },
-
-    openedAt: {
-        type: DataTypes.DATE,
-        defaultValue: DataTypes.NOW
+    status: {
+        type: DataTypes.STRING,
+        allowNull: false,
+        defaultValue: 'open'
     },
-
-    closedAt: {
+    // 🟢 Se a tua tabela no Supabase usa 'createdAt', mapeia assim:
+    createdAt: {
         type: DataTypes.DATE,
-        allowNull: true
+        field: 'createdAt',
+        defaultValue: DataTypes.NOW
     }
-
 }, {
-    tableName: 'requests',
-    timestamps: false
+    tableName: 'requests', // Nome exato da tabela no Supabase (geralmente em minúsculas)
+    timestamps: false      // ❌ Bloqueia o Sequelize de procurar a coluna 'updatedAt' que não existe!
 });
 
 module.exports = Request;
