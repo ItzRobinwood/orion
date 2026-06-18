@@ -16,15 +16,17 @@
   "type": "commonjs",
   "dependencies": {
     "bcryptjs": "^3.0.3",
+    "cloudinary": "^2.10.0",
     "cors": "^2.8.6",
     "dotenv": "^17.4.2",
     "express": "^5.2.1",
     "multer": "^2.2.0",
+    "multer-storage-cloudinary": "^2.2.1",
     "node-cron": "^4.3.0",
     "pg": "^8.21.0",
     "pg-hstore": "^2.3.4",
     "rss-parser": "^3.13.0",
-    "sequelize": "^6.37.8"
+    "sequelize": "^3.30.0"
   },
   "devDependencies": {
     "nodemon": "^3.1.14"

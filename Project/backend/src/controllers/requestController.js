@@ -162,13 +162,14 @@ const request_create = async (req, res) => {
         });
 
         if (req.file) {
-            await RequestFile.create({
-                requestId: newRequest.id,
-                fileName: req.file.originalname,
-                filePath: req.file.path,
-                uploadedAt: new Date()
-            });
-        }
+    const base64 = req.file.buffer.toString('base64');
+    await RequestFile.create({
+        requestId: newRequest.id,
+        fileName: req.file.originalname,
+        filePath: base64,  // guarda o ficheiro em base64
+        uploadedAt: new Date()
+    });
+}
 
         return res.status(201).json({
             success: true,
@@ -213,7 +214,10 @@ const request_file_download = async (req, res) => {
             return res.status(404).json({ success: false, message: "Ficheiro não encontrado." });
         }
 
-        return res.download(fileRecord.filePath, fileRecord.fileName);
+        const buffer = Buffer.from(fileRecord.filePath, 'base64');
+res.setHeader('Content-Disposition', `attachment; filename="${fileRecord.fileName}"`);
+res.setHeader('Content-Type', 'application/octet-stream');
+return res.send(buffer);
     } catch (error) {
         console.error("Erro no download:", error.message);
         return res.status(500).json({ success: false, message: error.message });
