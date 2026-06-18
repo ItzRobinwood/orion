@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react"; 
 import "bootstrap/dist/css/bootstrap.min.css";
 
 export default function ClientDashboard() {
@@ -250,7 +250,6 @@ function Docs() {
         },
     };
 
-    // Mapeamento idêntico aos IDs da tua tabela 'RequestTypes'
     const REQUEST_TYPES = [
         { id: 1, name: "Report de Incidente" },
         { id: 2, name: "Pentest"             },
@@ -267,13 +266,59 @@ function Docs() {
     const [submitting, setSubmitting] = useState(false);
     const [submitted, setSubmitted]   = useState(false);
 
-    // Lista estática de documentos (Mock para consulta rápida)
-    const docs = [
-        { id: 1, name: "Política de Segurança v3",       type: "PDF",  date: "02/03/2026", size: "1.1 MB" },
-        { id: 2, name: "Relatório NIS2 - Q1 2026",       type: "PDF",  date: "10/04/2026", size: "2.4 MB" },
-        { id: 3, name: "Guia de Boas Práticas",          type: "DOCX", date: "15/02/2026", size: "0.8 MB" },
-        { id: 4, name: "Plano de Resposta a Incidentes", type: "PDF",  date: "01/01/2026", size: "3.2 MB" },
-    ];
+    const [dbFiles, setDbFiles]           = useState([]);
+    const [loadingFiles, setLoadingFiles] = useState(false);
+
+    useEffect(() => {
+        if (subTab === "docs") {
+            fetchFiles();
+        }
+    }, [subTab]);
+
+    const fetchFiles = async () => {
+        setLoadingFiles(true);
+        try {
+            const token = localStorage.getItem("userToken");
+            // Nota: Se a rota de ficheiros estiver mapeada sob outra rota, ajusta aqui 
+            // Ex: `${API}/requests/files` ou apenas `${API}/files` dependendo do requestRoutes.js
+            const res = await axios.get(`${API}/requests/files`, {
+                headers: token ? { "Authorization": `Bearer ${token}` } : {}
+            });
+            
+            // Aceita o array diretamente ou embrulhado numa propriedade da resposta
+            const data = res.data?.files || res.data;
+            if (Array.isArray(data)) {
+                setDbFiles(data);
+            }
+        } catch (err) {
+            console.error("Erro ao carregar ficheiros:", err);
+        } finally {
+            setLoadingFiles(false);
+        }
+    };
+
+    const handleDownload = async (fileId, fileName) => {
+        try {
+            const token = localStorage.getItem("userToken");
+            const response = await axios({
+                url: `${API}/requests/files/download/${fileId}`,
+                method: 'GET',
+                responseType: 'blob',
+                headers: token ? { "Authorization": `Bearer ${token}` } : {}
+            });
+
+            const url = window.URL.createObjectURL(new Blob([response.data]));
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', fileName || 'documento');
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+        } catch (err) {
+            console.error("Erro ao descarregar o ficheiro:", err);
+            alert("Não foi possível realizar o download do ficheiro.");
+        }
+    };
 
     const currentConfig = typeId ? TYPE_FIELDS[typeId] : null;
 
@@ -300,7 +345,6 @@ function Docs() {
 
         setSubmitting(true);
         try {
-            // Converte o formulário dinâmico num bloco de texto limpo para o campo 'description' TEXT NOT NULL
             const formattedDescription = Object.entries(formData)
                 .map(([key, val]) => {
                     const fieldLabel = currentConfig.fields.find(f => f.key === key)?.label.replace(" *", "") || key;
@@ -308,29 +352,37 @@ function Docs() {
                 })
                 .join("\n");
 
+            const token = localStorage.getItem("userToken");
+            const activeUserId = localStorage.getItem("userId") || 1; // Padrão 1 caso venha vazio temporariamente
+            const configHeaders = token ? { headers: { "Authorization": `Bearer ${token}` } } : {};
+
             let res;
 
             if (file) {
                 const multiPartForm = new FormData();
+                // Match perfeito com as colunas da tabela 'requests'
                 multiPartForm.append("requestTypeId", Number(typeId));
                 multiPartForm.append("subject", currentConfig.label);
                 multiPartForm.append("description", formattedDescription); 
-                multiPartForm.append("creatorId", 1);
+                multiPartForm.append("creatorId", Number(activeUserId));
                 multiPartForm.append("file", file);
 
                 res = await axios.post(`${API}/requests`, multiPartForm, {
-                    headers: { "Content-Type": "multipart/form-data" }
+                    headers: { 
+                        "Content-Type": "multipart/form-data",
+                        ...(token ? { "Authorization": `Bearer ${token}` } : {})
+                    }
                 });
             } else {
                 res = await axios.post(`${API}/requests`, {
                     requestTypeId: Number(typeId),
                     subject: currentConfig.label,
                     description: formattedDescription,
-                    creatorId: 1,
-                });
+                    creatorId: Number(activeUserId),
+                }, configHeaders);
             }
 
-            if (res.data.success || res.status === 200 || res.status === 201) {
+            if (res.status === 200 || res.status === 201 || res.data?.success) {
                 setSubmitted(true);
                 setFormData({});
                 setTypeId("");
@@ -369,7 +421,6 @@ function Docs() {
 
     return (
         <div className="card p-3">
-            {/* Navegação de Abas Principal */}
             <ul className="nav nav-tabs mb-3">
                 <li className="nav-item">
                     <button className={`nav-link ${subTab === "form" ? "active" : ""}`} onClick={() => setSubTab("form")}>
@@ -383,7 +434,6 @@ function Docs() {
                 </li>
             </ul>
 
-            {/* ── Aba 1: Novo Pedido Dinâmico ── */}
             {subTab === "form" && (
                 <>
                     {submitted && (
@@ -426,7 +476,7 @@ function Docs() {
 
                                     <div className="col-12">
                                         <label className="form-label fw-semibold" style={{ fontSize: 12 }}>
-                                            Anexar Documento / Evidência Associada
+                                            Anexar Documento de Suporte (Envia para RequestFiles)
                                         </label>
                                         <input type="file" className="form-control form-control-sm"
                                             style={{ maxWidth: 400 }}
@@ -461,30 +511,55 @@ function Docs() {
                 </>
             )}
 
-            {/* ── Aba 2: Documentação Disponível (Consulta Rápida) ── */}
             {subTab === "docs" && (
                 <div className="table-responsive">
-                    <table className="table align-middle">
-                        <thead>
-                            <tr><th>Nome do Ficheiro</th><th>Tipo</th><th>Tamanho</th><th>Data de Submissão</th><th>Ação</th></tr>
-                        </thead>
-                        <tbody>
-                            {docs.map(d => (
-                                <tr key={d.id}>
-                                    <td style={{ fontWeight: 600 }}>{d.name}</td>
-                                    <td><span className="badge bg-secondary">{d.type}</span></td>
-                                    <td style={{ fontSize: 13, color: "#6b7280" }}>{d.size}</td>
-                                    <td style={{ fontSize: 13, color: "#6b7280" }}>{d.date}</td>
-                                    <td><button className="btn btn-sm btn-outline-dark">Download</button></td>
+                    {loadingFiles ? (
+                        <p className="text-muted p-3">A carregar documentos do servidor...</p>
+                    ) : dbFiles.length === 0 ? (
+                        <p className="text-muted p-3">Nenhum documento disponível no repositório de RequestFiles.</p>
+                    ) : (
+                        <table className="table align-middle">
+                            <thead>
+                                <tr>
+                                    <th>ID Ficheiro</th>
+                                    <th>Nome do Documento</th>
+                                    <th>Ref. Pedido</th>
+                                    <th>Data de Submissão</th>
+                                    <th>Ação</th>
                                 </tr>
-                            ))}
-                        </tbody>
-                    </table>
+                            </thead>
+                            <tbody>
+                                {dbFiles.map(f => (
+                                    <tr key={f.id}>
+                                        {/* 🟢 CORREÇÃO DOS CAMPOS: Usando camelCase estrito conforme a imagem da tabela */}
+                                        <td>#{f.id}</td>
+                                        <td style={{ fontWeight: 600 }}>{f.fileName || "Ficheiro Sem Nome"}</td>
+                                        <td>
+                                            <span className="badge bg-light text-dark">
+                                                Pedido #{f.requestId || "N/A"}
+                                            </span>
+                                        </td>
+                                        <td style={{ fontSize: 13, color: "#6b7280" }}>
+                                            {f.uploadedAt ? new Date(f.uploadedAt).toLocaleDateString('pt-PT') : "---"}
+                                        </td>
+                                        <td>
+                                            <button 
+                                                className="btn btn-sm btn-outline-dark"
+                                                onClick={() => handleDownload(f.id, f.fileName)}
+                                            >
+                                                📥 Download
+                                            </button>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    )}
                 </div>
             )}
         </div>
     );
-}
+}   
 /* ───────────────────────── TICKETS ───────────────────────── */
 function Tickets() {
     const [tickets, setTickets] = useState([

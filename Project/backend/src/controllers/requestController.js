@@ -2,6 +2,7 @@
 const Request = require('../models/requestModel');
 const RequestType = require('../models/requestTypeModel');
 const User = require('../models/User');
+const RequestFile = require('../models/requestFilesModel'); // 🟢 Importado para gerir os ficheiros
 
 // ==========================================
 // 1. LISTAR TODOS OS PEDIDOS (GET /api/requests)
@@ -14,12 +15,11 @@ const request_list = async (req, res) => {
                 { model: User, as: 'creator' },
                 { model: User, as: 'assignedTo' }
             ],
-            order: [['openedAt', 'DESC']]
+            // 🟢 CORREÇÃO: Mudado de 'openedAt' para 'createdAt' conforme o padrão da base de dados
+            order: [['createdAt', 'DESC']] 
         });
 
-        // 🟢 Transforma os dados no formato exato que a tabela do cliente espera ler
         const mappedRequests = requests.map(r => {
-            // Converte o ENUM do banco para o texto esperado pelas cores do bootstrap do frontend
             let statusReact = "Pendente";
             if (r.status === "in_progress") statusReact = "Em análise";
             if (r.status === "closed") statusReact = "Aprovado";
@@ -28,9 +28,10 @@ const request_list = async (req, res) => {
                 id: r.id,
                 type: r.RequestType ? r.RequestType.name : "Geral",
                 type_name: r.RequestType ? r.RequestType.name : "Geral",
-                date: r.openedAt ? new Date(r.openedAt).toLocaleDateString("pt-PT") : "",
-                status: statusReact, // Entrega o termo em português que o React usa nas cores
-                notes: r.description // O frontend chama 'notes', mapeamos a 'description' da BD
+                // 🟢 CORREÇÃO: Mudado para 'createdAt'
+                date: r.createdAt ? new Date(r.createdAt).toLocaleDateString("pt-PT") : "",
+                status: statusReact,
+                notes: r.description 
             };
         });
 
@@ -40,6 +41,7 @@ const request_list = async (req, res) => {
         });
 
     } catch (error) {
+        console.error("Erro em request_list:", error.message);
         return res.status(500).json({ success: false, message: error.message });
     }
 };
@@ -74,26 +76,31 @@ const request_detail = async (req, res) => {
 };
 
 // ==========================================
-// 3. CRIAR NOVO PEDIDO (POST /api/requests/create ou /api/requests)
+// 3. CRIAR NOVO PEDIDO (POST /api/requests)
 // ==========================================
 const request_create = async (req, res) => {
     try {
-        // Extrai tanto os campos originais do backend como os campos que o React envia
+        // 🟢 SEGURANÇA: Se o req.body vier vazio por falha de middleware, responde sem crashar
+        if (!req.body || Object.keys(req.body).length === 0) {
+            return res.status(400).json({
+                success: false,
+                message: 'O servidor não conseguiu ler os dados do formulário (req.body está vazio). Garante que o Multer está ativo na rota.'
+            });
+        }
+
         const {
-            requestTypeId, type,       // Aceita 'requestTypeId' ou 'type'
+            requestTypeId, type,
             creatorId,
             assignedToId,
             subject,
-            description, notes,        // Aceita 'description' ou 'notes'
+            description, notes,
             subtype
         } = req.body;
 
-        // Mapeamento inteligente: se vier do React, usa as variáveis dele
         const finalRequestTypeId = requestTypeId || type;
         const finalDescription = description || notes;
         const finalSubject = subject || "Pedido via Portal";
 
-        // Validação de campos obrigatórios
         if (!finalRequestTypeId || !finalDescription) {
             return res.status(400).json({ 
                 success: false, 
@@ -101,7 +108,6 @@ const request_create = async (req, res) => {
             });
         }
 
-        // Verificar se o tipo de pedido existe na Base de Dados
         const requestType = await RequestType.findByPk(finalRequestTypeId);
         if (!requestType) {
             return res.status(404).json({ 
@@ -110,25 +116,26 @@ const request_create = async (req, res) => {
             });
         }
 
-        // Validação inteligente para o tipo "Others"
-        if (requestType.name === 'Others' && (!subtype || subtype.trim() === '')) {
-            return res.status(400).json({ 
-                success: false, 
-                message: 'É obrigatório especificar o subtipo quando escolhe a opção "Outros".' 
-            });
-        }
-
-        // Criar o registo na Base de Dados com o Sequelize
+        // Cria o pedido na Base de Dados
         const newRequest = await Request.create({
             requestTypeId: Number(finalRequestTypeId),
-            creatorId: creatorId || 1, // Fallback caso o frontend não passe o ID do user logado
+            creatorId: creatorId ? Number(creatorId) : 1, 
             assignedToId: assignedToId || null, 
             subject: finalSubject,
             description: finalDescription,
-            subtype: requestType.name === 'Others' ? subtype.trim() : null, 
-            status: 'open', 
-            openedAt: new Date() 
+            subtype: requestType.name === 'Others' && subtype ? subtype.trim() : null, 
+            status: 'open'
         });
+
+        // Se o Multer intercetou um ficheiro, regista-o na tabela RequestFiles
+        if (req.file) {
+            await RequestFile.create({
+                requestId: newRequest.id,
+                fileName: req.file.originalname,
+                filePath: req.file.path,
+                uploadedAt: new Date()
+            });
+        }
 
         return res.status(201).json({
             success: true,
@@ -147,53 +154,67 @@ const request_create = async (req, res) => {
 };
 
 // ==========================================
-// 4. ATUALIZAR PEDIDO (PUT /api/requests/:id)
+// 4. LISTAR FICHEIROS DISPONÍVEIS (GET /api/requests/files)
+// ==========================================
+const request_files_list = async (req, res) => {
+    try {
+        // 🟢 CORREÇÃO: Mudado de 'createdAt' para 'uploadedAt' (o nome real da coluna na BD)
+        const files = await RequestFile.findAll({
+            order: [['uploadedAt', 'DESC']]
+        });
+        
+        return res.json(files);
+    } catch (error) {
+        console.error("Erro ao listar ficheiros:", error.message);
+        return res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+// ==========================================
+// 5. DESCARREGAR FICHEIRO POR ID (GET /api/requests/files/download/:id)
+// ==========================================
+const request_file_download = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const fileRecord = await RequestFile.findByPk(id);
+
+        if (!fileRecord) {
+            return res.status(404).json({ success: false, message: "Ficheiro não encontrado." });
+        }
+
+        // Envia o arquivo físico salvo no servidor de volta ao cliente
+        return res.download(fileRecord.filePath, fileRecord.fileName);
+    } catch (error) {
+        console.error("Erro no download:", error.message);
+        return res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+// ==========================================
+// 6. ATUALIZAR PEDIDO (PUT /api/requests/:id)
 // ==========================================
 const request_update = async (req, res) => {
     try {
         const { id } = req.params;
-
-        const request = await Request.findByPk(id, {
-            include: [{ model: RequestType }]
-        });
+        const request = await Request.findByPk(id);
 
         if (!request) {
             return res.status(404).json({ success: false, message: 'Pedido não encontrado.' });
         }
 
-        const newRequestTypeId = req.body.requestTypeId || request.requestTypeId;
-        const requestType = await RequestType.findByPk(newRequestTypeId);
-
-        if (requestType.name === 'Others') {
-            const newSubtype = req.body.subtype || request.subtype;
-            if (!newSubtype || newSubtype.trim() === '') {
-                return res.status(400).json({ success: false, message: 'Subtype é obrigatório para pedidos do tipo Others.' });
-            }
-            req.body.subtype = newSubtype.trim();
-        } else {
-            req.body.subtype = null;
-        }
-
         await request.update(req.body);
-
-        return res.json({
-            success: true,
-            message: 'Pedido atualizado com sucesso.',
-            request
-        });
-
+        return res.json({ success: true, message: 'Pedido atualizado.', request });
     } catch (error) {
         return res.status(500).json({ success: false, message: error.message });
     }
 };
 
 // ==========================================
-// 5. ELIMINAR PEDIDO (DELETE /api/requests/:id)
+// 7. ELIMINAR PEDIDO (DELETE /api/requests/:id)
 // ==========================================
 const request_delete = async (req, res) => {
     try {
         const { id } = req.params;
-
         const request = await Request.findByPk(id);
 
         if (!request) {
@@ -201,48 +222,37 @@ const request_delete = async (req, res) => {
         }
 
         await request.destroy();
-
-        return res.json({ success: true, message: 'Pedido eliminado com sucesso.' });
-
+        return res.json({ success: true, message: 'Pedido eliminado.' });
     } catch (error) {
         return res.status(500).json({ success: false, message: error.message });
     }
 };
 
 // ==========================================
-// 6. FECHAR PEDIDO (PUT /api/requests/:id/close)
+// 8. FECHAR PEDIDO (PUT /api/requests/:id/close)
 // ==========================================
 const request_close = async (req, res) => {
     try {
         const { id } = req.params;
-
         const request = await Request.findByPk(id);
 
         if (!request) {
             return res.status(404).json({ success: false, message: 'Pedido não encontrado.' });
         }
 
-        await request.update({
-            status: 'closed',
-            closedAt: new Date()
-        });
-
-        return res.json({
-            success: true,
-            message: 'Pedido fechado com sucesso.',
-            request
-        });
-
+        await request.update({ status: 'closed' });
+        return res.json({ success: true, message: 'Pedido fechado.', request });
     } catch (error) {
         return res.status(500).json({ success: false, message: error.message });
     }
 };
 
-// Exportação unificada de todas as funções do controlador
 module.exports = {
     request_list,
     request_detail,
     request_create,
+    request_files_list,      // 🟢 Adicionado aos exports
+    request_file_download,    // 🟢 Adicionado aos exports
     request_update,
     request_delete,
     request_close

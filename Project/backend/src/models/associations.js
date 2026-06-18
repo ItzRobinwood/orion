@@ -1,16 +1,3 @@
-const User = require("./User");
-const UserType = require("./UserType");
-const Company = require("./company");
-const Request = require("./requestModel");
-const RequestType = require("./requestTypeModel");
-const RequestFile = require("./requestFilesModel");
-const Question = require("./questions");
-const MessageQuestion = require("./messagesQuestions");
-const EstadoPedido = require("./requestStatus");
-const Logs = require("./logs");
-const Incident = require("./incidentModel");
-
-
 function applyAssociations() {
 
   // UserType <-> User
@@ -31,15 +18,16 @@ function applyAssociations() {
 
   //------------------------------//
 
+  // 🟢 CORREÇÃO: Removidos os 'id_Utilizador' que faziam o SQL crashar no Sequelize
   // User (creator) <-> Request
-  User.hasMany(Request, { foreignKey: "creatorId", sourceKey: "id_Utilizador", as: "createdRequests" });
-  Request.belongsTo(User, { foreignKey: "creatorId", targetKey: "id_Utilizador", as: "creator" });
+  User.hasMany(Request, { foreignKey: "creatorId", as: "createdRequests" });
+  Request.belongsTo(User, { foreignKey: "creatorId", as: "creator" });
 
   //------------------------------//
 
   // User (assignedTo) <-> Request
-  User.hasMany(Request, { foreignKey: "assignedToId", sourceKey: "id_Utilizador", as: "assignedRequests" });
-  Request.belongsTo(User, { foreignKey: "assignedToId", targetKey: "id_Utilizador", as: "assignedTo" });
+  User.hasMany(Request, { foreignKey: "assignedToId", as: "assignedRequests" });
+  Request.belongsTo(User, { foreignKey: "assignedToId", as: "assignedTo" });
 
   //------------------------------//
 
@@ -50,14 +38,14 @@ function applyAssociations() {
   //------------------------------//
 
   // User (creator) <-> Question
-  User.hasMany(Question, { foreignKey: "creatorId", sourceKey: "id_Utilizador", as: "createdQuestions" });
-  Question.belongsTo(User, { foreignKey: "creatorId", targetKey: "id_Utilizador", as: "creator" });
+  User.hasMany(Question, { foreignKey: "creatorId", as: "createdQuestions" });
+  Question.belongsTo(User, { foreignKey: "creatorId", as: "creator" });
 
   //------------------------------//
 
   // User (assignedTo) <-> Question
-  User.hasMany(Question, { foreignKey: "assignedToId", sourceKey: "id_Utilizador", as: "assignedQuestions" });
-  Question.belongsTo(User, { foreignKey: "assignedToId", targetKey: "id_Utilizador", as: "assignedTo" });
+  User.hasMany(Question, { foreignKey: "assignedToId", as: "assignedQuestions" });
+  Question.belongsTo(User, { foreignKey: "assignedToId", as: "assignedTo" });
 
   //------------------------------//
 
@@ -68,8 +56,8 @@ function applyAssociations() {
   //------------------------------//
 
   // User <-> MessageQuestion
-  User.hasMany(MessageQuestion, { foreignKey: "userId", sourceKey: "id_Utilizador", as: "sentMessages" });
-  MessageQuestion.belongsTo(User, { foreignKey: "userId", targetKey: "id_Utilizador", as: "sender" });
+  User.hasMany(MessageQuestion, { foreignKey: "userId", as: "sentMessages" });
+  MessageQuestion.belongsTo(User, { foreignKey: "userId", as: "sender" });
 
   //------------------------------//
 
@@ -80,21 +68,19 @@ function applyAssociations() {
   //------------------------------//
 
   // User <-> EstadoPedido
-  User.hasMany(EstadoPedido, { foreignKey: "userId", sourceKey: "id_Utilizador", as: "requestStates" });
-  EstadoPedido.belongsTo(User, { foreignKey: "userId", targetKey: "id_Utilizador", as: "changedBy" });
+  User.hasMany(EstadoPedido, { foreignKey: "userId", as: "requestStates" });
+  EstadoPedido.belongsTo(User, { foreignKey: "userId", as: "changedBy" });
 
   //------------------------------//
 
   // User <-> Logs
-  User.hasMany(Logs, { foreignKey: "userId", sourceKey: "id_Utilizador", as: "logs" });
-  Logs.belongsTo(User, { foreignKey: "userId", targetKey: "id_Utilizador", as: "user" });
+  User.hasMany(Logs, { foreignKey: "userId", as: "logs" });
+  Logs.belongsTo(User, { foreignKey: "userId", as: "user" });
 
   //------------------------------//
 
   // User <-> Incident
-  User.hasMany(Incident, { foreignKey: "creatorId", sourceKey: "id_Utilizador", as: "incidents" });
-  Incident.belongsTo(User, { foreignKey: "creatorId", targetKey: "id_Utilizador", as: "creator" });
+  User.hasMany(Incident, { foreignKey: "creatorId", as: "incidents" });
+  Incident.belongsTo(User, { foreignKey: "creatorId", as: "creator" });
 
 }
-
-module.exports = applyAssociations;

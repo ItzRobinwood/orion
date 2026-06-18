@@ -15,12 +15,22 @@ const RequestFile = sequelize.define('RequestFile', {
         type: DataTypes.STRING,
         allowNull: false
     },
+    // 🟢 COLUNA EM FALTA ADICIONADA: Sem isto, as associações quebram o backend!
+    requestId: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+        references: {
+            model: 'requests', // Nome da tabela de pedidos na BD
+            key: 'id'
+        }
+    },
     uploadedAt: {
         type: DataTypes.DATE,
         defaultValue: DataTypes.NOW
     }
 }, {
-    timestamps: false
+    tableName: 'RequestFiles', // 🟢 Garante que o Sequelize bate na tabela com "s" no fim
+    timestamps: false          // Mantém desativado os createdAt/updatedAt fantasmas
 });
 
 module.exports = RequestFile;
