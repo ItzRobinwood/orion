@@ -127,14 +127,17 @@ function Accounts() {
             const mapped = data.users
                 .filter(u => u.id_tipo === 3)
                 .map(u => {
-                    // Mapeia usando a lista de empresas atualizada
-                    const associatedCompany = currentAccounts.find(acc => acc.id === u.id_empresa);
+                    // 🔴 CORREÇÃO AQUI: Convertemos ambos os IDs para Number antes de comparar
+                    const associatedCompany = currentAccounts.find(acc =>
+                        Number(acc.id) === Number(u.id_empresa)
+                    );
 
                     return {
                         ...u,
                         id: u.id_Utilizador,
                         phone: u.telephone,
                         status: u.active ? "Ativo" : "Inativo",
+                        // Se encontrar a empresa usa o nome mapeado, senão exibe "Sem Empresa"
                         companyName: associatedCompany ? associatedCompany.company : "Sem Empresa"
                     };
                 });
@@ -407,7 +410,7 @@ function ClientsTable({ clients, setClients, reloadClients, accounts }) {
             });
 
             if (res.data.success) {
-                await reloadClients(); // Atualiza a lista geral
+                await reloadClients(accounts); // Atualiza a lista geral
                 setForm(getEmptyForm());
                 setShowForm(false);
             } else {
@@ -445,7 +448,7 @@ function ClientsTable({ clients, setClients, reloadClients, accounts }) {
             });
 
             if (res.data.success) {
-                await reloadClients();
+                await reloadClients(accounts);
                 cancelEdit();
             } else {
                 alert("Error: " + res.data.message);
@@ -460,7 +463,7 @@ function ClientsTable({ clients, setClients, reloadClients, accounts }) {
         try {
             const res = await axios.delete(`https://orion-dewp.onrender.com/api/users/${id}`);
             if (res.data.success) {
-                await reloadClients();
+                await reloadClients(accounts);
             } else {
                 alert("Error: " + res.data.message);
             }
