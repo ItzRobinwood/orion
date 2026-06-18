@@ -86,7 +86,6 @@ function Accounts() {
         try {
             const res = await axios.get("https://orion-dewp.onrender.com/api/users");
             const data = res.data;
-
             const mapped = data.users
                 .filter(u => u.id_tipo === 1)
                 .map(u => ({
@@ -95,7 +94,6 @@ function Accounts() {
                     phone: u.telephone,
                     status: u.active ? "Ativo" : "Inativo"
                 }));
-
             setAdmins(mapped);
         } catch (err) {
             console.error("Error loading admins:", err);
@@ -106,7 +104,6 @@ function Accounts() {
         try {
             const res = await axios.get("https://orion-dewp.onrender.com/api/users");
             const data = res.data;
-
             const mapped = data.users
                 .filter(u => u.id_tipo === 2)
                 .map(u => ({
@@ -115,7 +112,6 @@ function Accounts() {
                     phone: u.telephone,
                     status: u.active ? "Ativo" : "Inativo"
                 }));
-
             setManagers(mapped);
         } catch (err) {
             console.error("Error loading managers:", err);
@@ -128,7 +124,8 @@ function Accounts() {
             const res = await axios.get("https://orion-dewp.onrender.com/api/users");
             const data = res.data;
 
-            // Se não for passado um array fresco por parâmetro, usa o estado atual
+            // Se passarmos a lista de empresas (como no reloadCompanies), usamos essa.
+            // Caso contrário, tentamos usar o estado "accounts" atual.
             const targetAccounts = currentAccounts || accounts;
 
             const mapped = data.users
@@ -179,26 +176,35 @@ function Accounts() {
             }));
 
             setAccounts(mapped);
-            // Passamos o mapeamento logo aqui para a primeira renderização vir correta
+            // Passa explicitamente o mapeamento fresco para os clientes
             await reloadClients(mapped);
         } catch (err) {
             console.error("Error loading companies:", err);
         }
     };
 
-    // 3. CICLO DE VIDA ÚNICO: Dispara apenas UMA VEZ quando a página monta
+    // 🔴 CORREÇÃO NO USEEFFECT: Adicionamos a dependência das accounts para que a função 
+    // reloadClients se atualize sempre que as empresas mudarem no sistema!
     useEffect(() => {
         reloadAdmins();
         reloadManagers();
         reloadCompanies();
-    }, []); // 🔴 Mantém as dependências vazias aqui para evitar loops de requests à API!
+    }, []);
 
-    // 4. SINCRONIZAÇÃO: Atualiza os nomes na tabela sempre que a lista de empresas mudar localmente
+    // 🔴 ADICIONAR ESTE SEGUNDO USEEFFECT: Garante a sincronização automática dos clientes
+    // sempre que a lista de empresas (accounts) terminar de carregar no React.
     useEffect(() => {
         if (accounts.length > 0) {
             reloadClients(accounts);
         }
     }, [accounts]);
+
+    // 1. Primeiro ciclo de vida: Carrega dados independentes e as empresas
+    useEffect(() => {
+        reloadAdmins();
+        reloadManagers();
+        reloadCompanies();
+    }, []);
 
     return (
         <div className="d-flex flex-column gap-4">
