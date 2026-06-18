@@ -2,7 +2,7 @@
 const Request = require('../models/requestModel');
 const RequestType = require('../models/requestTypeModel');
 const User = require('../models/User');
-const RequestFile = require('../models/requestFilesModel'); 
+const RequestFile = require('../models/requestFilesModel');
 
 // ==========================================
 // 1. LISTAR TODOS OS PEDIDOS (GET /api/requests)
@@ -15,7 +15,7 @@ const request_list = async (req, res) => {
                 { model: User, as: 'creator', include: [{ model: require('../models/company'), as: 'company' }] },
                 { model: User, as: 'assignedTo' }
             ],
-            order: [['openedAt', 'DESC']]
+            order: [['createdAt', 'DESC']]
         });
 
         const mappedRequests = requests.map(r => {
@@ -30,8 +30,8 @@ const request_list = async (req, res) => {
                 type: r.RequestType ? r.RequestType.name : "Geral",
                 type_name: r.RequestType ? r.RequestType.name : "Geral",
                 subtype: r.subtype || null,
-                date: r.openedAt
-                    ? new Date(r.openedAt).toLocaleDateString("pt-PT")
+                date: r.createdAt
+                    ? new Date(r.createdAt).toLocaleDateString("pt-PT")
                     : new Date().toLocaleDateString("pt-PT"),
                 status: statusReact,
                 company: r.creator?.company?.nome || r.creator?.name || "Cliente",
