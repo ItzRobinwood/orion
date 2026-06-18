@@ -26,6 +26,14 @@ const Question = sequelize.define('Question', {
     closedAt: {
         type: DataTypes.DATE,
         allowNull: true
+    },
+    creatorId: {
+        type: DataTypes.INTEGER,
+        allowNull: true
+    },
+    assignedToId: {
+        type: DataTypes.INTEGER,
+        allowNull: true
     }
 }, {
     tableName: 'questions',
