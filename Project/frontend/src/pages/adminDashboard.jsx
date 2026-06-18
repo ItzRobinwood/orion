@@ -128,7 +128,7 @@ function Accounts() {
                 .filter(u => u.id_tipo === 3)
                 .map(u => {
                     // Mapeia usando a lista de empresas atualizada
-                    const associatedCompany = currentAccounts.find(acc => acc.id === u.companyId);
+                    const associatedCompany = currentAccounts.find(acc => acc.id === u.id_empresa);
 
                     return {
                         ...u,
@@ -169,10 +169,10 @@ function Accounts() {
                     phone: u.telephone
                 }))
             }));
-            
+
             setAccounts(mapped);
             // IMPORTANTE: Passamos o mapeamento diretamente para atualizar os clientes na hora!
-            await reloadClients(mapped); 
+            await reloadClients(mapped);
         } catch (err) {
             console.error("Error loading companies:", err);
         }
@@ -182,7 +182,7 @@ function Accounts() {
     useEffect(() => {
         reloadAdmins();
         reloadManagers();
-        reloadCompanies(); 
+        reloadCompanies();
     }, []);
 
     return (
@@ -403,7 +403,7 @@ function ClientsTable({ clients, setClients, reloadClients, accounts }) {
                 password: form.password,
                 telephone: form.phone,
                 id_tipo: 3, // Tipo 3 para Clientes
-                companyId: parseInt(form.companyId) // Envia o ID da Empresa selecionada
+                id_empresa: parseInt(form.companyId) // Envia o ID da Empresa selecionada
             });
 
             if (res.data.success) {
@@ -422,7 +422,7 @@ function ClientsTable({ clients, setClients, reloadClients, accounts }) {
         setEditingId(c.id_Utilizador || c.id);
         setEditForm({
             ...c,
-            companyId: c.companyId || "" // Garante que o ID antigo fica selecionado no dropdown
+            companyId: c.id_empresa || "" // Garante que o ID antigo fica selecionado no dropdown
         });
         setShowForm(false);
     };
@@ -441,7 +441,7 @@ function ClientsTable({ clients, setClients, reloadClients, accounts }) {
                 email: editForm.email,
                 telephone: editForm.phone,
                 status: editForm.status,
-                companyId: parseInt(editForm.companyId) // Atualiza a associação da empresa
+                id_empresa: parseInt(editForm.companyId) // Atualiza a associação da empresa
             });
 
             if (res.data.success) {
