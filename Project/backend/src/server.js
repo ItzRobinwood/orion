@@ -25,8 +25,7 @@ const newsRoutes = require('./routes/newsRoutes');
 const requestTypeRoutes = require("./routes/requestTypeRoutes"); // ✅ movido para aqui
 
 // associations
-// 🔴 CORREÇÃO AQUI: Adicionadas as chavetas { } para extrair a função corretamente!
-const { applyAssociations } = require('./models/associations');
+const applyAssociations = require("./models/associations");
 
 // seeds
 const seedUserTypes = require("./seeders/seedUserTypes");
@@ -56,7 +55,6 @@ app.get("/", (req, res) => {
   res.send("CyberBox API está online e funcional! 🚀");
 });
 
-// Agora isto já vai funcionar sem dar "is not a function" 🎉
 applyAssociations();
 
 const PORT = process.env.PORT || 3000;
