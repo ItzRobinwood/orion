@@ -2,10 +2,10 @@
 const Request = require('../models/requestModel');
 const RequestType = require('../models/requestTypeModel');
 const User = require('../models/User');
-const RequestFile = require('../models/requestFilesModel'); // 🟢 Importado para gerir os ficheiros
+const RequestFile = require('../models/requestFilesModel'); 
 
-/// ==========================================
-// 1. LISTAR TODOS OS PEDIDOS (GET /api/requests) - ATUALIZADO
+// ==========================================
+// 1. LISTAR TODOS OS PEDIDOS (GET /api/requests)
 // ==========================================
 const request_list = async (req, res) => {
     try {
@@ -15,7 +15,6 @@ const request_list = async (req, res) => {
                 { model: User, as: 'creator' },
                 { model: User, as: 'assignedTo' }
             ],
-            // 🟢 CORREÇÃO: Mudado de 'openedAt' para 'createdAt' conforme o padrão da base de dados
             order: [['createdAt', 'DESC']] 
         });
 
@@ -28,13 +27,11 @@ const request_list = async (req, res) => {
                 id: r.id,
                 type: r.RequestType ? r.RequestType.name : "Geral",
                 type_name: r.RequestType ? r.RequestType.name : "Geral",
-                date: r.openedAt ? new Date(r.openedAt).toLocaleDateString("pt-PT") : "",
+                date: r.createdAt ? new Date(r.createdAt).toLocaleDateString("pt-PT") : "",
                 status: statusReact, 
                 notes: r.description,
-                
-                // 🟢 ADICIONA ESTES DOIS CAMPOS AQUI PARA O FRONTEND CONSEGUIR LER!
-                assignedToId: r.assignedTo ? r.assignedTo.id : "", 
-                assignedToName: r.assignedTo ? (r.assignedTo.name || r.assignedTo.nome) : "Sem atribuição"
+                assignedToId: r.assignedTo ? r.assignedTo.id_Utilizador : "", 
+                assignedToName: r.assignedTo ? (r.assignedTo.name || "Sem nome") : "Sem atribuição"
             };
         });
 
@@ -50,7 +47,7 @@ const request_list = async (req, res) => {
 };
 
 // ==========================================
-// 2. NOVA ROTA: ATRIBUIR GESTOR (PUT /api/requests/:id/assign)
+// 2. ATRIBUIR GESTOR (PUT /api/requests/:id/assign) - CORRIGIDO 🚀
 // ==========================================
 const assign_manager = async (req, res) => {
     try {
@@ -62,10 +59,9 @@ const assign_manager = async (req, res) => {
             return res.status(404).json({ success: false, message: "Pedido não encontrado." });
         }
 
-        // ⚠️ Nota: Confirma se na tua BD a coluna se chama 'id_assignedTo' ou 'assignedToId'
-        request.id_assignedTo = managerId || null; 
+        // 🟢 CORREÇÃO: Atualiza o campo exato mapeado no teu requestModel.js
+        request.assignedToId = managerId ? Number(managerId) : null; 
         
-        // Se um administrador atribui um gestor, o estado passa automaticamente para em execução
         if (managerId) {
             request.status = "in_progress";
         } else {
@@ -76,17 +72,18 @@ const assign_manager = async (req, res) => {
 
         return res.json({ 
             success: true, 
-            message: "Gestor atribuído com sucesso!" 
+            message: "Gestor atribuído com sucesso!",
+            request
         });
 
     } catch (error) {
+        console.error("Erro em assign_manager:", error.message);
         return res.status(500).json({ success: false, message: error.message });
     }
 };
 
-
 // ==========================================
-// 2. DETALHAR UM PEDIDO POR ID (GET /api/requests/:id)
+// 3. DETALHAR UM PEDIDO POR ID (GET /api/requests/:id)
 // ==========================================
 const request_detail = async (req, res) => {
     try {
@@ -115,15 +112,14 @@ const request_detail = async (req, res) => {
 };
 
 // ==========================================
-// 3. CRIAR NOVO PEDIDO (POST /api/requests)
+// 4. CRIAR NOVO PEDIDO (POST /api/requests)
 // ==========================================
 const request_create = async (req, res) => {
     try {
-        // 🟢 SEGURANÇA: Se o req.body vier vazio por falha de middleware, responde sem crashar
         if (!req.body || Object.keys(req.body).length === 0) {
             return res.status(400).json({
                 success: false,
-                message: 'O servidor não conseguiu ler os dados do formulário (req.body está vazio). Garante que o Multer está ativo na rota.'
+                message: 'O servidor não conseguiu ler os dados do formulário (req.body está vazio).'
             });
         }
 
@@ -155,7 +151,6 @@ const request_create = async (req, res) => {
             });
         }
 
-        // Cria o pedido na Base de Dados
         const newRequest = await Request.create({
             requestTypeId: Number(finalRequestTypeId),
             creatorId: creatorId ? Number(creatorId) : 1, 
@@ -166,7 +161,6 @@ const request_create = async (req, res) => {
             status: 'open'
         });
 
-        // Se o Multer intercetou um ficheiro, regista-o na tabela RequestFiles
         if (req.file) {
             await RequestFile.create({
                 requestId: newRequest.id,
@@ -193,15 +187,13 @@ const request_create = async (req, res) => {
 };
 
 // ==========================================
-// 4. LISTAR FICHEIROS DISPONÍVEIS (GET /api/requests/files)
+// 5. LISTAR FICHEIROS DISPONÍVEIS (GET /api/requests/files)
 // ==========================================
 const request_files_list = async (req, res) => {
     try {
-        // 🟢 CORREÇÃO: Mudado de 'createdAt' para 'uploadedAt' (o nome real da coluna na BD)
         const files = await RequestFile.findAll({
             order: [['uploadedAt', 'DESC']]
         });
-        
         return res.json(files);
     } catch (error) {
         console.error("Erro ao listar ficheiros:", error.message);
@@ -210,7 +202,7 @@ const request_files_list = async (req, res) => {
 };
 
 // ==========================================
-// 5. DESCARREGAR FICHEIRO POR ID (GET /api/requests/files/download/:id)
+// 6. DESCARREGAR FICHEIRO POR ID (GET /api/requests/files/download/:id)
 // ==========================================
 const request_file_download = async (req, res) => {
     try {
@@ -221,7 +213,6 @@ const request_file_download = async (req, res) => {
             return res.status(404).json({ success: false, message: "Ficheiro não encontrado." });
         }
 
-        // Envia o arquivo físico salvo no servidor de volta ao cliente
         return res.download(fileRecord.filePath, fileRecord.fileName);
     } catch (error) {
         console.error("Erro no download:", error.message);
@@ -230,7 +221,7 @@ const request_file_download = async (req, res) => {
 };
 
 // ==========================================
-// 6. ATUALIZAR PEDIDO (PUT /api/requests/:id)
+// 7. ATUALIZAR PEDIDO (PUT /api/requests/:id)
 // ==========================================
 const request_update = async (req, res) => {
     try {
@@ -249,7 +240,7 @@ const request_update = async (req, res) => {
 };
 
 // ==========================================
-// 7. ELIMINAR PEDIDO (DELETE /api/requests/:id)
+// 8. ELIMINAR PEDIDO (DELETE /api/requests/:id)
 // ==========================================
 const request_delete = async (req, res) => {
     try {
@@ -268,7 +259,7 @@ const request_delete = async (req, res) => {
 };
 
 // ==========================================
-// 8. FECHAR PEDIDO (PUT /api/requests/:id/close)
+// 9. FECHAR PEDIDO (PUT /api/requests/:id/close)
 // ==========================================
 const request_close = async (req, res) => {
     try {
@@ -290,8 +281,8 @@ module.exports = {
     request_list,
     request_detail,
     request_create,
-    request_files_list,      // 🟢 Adicionado aos exports
-    request_file_download,    // 🟢 Adicionado aos exports
+    request_files_list,      
+    request_file_download,    
     request_update,
     request_delete,
     request_close,
