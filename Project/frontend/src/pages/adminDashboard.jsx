@@ -1081,40 +1081,22 @@ function Requests() {
             const response = await axios.get("https://orion-dewp.onrender.com/api/requests");
             const data = response.data;
 
-            // ← ADICIONA ISTO TEMPORARIAMENTE
-            console.log("RAW API DATA:", JSON.stringify(data.requests?.[0], null, 2));
-
             if (data.success && data.requests) {
                 const mappedRequests = data.requests.map(r => ({
                     id: r.id,
                     title: r.subject,
                     description: r.description,
-                    // Tenta ambos os campos
-                    company: r.creator?.nome || r.creator?.name || r.creator?.username || "Cliente",
-                    date: r.createddAt
-                        ? new Date(r.openedAt).toLocaleDateString("pt-PT")
-                        : r.createdAt
-                            ? new Date(r.createdAt).toLocaleDateString("pt-PT")
-                            : "N/A",
-                    itemsCount: r.subtype ? 1 : 0,
-                    // Tenta várias formas que o Sequelize pode retornar o include
-                    type: r.RequestType?.name
-                        || r.request_type?.name
-                        || r.type?.name
-                        || r.RequestType?.nome
-                        || "Geral",
+                    company: r.company,
+                    date: r.date,
+                    type: r.type,
                     subtype: r.subtype,
-                    assignedTo: r.assignedTo?.nome
-                        || r.assignedTo?.name
-                        || r.assignedTo?.username
-                        || "Sem atribuição",
-                    status: translateStatus(r.status)
+                    assignedTo: r.assignedToName,
+                    status: r.status
                 }));
                 setRequests(mappedRequests);
             }
         } catch (err) {
             console.error("Error:", err.message);
-            // fallback...
         } finally {
             setLoading(false);
         }
@@ -1131,8 +1113,9 @@ function Requests() {
     const openAssignModal = async (requestId) => {
         setSelectedRequestId(requestId);
         try {
-            const res = await axios.get("https://orion-dewp.onrender.com/api/users?role=manager");
-            setManagers(res.data.users || []);
+            const res = await axios.get("https://orion-dewp.onrender.com/api/users");
+            const onlyManagers = res.data.users.filter(u => u.id_tipo === 2);
+            setManagers(onlyManagers);
         } catch (err) {
             console.error("Erro ao carregar managers:", err);
         }
@@ -1140,27 +1123,26 @@ function Requests() {
     };
 
     const handleAssign = async (managerId, managerName) => {
-    try {
-        await axios.patch(
-            `https://orion-dewp.onrender.com/api/requests/${selectedRequestId}/assign`,
-            { assignedToId: managerId }
-        );
+        try {
+            await axios.put(
+                `https://orion-dewp.onrender.com/api/requests/${selectedRequestId}/assign`,
+                { assignedToId: managerId }
+            );
+            setRequests(prev =>
+                prev.map(r =>
+                    r.id === selectedRequestId
+                        ? { ...r, assignedTo: managerName }
+                        : r
+                )
+            );
 
-        setRequests(prev =>
-            prev.map(r =>
-                r.id === selectedRequestId
-                    ? { ...r, assignedTo: managerName }
-                    : r
-            )
-        );
-
-        setAssignModalOpen(false);
-        setSelectedRequestId(null);
-    } catch (err) {
-        console.error("Erro ao atribuir:", err);
-        alert("Erro ao atribuir manager. Tenta novamente.");
-    }
-};
+            setAssignModalOpen(false);
+            setSelectedRequestId(null);
+        } catch (err) {
+            console.error("Erro ao atribuir:", err);
+            alert("Erro ao atribuir manager. Tenta novamente.");
+        }
+    };
 
     const totalRequests = requests.length;
     const countByStatus = (status) => requests.filter(r => r.status === status).length;
@@ -1301,7 +1283,7 @@ function Requests() {
                                             key={m.id}
                                             className="d-flex align-items-center gap-3 p-2 border rounded cursor-pointer"
                                             style={{ cursor: "pointer" }}
-                                            onClick={() => handleAssign(m.id)}
+                                            onClick={() => handleAssign(m.id_Utilizador || m.id, m.name)}
                                         >
                                             <div className="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center"
                                                 style={{ width: 36, height: 36, fontSize: 13, fontWeight: 500 }}>

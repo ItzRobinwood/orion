@@ -12,10 +12,10 @@ const request_list = async (req, res) => {
         const requests = await Request.findAll({
             include: [
                 { model: RequestType },
-                { model: User, as: 'creator' },
+                { model: User, as: 'creator', include: [{ model: require('../models/company'), as: 'company' }] },
                 { model: User, as: 'assignedTo' }
             ],
-            order: [['createdAt', 'DESC']] 
+            order: [['openedAt', 'DESC']]
         });
 
         const mappedRequests = requests.map(r => {
@@ -25,12 +25,23 @@ const request_list = async (req, res) => {
 
             return {
                 id: r.id,
+                subject: r.subject,
+                description: r.description,
                 type: r.RequestType ? r.RequestType.name : "Geral",
                 type_name: r.RequestType ? r.RequestType.name : "Geral",
-                date: r.createdAt ? new Date(r.createdAt).toLocaleDateString("pt-PT") : "",
+                subtype: r.subtype || null,
+                date: r.openedAt
+                    ? new Date(r.openedAt).toLocaleDateString("pt-PT")
+                    : new Date().toLocaleDateString("pt-PT"),
                 status: statusReact,
-                notes: r.description,
-                assignedToId: r.assignedTo ? r.assignedTo.id_Utilizador : "",
+                company: r.creator?.company?.nome || r.creator?.name || "Cliente",
+                creator: r.creator ? {
+                    id: r.creator.id_Utilizador,
+                    name: r.creator.name,
+                    email: r.creator.email
+                } : null,
+                assignedToId: r.assignedTo ? r.assignedTo.id_Utilizador : null,
+                assignedTo: r.assignedTo ? (r.assignedTo.name || "Sem nome") : "Sem atribuição",
                 assignedToName: r.assignedTo ? (r.assignedTo.name || "Sem nome") : "Sem atribuição"
             };
         });
@@ -51,22 +62,22 @@ const request_list = async (req, res) => {
 // ==========================================
 const assign_manager = async (req, res) => {
     try {
-        const { id } = req.params; 
-        const { managerId } = req.body; 
+        const { id } = req.params;
+        const { assignedToId, managerId } = req.body;
+        const resolvedId = assignedToId || managerId;
 
         const request = await Request.findByPk(id);
         if (!request) {
             return res.status(404).json({ success: false, message: "Pedido não encontrado." });
         }
 
-        request.assignedToId = managerId ? Number(managerId) : null;
-
-        request.status = managerId ? "in_progress" : "open";
+        request.assignedToId = resolvedId ? Number(resolvedId) : null;
+        request.status = resolvedId ? "in_progress" : "open";
 
         await request.save();
 
-        return res.json({ 
-            success: true, 
+        return res.json({
+            success: true,
             message: "Gestor atribuído com sucesso!",
             request
         });
