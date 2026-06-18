@@ -3,8 +3,8 @@ const Request = require('../models/requestModel');
 const RequestType = require('../models/requestTypeModel');
 const User = require('../models/User');
 
-// ==========================================
-// 1. LISTAR TODOS OS PEDIDOS (GET /api/requests)
+/// ==========================================
+// 1. LISTAR TODOS OS PEDIDOS (GET /api/requests) - ATUALIZADO
 // ==========================================
 const request_list = async (req, res) => {
     try {
@@ -17,20 +17,23 @@ const request_list = async (req, res) => {
             order: [['openedAt', 'DESC']]
         });
 
-        // 🟢 Transforma os dados no formato exato que a tabela do cliente espera ler
         const mappedRequests = requests.map(r => {
-            // Converte o ENUM do banco para o texto esperado pelas cores do bootstrap do frontend
+            // Alinhado com o teu frontend: 'open' -> Pendente, 'in_progress' -> Em Execução, 'closed' -> Concluídos
             let statusReact = "Pendente";
-            if (r.status === "in_progress") statusReact = "Em análise";
-            if (r.status === "closed") statusReact = "Aprovado";
+            if (r.status === "in_progress") statusReact = "Em Execução";
+            if (r.status === "closed") statusReact = "Concluídos";
 
             return {
                 id: r.id,
                 type: r.RequestType ? r.RequestType.name : "Geral",
                 type_name: r.RequestType ? r.RequestType.name : "Geral",
                 date: r.openedAt ? new Date(r.openedAt).toLocaleDateString("pt-PT") : "",
-                status: statusReact, // Entrega o termo em português que o React usa nas cores
-                notes: r.description // O frontend chama 'notes', mapeamos a 'description' da BD
+                status: statusReact, 
+                notes: r.description,
+                
+                // 🟢 ADICIONA ESTES DOIS CAMPOS AQUI PARA O FRONTEND CONSEGUIR LER!
+                assignedToId: r.assignedTo ? r.assignedTo.id : "", 
+                assignedToName: r.assignedTo ? (r.assignedTo.name || r.assignedTo.nome) : "Sem atribuição"
             };
         });
 
@@ -43,6 +46,42 @@ const request_list = async (req, res) => {
         return res.status(500).json({ success: false, message: error.message });
     }
 };
+
+// ==========================================
+// 2. NOVA ROTA: ATRIBUIR GESTOR (PUT /api/requests/:id/assign)
+// ==========================================
+const assign_manager = async (req, res) => {
+    try {
+        const { id } = req.params; 
+        const { managerId } = req.body; 
+
+        const request = await Request.findByPk(id);
+        if (!request) {
+            return res.status(404).json({ success: false, message: "Pedido não encontrado." });
+        }
+
+        // ⚠️ Nota: Confirma se na tua BD a coluna se chama 'id_assignedTo' ou 'assignedToId'
+        request.id_assignedTo = managerId || null; 
+        
+        // Se um administrador atribui um gestor, o estado passa automaticamente para em execução
+        if (managerId) {
+            request.status = "in_progress";
+        } else {
+            request.status = "open"; 
+        }
+
+        await request.save();
+
+        return res.json({ 
+            success: true, 
+            message: "Gestor atribuído com sucesso!" 
+        });
+
+    } catch (error) {
+        return res.status(500).json({ success: false, message: error.message });
+    }
+};
+
 
 // ==========================================
 // 2. DETALHAR UM PEDIDO POR ID (GET /api/requests/:id)
@@ -245,5 +284,6 @@ module.exports = {
     request_create,
     request_update,
     request_delete,
-    request_close
+    request_close,
+    assign_manager
 };
