@@ -7,6 +7,7 @@ const requestController = require("../controllers/requestController");
 router.get('/requests', requestController.request_list);
 router.get('/requests/:id', requestController.request_detail);
 
+
 // 🟢 Rotas de criação (POST) - Ambas apontam para o mesmo controlador corrigido!
 router.post('/requests/create', requestController.request_create); // Rota antiga/padrão
 router.post('/requests', requestController.request_create);        // Rota de emergência para o React
@@ -15,5 +16,6 @@ router.post('/requests', requestController.request_create);        // Rota de em
 router.put('/requests/:id', requestController.request_update);
 router.delete('/requests/:id', requestController.request_delete);
 router.put('/requests/:id/close', requestController.request_close);
+router.put('/requests/:id/assign', requestController.assign_manager);
 
 module.exports = router;
