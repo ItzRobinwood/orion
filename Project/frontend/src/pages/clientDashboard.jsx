@@ -1,6 +1,8 @@
 import axios from 'axios';
-import { useState, useRef, useEffect } from "react"; 
+import { useState, useEffect } from "react";
 import "bootstrap/dist/css/bootstrap.min.css";
+
+const API = "https://orion-dewp.onrender.com/api";
 
 export default function ClientDashboard() {
     const [active, setActive] = useState("dashboard");
@@ -72,7 +74,7 @@ function Dashboard({ setActive }) {
                 <StatCard title="Nível de Risco"     value="Médio" color="warning" />
                 <StatCard title="Documentos"         value="12"    color="primary" />
                 <StatCard title="Pedidos Ativos"     value="3"     color="info"    />
-                <StatCard title="Incidentes Abertos" value="1"     color="danger"  />
+                <StatCard title="Tickets Abertos"    value="1"     color="danger"  />
             </div>
 
             <div className="row g-3">
@@ -89,7 +91,7 @@ function Dashboard({ setActive }) {
                                 <small className="text-muted">Ontem</small>
                             </li>
                             <li className="list-group-item d-flex justify-content-between">
-                                <span>Incidente #I001 registado</span>
+                                <span>Ticket #T001 respondido</span>
                                 <small className="text-muted">12/05/2026</small>
                             </li>
                         </ul>
@@ -100,10 +102,10 @@ function Dashboard({ setActive }) {
                         <h6 className="mb-3">Acesso Rápido</h6>
                         <div className="d-flex flex-column gap-2">
                             {[
-                                { label: "Ver Avaliação de Risco", tab: "report"   },
-                                { label: "Submeter Ficheiro",      tab: "docs"     },
-                                { label: "Colocar Ticket",         tab: "tickets"  },
-                                { label: "Ver Estado de Pedidos",  tab: "requests" },
+                                { label: "Ver Avaliação de Risco",     tab: "report"   },
+                                { label: "Ver Documentos Partilhados", tab: "docs"     },
+                                { label: "Abrir Ticket de Suporte",    tab: "tickets"  },
+                                { label: "Submeter Novo Pedido",       tab: "requests" },
                             ].map(({ label, tab }) => (
                                 <button key={tab} className="btn btn-outline-dark btn-sm text-start"
                                     onClick={() => setActive(tab)}>
@@ -182,69 +184,341 @@ function Report() {
     );
 }
 
-/* ───────────────────────── DOCS ───────────────────────── */
+/* ───────────────────────── DOCUMENTAÇÃO ───────────────────────── */
+// Lista de ficheiros partilhados pela CyberBox com o cliente.
+// O cliente só faz download — os ficheiros são carregados pelo admin/gestor.
 function Docs() {
-    const API = "https://orion-dewp.onrender.com/api";
+    const [docs, setDocs]           = useState([]);
+    const [loading, setLoading]     = useState(true);
+    const [filter, setFilter]       = useState("Todos");
 
-    // Definição dos campos específicos que vão ser gerados e guardados dentro de 'description'
+    const DOC_TYPES = ["Todos", "Relatório", "Pentest", "Política", "Procedimento", "Outro"];
+
+    useEffect(() => {
+        fetchDocs();
+    }, []);
+
+    const fetchDocs = async () => {
+        setLoading(true);
+        try {
+            const res = await axios.get(`${API}/requests/files`);
+            const data = res.data?.files || res.data;
+            if (Array.isArray(data)) setDocs(data);
+        } catch (err) {
+            console.error("Erro ao carregar documentos:", err);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleDownload = async (fileId, fileName) => {
+        try {
+            const response = await axios({
+                url: `${API}/requests/files/download/${fileId}`,
+                method: "GET",
+                responseType: "blob",
+            });
+            const url = window.URL.createObjectURL(new Blob([response.data]));
+            const link = document.createElement("a");
+            link.href = url;
+            link.setAttribute("download", fileName || "documento");
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+        } catch (err) {
+            console.error("Erro ao descarregar:", err);
+            alert("Não foi possível descarregar o ficheiro.");
+        }
+    };
+
+    // Inferir o tipo de documento pelo nome do ficheiro
+    const inferType = (fileName) => {
+        if (!fileName) return "Outro";
+        const name = fileName.toLowerCase();
+        if (name.includes("relat")) return "Relatório";
+        if (name.includes("pentest")) return "Pentest";
+        if (name.includes("politic")) return "Política";
+        if (name.includes("proced")) return "Procedimento";
+        return "Outro";
+    };
+
+    const typeColor = {
+        "Relatório":    "primary",
+        "Pentest":      "danger",
+        "Política":     "warning",
+        "Procedimento": "info",
+        "Outro":        "secondary",
+    };
+
+    const filtered = filter === "Todos"
+        ? docs
+        : docs.filter(f => inferType(f.fileName) === filter);
+
+    return (
+        <div className="card p-3">
+            <div className="mb-3">
+                <h6 className="mb-1 fw-bold">Documentos Partilhados</h6>
+                <p className="text-muted small mb-3">
+                    Ficheiros e relatórios disponibilizados pela CyberBox para a tua empresa.
+                </p>
+
+                {/* Filtros por tipo */}
+                <div className="d-flex gap-2 flex-wrap">
+                    {DOC_TYPES.map(t => (
+                        <button key={t}
+                            onClick={() => setFilter(t)}
+                            className={`btn btn-sm ${filter === t ? "btn-dark" : "btn-outline-secondary"}`}>
+                            {t}
+                        </button>
+                    ))}
+                </div>
+            </div>
+
+            {loading ? (
+                <p className="text-muted">A carregar documentos...</p>
+            ) : filtered.length === 0 ? (
+                <div className="text-center text-muted py-5 border rounded">
+                    <div style={{ fontSize: 32 }}>📂</div>
+                    <p className="mt-2 mb-0">Nenhum documento disponível.</p>
+                    <small>A CyberBox ainda não partilhou ficheiros contigo.</small>
+                </div>
+            ) : (
+                <div className="table-responsive">
+                    <table className="table table-hover align-middle mb-0">
+                        <thead className="table-dark">
+                            <tr>
+                                <th>Documento</th>
+                                <th>Tipo</th>
+                                <th>Pedido</th>
+                                <th>Data</th>
+                                <th>Ação</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {filtered.map(f => (
+                                <tr key={f.id}>
+                                    <td className="fw-semibold">
+                                        📄 {f.fileName || "Sem nome"}
+                                    </td>
+                                    <td>
+                                        <span className={`badge bg-${typeColor[inferType(f.fileName)]}`}>
+                                            {inferType(f.fileName)}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <span className="badge bg-light text-dark border">
+                                            Pedido #{f.requestId || "—"}
+                                        </span>
+                                    </td>
+                                    <td style={{ fontSize: 13, color: "#6b7280" }}>
+                                        {f.uploadedAt
+                                            ? new Date(f.uploadedAt).toLocaleDateString("pt-PT")
+                                            : "—"}
+                                    </td>
+                                    <td>
+                                        <button
+                                            className="btn btn-sm btn-outline-dark"
+                                            onClick={() => handleDownload(f.id, f.fileName)}>
+                                            📥 Download
+                                        </button>
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
+            )}
+        </div>
+    );
+}
+
+/* ───────────────────────── TICKETS ───────────────────────── */
+// Comunicação direta com o suporte CyberBox.
+// Usado para dúvidas, problemas técnicos e reporte de incidentes.
+function Tickets() {
+    const [tickets, setTickets] = useState([
+        { id: 1, subject: "Dúvida sobre NIS2", category: "Dúvida", priority: "Baixa", message: "Quais são os requisitos mínimos?", date: "10/05/2026", status: "Respondido", reply: "Os requisitos mínimos incluem gestão de risco, resposta a incidentes e relatório às autoridades em 24h." },
+        { id: 2, subject: "Incidente de phishing detetado", category: "Incidente", priority: "Alta", message: "Recebemos emails suspeitos a imitar o nosso banco.", date: "15/05/2026", status: "Pendente", reply: "" },
+    ]);
+
+    const [form, setForm] = useState({ subject: "", category: "Dúvida", priority: "Baixa", message: "" });
+    const [showForm, setShowForm] = useState(false);
+    const [expanded, setExpanded] = useState(null);
+
+    const priorityColor = { Alta: "danger", Média: "warning", Baixa: "secondary" };
+    const statusColor   = { Respondido: "success", Pendente: "warning", "Em Análise": "info" };
+
+    const handleSubmit = () => {
+        if (!form.subject || !form.message) return;
+        setTickets([...tickets, {
+            id: Date.now(),
+            ...form,
+            date: new Date().toLocaleDateString("pt-PT"),
+            status: "Pendente",
+            reply: "",
+        }]);
+        setForm({ subject: "", category: "Dúvida", priority: "Baixa", message: "" });
+        setShowForm(false);
+    };
+
+    return (
+        <div className="d-flex flex-column gap-3">
+            <div className="card p-3">
+                <div className="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 className="mb-0 fw-bold">Tickets de Suporte</h6>
+                        <p className="text-muted small mb-0">Dúvidas, problemas técnicos ou reporte de incidentes.</p>
+                    </div>
+                    <button className="btn btn-sm btn-dark" onClick={() => setShowForm(!showForm)}>
+                        {showForm ? "Cancelar" : "+ Novo Ticket"}
+                    </button>
+                </div>
+
+                {showForm && (
+                    <div className="border rounded p-3 mt-3 bg-light">
+                        <div className="row g-3">
+                            <div className="col-md-6">
+                                <label className="form-label fw-semibold" style={{ fontSize: 12 }}>Assunto *</label>
+                                <input className="form-control form-control-sm" placeholder="Descreve o problema ou dúvida"
+                                    value={form.subject} onChange={e => setForm({ ...form, subject: e.target.value })} />
+                            </div>
+                            <div className="col-md-3">
+                                <label className="form-label fw-semibold" style={{ fontSize: 12 }}>Categoria</label>
+                                <select className="form-select form-select-sm"
+                                    value={form.category} onChange={e => setForm({ ...form, category: e.target.value })}>
+                                    <option>Dúvida</option>
+                                    <option>Incidente</option>
+                                    <option>Problema Técnico</option>
+                                    <option>Outro</option>
+                                </select>
+                            </div>
+                            <div className="col-md-3">
+                                <label className="form-label fw-semibold" style={{ fontSize: 12 }}>Prioridade</label>
+                                <select className="form-select form-select-sm"
+                                    value={form.priority} onChange={e => setForm({ ...form, priority: e.target.value })}>
+                                    <option>Baixa</option>
+                                    <option>Média</option>
+                                    <option>Alta</option>
+                                </select>
+                            </div>
+                            <div className="col-12">
+                                <label className="form-label fw-semibold" style={{ fontSize: 12 }}>Mensagem *</label>
+                                <textarea className="form-control form-control-sm" rows={4}
+                                    placeholder="Descreve com detalhe o que aconteceu ou o que precisas de saber..."
+                                    value={form.message} onChange={e => setForm({ ...form, message: e.target.value })} />
+                            </div>
+                        </div>
+                        <button className="btn btn-sm btn-success mt-3" onClick={handleSubmit}>Enviar Ticket</button>
+                    </div>
+                )}
+            </div>
+
+            {/* Lista de tickets */}
+            {tickets.map(t => (
+                <div key={t.id} className="card p-3 border-start border-4"
+                    style={{ borderColor: t.priority === "Alta" ? "#dc3545" : t.priority === "Média" ? "#ffc107" : "#6c757d" }}>
+                    <div className="d-flex justify-content-between align-items-start">
+                        <div>
+                            <div className="d-flex align-items-center gap-2 mb-1">
+                                <span className="fw-semibold">#{t.id} — {t.subject}</span>
+                                <span className={`badge bg-${priorityColor[t.priority]}`}>{t.priority}</span>
+                                <span className="badge bg-light text-dark border">{t.category}</span>
+                            </div>
+                            <p className="text-muted small mb-1">{t.message}</p>
+                            <small className="text-muted">Submetido em {t.date}</small>
+                        </div>
+                        <div className="d-flex flex-column align-items-end gap-2">
+                            <span className={`badge bg-${statusColor[t.status] || "secondary"}`}>{t.status}</span>
+                            {t.reply && (
+                                <button className="btn btn-sm btn-outline-primary"
+                                    onClick={() => setExpanded(expanded === t.id ? null : t.id)}>
+                                    {expanded === t.id ? "Fechar resposta" : "Ver resposta"}
+                                </button>
+                            )}
+                        </div>
+                    </div>
+
+                    {expanded === t.id && t.reply && (
+                        <div className="mt-3 p-3 bg-light border rounded">
+                            <small className="fw-semibold text-success d-block mb-1">✅ Resposta da CyberBox:</small>
+                            <p className="mb-0 small">{t.reply}</p>
+                        </div>
+                    )}
+                </div>
+            ))}
+
+            {tickets.length === 0 && (
+                <div className="text-center text-muted py-5 border rounded bg-white">
+                    <div style={{ fontSize: 32 }}>🎫</div>
+                    <p className="mt-2 mb-0">Nenhum ticket aberto.</p>
+                </div>
+            )}
+        </div>
+    );
+}
+
+/* ───────────────────────── PEDIDOS ───────────────────────── */
+// O cliente solicita um serviço à CyberBox (pentest, auditoria, NIS2, etc.)
+// Tem formulário de submissão e histórico com estado.
+function Requests() {
     const TYPE_FIELDS = {
-        1: { // ReportIncident
+        1: {
             label: "Report de Incidente",
             fields: [
-                { key: "incidentDate",  label: "Data do Incidente *",     type: "date" },
-                { key: "incidentType",  label: "Tipo de Incidente *",     type: "select",
+                { key: "incidentDate", label: "Data do Incidente *", type: "date" },
+                { key: "incidentType", label: "Tipo de Incidente *", type: "select",
                   options: ["Acesso não autorizado", "Malware / Ransomware", "Phishing", "DoS/DDoS", "Fuga de informação", "Outro"] },
-                { key: "details",       label: "Descrição detalhada *",    type: "textarea" },
-                { key: "impact",        label: "Impacto estimado",        type: "select",
+                { key: "details",      label: "Descrição detalhada *", type: "textarea" },
+                { key: "impact",       label: "Impacto estimado", type: "select",
                   options: ["Baixo", "Médio", "Alto", "Crítico"] },
-                { key: "systems",       label: "Sistemas Afetados",       type: "text",     placeholder: "Ex: Servidor Web, Email..." },
-                { key: "actions",       label: "Ações Imediatas Tomadas", type: "textarea" },
+                { key: "systems",      label: "Sistemas Afetados", type: "text", placeholder: "Ex: Servidor Web, Email..." },
+                { key: "actions",      label: "Ações Imediatas Tomadas", type: "textarea" },
             ]
         },
-        2: { // Pentest
+        2: {
             label: "Pentest",
             fields: [
-                { key: "scope",         label: "Âmbito do Teste *",       type: "select",
+                { key: "scope",      label: "Âmbito do Teste *", type: "select",
                   options: ["Rede interna", "Aplicação Web", "Engenharia social", "Físico", "Outro"] },
-                { key: "targets",       label: "Sistemas Alvo (IPs/URLs) *", type: "text",  placeholder: "Ex: 192.168.1.0/24, app.empresa.pt" },
-                { key: "objectives",    label: "Objetivos Principais *",  type: "textarea" },
-                { key: "startDate",     label: "Data Pretendida para o Teste", type: "date" },
+                { key: "targets",    label: "Sistemas Alvo (IPs/URLs) *", type: "text", placeholder: "Ex: 192.168.1.0/24" },
+                { key: "objectives", label: "Objetivos Principais *", type: "textarea" },
+                { key: "startDate",  label: "Data Pretendida", type: "date" },
             ]
         },
-        3: { // Documentation
+        3: {
             label: "Documentação",
             fields: [
-                { key: "docType",       label: "Tipo de Documento Solicitado *", type: "select",
+                { key: "docType", label: "Tipo de Documento *", type: "select",
                   options: ["Política de Segurança", "Plano de Continuidade", "Procedimento", "Manual", "Outro"] },
-                { key: "context",       label: "Contexto / Requisitos *", type: "textarea" },
+                { key: "context", label: "Contexto / Requisitos *", type: "textarea" },
             ]
         },
-        4: { // Technological Assets
+        4: {
             label: "Ativos Tecnológicos",
             fields: [
-                { key: "assetName",     label: "Nome do Ativo *",         type: "text",     placeholder: "Ex: Servidor Web Principal" },
-                { key: "assetType",     label: "Tipo de Ativo *",         type: "select",
+                { key: "assetName", label: "Nome do Ativo *", type: "text", placeholder: "Ex: Servidor Web Principal" },
+                { key: "assetType", label: "Tipo de Ativo *", type: "select",
                   options: ["Servidor", "Workstation", "Rede", "Aplicação", "Cloud", "Outro"] },
-                { key: "ip",            label: "Endereço IP / Subrede",   type: "text",     placeholder: "Ex: 192.168.1.10" },
-                { key: "location",      label: "Localização Física/Cloud", type: "text",     placeholder: "Ex: Datacenter A, AWS" },
-                { key: "notes",         label: "Notas Adicionais",        type: "textarea" },
+                { key: "ip",        label: "Endereço IP / Subrede", type: "text", placeholder: "Ex: 192.168.1.10" },
+                { key: "location",  label: "Localização", type: "text", placeholder: "Ex: Datacenter A, AWS" },
+                { key: "notes",     label: "Notas Adicionais", type: "textarea" },
             ]
         },
-        5: { // Others
+        5: {
             label: "Outros",
             fields: [
-                { key: "subtype",       label: "Especifique o Assunto *", type: "text",     placeholder: "Descreva brevemente o tipo de pedido" },
-                { key: "details",       label: "Descrição do Pedido *",   type: "textarea" },
+                { key: "subtype", label: "Especifique o Assunto *", type: "text", placeholder: "Descreve brevemente o tipo de pedido" },
+                { key: "details", label: "Descrição do Pedido *", type: "textarea" },
             ]
         },
-        6: { // NIS2
+        6: {
             label: "NIS2",
             fields: [
-                { key: "nis2Area",      label: "Área NIS2 Relacionada *", type: "select",
+                { key: "nis2Area",   label: "Área NIS2 Relacionada *", type: "select",
                   options: ["Gestão de Risco", "Resposta a Incidentes", "Segurança da Cadeia de Fornecimento", "Criptografia", "Continuidade de Negócio", "Outro"] },
-                { key: "deadline",      label: "Prazo Limite de Conformidade", type: "date" },
-                { key: "context",       label: "Descrição / Contexto Atual *", type: "textarea" },
-                { key: "compliance",    label: "Estado Atual de Conformidade", type: "select",
+                { key: "deadline",   label: "Prazo Limite de Conformidade", type: "date" },
+                { key: "context",    label: "Descrição / Contexto Atual *", type: "textarea" },
+                { key: "compliance", label: "Estado Atual de Conformidade", type: "select",
                   options: ["Conforme", "Parcialmente conforme", "Não conforme", "Em avaliação"] },
             ]
         },
@@ -255,91 +529,61 @@ function Docs() {
         { id: 2, name: "Pentest"             },
         { id: 3, name: "Documentação"        },
         { id: 4, name: "Ativos Tecnológicos" },
-        { id: 5, name: "Outros"             },
-        { id: 6, name: "NIS2"               },
+        { id: 5, name: "Outros"              },
+        { id: 6, name: "NIS2"                },
     ];
 
-    const [subTab, setSubTab]         = useState("form");
+    const [requests, setRequests]     = useState([]);
+    const [loading, setLoading]       = useState(true);
+    const [showForm, setShowForm]     = useState(false);
     const [typeId, setTypeId]         = useState("");
     const [formData, setFormData]     = useState({});
     const [file, setFile]             = useState(null);
     const [submitting, setSubmitting] = useState(false);
     const [submitted, setSubmitted]   = useState(false);
+    const [search, setSearch] = useState("");
+    
+    const filtered = requests.filter(r =>
+    !search || (r.subject || "").toLowerCase().includes(search.toLowerCase())
+    );
 
-    const [dbFiles, setDbFiles]           = useState([]);
-    const [loadingFiles, setLoadingFiles] = useState(false);
-
-    useEffect(() => {
-        if (subTab === "docs") {
-            fetchFiles();
-        }
-    }, [subTab]);
-
-    const fetchFiles = async () => {
-        setLoadingFiles(true);
-        try {
-            const token = localStorage.getItem("userToken");
-            // Nota: Se a rota de ficheiros estiver mapeada sob outra rota, ajusta aqui 
-            // Ex: `${API}/requests/files` ou apenas `${API}/files` dependendo do requestRoutes.js
-            const res = await axios.get(`${API}/requests/files`, {
-                headers: token ? { "Authorization": `Bearer ${token}` } : {}
-            });
-            
-            // Aceita o array diretamente ou embrulhado numa propriedade da resposta
-            const data = res.data?.files || res.data;
-            if (Array.isArray(data)) {
-                setDbFiles(data);
-            }
-        } catch (err) {
-            console.error("Erro ao carregar ficheiros:", err);
-        } finally {
-            setLoadingFiles(false);
-        }
+    const statusColor = {
+        "Pendente":    "warning",
+        "Em Execução": "info",
+        "Concluído":   "success",
     };
 
-    const handleDownload = async (fileId, fileName) => {
-        try {
-            const token = localStorage.getItem("userToken");
-            const response = await axios({
-                url: `${API}/requests/files/download/${fileId}`,
-                method: 'GET',
-                responseType: 'blob',
-                headers: token ? { "Authorization": `Bearer ${token}` } : {}
-            });
+    useEffect(() => {
+        fetchRequests();
+    }, []);
 
-            const url = window.URL.createObjectURL(new Blob([response.data]));
-            const link = document.createElement('a');
-            link.href = url;
-            link.setAttribute('download', fileName || 'documento');
-            document.body.appendChild(link);
-            link.click();
-            link.remove();
+    const fetchRequests = async () => {
+        setLoading(true);
+        try {
+            const res = await axios.get(`${API}/requests`);
+            setRequests(res.data.requests || []);
         } catch (err) {
-            console.error("Erro ao descarregar o ficheiro:", err);
-            alert("Não foi possível realizar o download do ficheiro.");
+            console.error("Erro ao carregar pedidos:", err);
+        } finally {
+            setLoading(false);
         }
     };
 
     const currentConfig = typeId ? TYPE_FIELDS[typeId] : null;
 
-    const handleField = (key, value) => {
-        setFormData(prev => ({ ...prev, [key]: value }));
-    };
+    const handleField = (key, value) => setFormData(prev => ({ ...prev, [key]: value }));
 
     const handleTypeChange = (val) => {
         setTypeId(val);
         setFormData({});
-        setSubmitted(false);
         setFile(null);
+        setSubmitted(false);
     };
 
     const handleSubmit = async () => {
-        if (!typeId) { alert("Por favor, seleciona o tipo de pedido nos botões acima."); return; }
+        if (!typeId) { alert("Seleciona o tipo de pedido."); return; }
 
-        const requiredFields = currentConfig.fields
-            .filter(f => f.label.includes("*"))
-            .map(f => f.key);
-        
+        const requiredFields = currentConfig.fields.filter(f => f.label.includes("*")).map(f => f.key);
         const missing = requiredFields.find(k => !formData[k] || formData[k].trim() === "");
         if (missing) { alert("Preenche todos os campos obrigatórios (*)."); return; }
 
@@ -352,26 +596,18 @@ function Docs() {
                 })
                 .join("\n");
 
-            const token = localStorage.getItem("userToken");
-            const activeUserId = localStorage.getItem("userId") || 1; // Padrão 1 caso venha vazio temporariamente
-            const configHeaders = token ? { headers: { "Authorization": `Bearer ${token}` } } : {};
+            const activeUserId = localStorage.getItem("userId") || 1;
 
             let res;
-
             if (file) {
                 const multiPartForm = new FormData();
-                // Match perfeito com as colunas da tabela 'requests'
                 multiPartForm.append("requestTypeId", Number(typeId));
                 multiPartForm.append("subject", currentConfig.label);
-                multiPartForm.append("description", formattedDescription); 
+                multiPartForm.append("description", formattedDescription);
                 multiPartForm.append("creatorId", Number(activeUserId));
                 multiPartForm.append("file", file);
-
                 res = await axios.post(`${API}/requests`, multiPartForm, {
-                    headers: { 
-                        "Content-Type": "multipart/form-data",
-                        ...(token ? { "Authorization": `Bearer ${token}` } : {})
-                    }
+                    headers: { "Content-Type": "multipart/form-data" }
                 });
             } else {
                 res = await axios.post(`${API}/requests`, {
@@ -379,7 +615,7 @@ function Docs() {
                     subject: currentConfig.label,
                     description: formattedDescription,
                     creatorId: Number(activeUserId),
-                }, configHeaders);
+                });
             }
 
             if (res.status === 200 || res.status === 201 || res.data?.success) {
@@ -387,10 +623,11 @@ function Docs() {
                 setFormData({});
                 setTypeId("");
                 setFile(null);
+                setShowForm(false);
+                await fetchRequests();
             }
         } catch (err) {
-            console.error(err);
-            alert(err.response?.data?.message || "Erro ao submeter pedido para o servidor.");
+            alert(err.response?.data?.message || "Erro ao submeter pedido.");
         } finally {
             setSubmitting(false);
         }
@@ -398,8 +635,6 @@ function Docs() {
 
     const renderField = (field) => {
         const val = formData[field.key] || "";
-        const common = "form-control form-control-sm";
-
         if (field.type === "select") return (
             <select className="form-select form-select-sm" value={val}
                 onChange={e => handleField(field.key, e.target.value)}>
@@ -408,371 +643,149 @@ function Docs() {
             </select>
         );
         if (field.type === "textarea") return (
-            <textarea className={common} rows={3}
+            <textarea className="form-control form-control-sm" rows={3}
                 placeholder={field.placeholder || ""}
                 value={val} onChange={e => handleField(field.key, e.target.value)} />
         );
         return (
-            <input type={field.type} className={common}
+            <input type={field.type} className="form-control form-control-sm"
                 placeholder={field.placeholder || ""}
                 value={val} onChange={e => handleField(field.key, e.target.value)} />
         );
     };
 
     return (
-        <div className="card p-3">
-            <ul className="nav nav-tabs mb-3">
-                <li className="nav-item">
-                    <button className={`nav-link ${subTab === "form" ? "active" : ""}`} onClick={() => setSubTab("form")}>
-                        Novo Pedido
-                    </button>
-                </li>
-                <li className="nav-item">
-                    <button className={`nav-link ${subTab === "docs" ? "active" : ""}`} onClick={() => setSubTab("docs")}>
-                        Documentação Disponível
-                    </button>
-                </li>
-            </ul>
+        <div className="d-flex flex-column gap-3">
 
-            {subTab === "form" && (
-                <>
-                    {submitted && (
-                        <div className="alert alert-success d-flex align-items-center gap-2 mb-3">
-                            <span>✅</span>
-                            <span>Pedido registado com sucesso na base de dados!</span>
-                        </div>
-                    )}
+            {/* Botão para abrir formulário */}
+            <div className="card p-3">
+                <div className="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 className="mb-0 fw-bold">Pedidos de Serviço</h6>
+                        <p className="text-muted small mb-0">Solicita um serviço à CyberBox — pentest, auditoria, consultoria NIS2, entre outros.</p>
+                    </div>
+                    <button className="btn btn-sm btn-dark" onClick={() => { setShowForm(!showForm); setSubmitted(false); }}>
+                        {showForm ? "Cancelar" : "+ Novo Pedido"}
+                    </button>
+                </div>
 
-                    <div className="mb-4">
-                        <label className="form-label fw-semibold">O que pretendes solicitar? *</label>
-                        <div className="d-flex flex-wrap gap-2">
+                {/* Formulário de submissão */}
+                {showForm && (
+                    <div className="mt-3 border-top pt-3">
+                        {submitted && (
+                            <div className="alert alert-success mb-3">✅ Pedido submetido com sucesso!</div>
+                        )}
+
+                        <label className="form-label fw-semibold mb-2">Que tipo de serviço pretendes solicitar? *</label>
+                        <div className="d-flex flex-wrap gap-2 mb-3">
                             {REQUEST_TYPES.map(t => (
-                                <button key={t.id}
-                                    type="button"
+                                <button key={t.id} type="button"
                                     onClick={() => handleTypeChange(String(t.id))}
                                     className={`btn btn-sm ${typeId === String(t.id) ? "btn-dark" : "btn-outline-secondary"}`}>
                                     {t.name}
                                 </button>
                             ))}
                         </div>
-                    </div>
 
-                    {currentConfig && (
-                        <>
-                            <div className="border-top pt-3 mb-3">
-                                <h6 className="text-muted mb-3" style={{ fontSize: 13, textTransform: "uppercase", letterSpacing: 1 }}>
-                                    Formulário: {currentConfig.label}
-                                </h6>
-                                <div className="row g-3">
+                        {currentConfig && (
+                            <>
+                                <div className="row g-3 mb-3">
                                     {currentConfig.fields.map(field => (
-                                        <div key={field.key}
-                                            className={field.type === "textarea" ? "col-12" : "col-md-6"}>
-                                            <label className="form-label fw-semibold" style={{ fontSize: 12 }}>
-                                                {field.label}
-                                            </label>
+                                        <div key={field.key} className={field.type === "textarea" ? "col-12" : "col-md-6"}>
+                                            <label className="form-label fw-semibold" style={{ fontSize: 12 }}>{field.label}</label>
                                             {renderField(field)}
                                         </div>
                                     ))}
-
                                     <div className="col-12">
-                                        <label className="form-label fw-semibold" style={{ fontSize: 12 }}>
-                                            Anexar Documento de Suporte (Envia para RequestFiles)
-                                        </label>
-                                        <input type="file" className="form-control form-control-sm"
-                                            style={{ maxWidth: 400 }}
+                                        <label className="form-label fw-semibold" style={{ fontSize: 12 }}>Anexar Documento de Suporte (opcional)</label>
+                                        <input type="file" className="form-control form-control-sm" style={{ maxWidth: 400 }}
                                             onChange={e => setFile(e.target.files[0])} />
-                                        {file && (
-                                            <small className="text-success mt-1 d-block">
-                                                📎 {file.name} ({(file.size / 1024 / 1024).toFixed(2)} MB)
-                                            </small>
-                                        )}
+                                        {file && <small className="text-success mt-1 d-block">📎 {file.name}</small>}
                                     </div>
                                 </div>
-                            </div>
+                                <div className="d-flex gap-2">
+                                    <button className="btn btn-sm btn-success" onClick={handleSubmit} disabled={submitting}>
+                                        {submitting ? "A submeter..." : "Submeter Pedido"}
+                                    </button>
+                                    <button className="btn btn-sm btn-outline-secondary"
+                                        onClick={() => { setTypeId(""); setFormData({}); setFile(null); }}>
+                                        Limpar
+                                    </button>
+                                </div>
+                            </>
+                        )}
 
-                            <div className="d-flex gap-2">
-                                <button className="btn btn-sm btn-success"
-                                    onClick={handleSubmit} disabled={submitting}>
-                                    {submitting ? "A guardar no sistema..." : "Submeter Pedido"}
-                                </button>
-                                <button className="btn btn-sm btn-outline-secondary"
-                                    onClick={() => { setTypeId(""); setFormData({}); setSubmitted(false); setFile(null); }}>
-                                    Limpar
-                                </button>
-                            </div>
-                        </>
-                    )}
+                        {!typeId && (
+                            <p className="text-muted small">Clica num dos botões acima para abrir o formulário.</p>
+                        )}
+                    </div>
+                )}
+            </div>
 
-                    {!typeId && (
-                        <p className="text-muted" style={{ fontSize: 13 }}>
-                            Clica num dos botões acima para abrir o formulário correto.
-                        </p>
-                    )}
-                </>
-            )}
+            {/* Histórico de pedidos */}
+            <div className="card p-3">
+                <div className="d-flex justify-content-between align-items-center mb-3">
+                    <h6 className="fw-bold mb-0">Histórico de Pedidos</h6>
+                    <input
+                        className="form-control form-control-sm"
+                        style={{ maxWidth: 260 }}
+                        placeholder="🔍 Pesquisar por nome..."
+                        value={search}
+                        onChange={e => setSearch(e.target.value)}
+                    />
+                </div>
 
-            {subTab === "docs" && (
-                <div className="table-responsive">
-                    {loadingFiles ? (
-                        <p className="text-muted p-3">A carregar documentos do servidor...</p>
-                    ) : dbFiles.length === 0 ? (
-                        <p className="text-muted p-3">Nenhum documento disponível no repositório de RequestFiles.</p>
-                    ) : (
-                        <table className="table align-middle">
-                            <thead>
+                {loading ? (
+                    <p className="text-muted">A carregar...</p>
+                ) : filtered.length === 0 ? (
+                    <div className="text-center text-muted py-4 border rounded">
+                        <div style={{ fontSize: 32 }}>📋</div>
+                        <p className="mt-2 mb-0">Nenhum pedido encontrado.</p>
+                    </div>
+                ) : (
+                    <div className="table-responsive">
+                        <table className="table table-hover align-middle mb-0">
+                            <thead className="table-dark">
                                 <tr>
-                                    <th>ID Ficheiro</th>
-                                    <th>Nome do Documento</th>
-                                    <th>Ref. Pedido</th>
-                                    <th>Data de Submissão</th>
-                                    <th>Ação</th>
+                                    <th>ID</th>
+                                    <th>Nome</th>
+                                    <th>Tipo</th>
+                                    <th>Data</th>
+                                    <th>Estado</th>
+                                    <th>Atribuído a</th>
+                                    <th>Descrição</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                {dbFiles.map(f => (
-                                    <tr key={f.id}>
-                                        {/* 🟢 CORREÇÃO DOS CAMPOS: Usando camelCase estrito conforme a imagem da tabela */}
-                                        <td>#{f.id}</td>
-                                        <td style={{ fontWeight: 600 }}>{f.fileName || "Ficheiro Sem Nome"}</td>
+                                {filtered.map(r => (
+                                    <tr key={r.id}>
+                                        <td className="fw-semibold text-primary">#{r.id}</td>
+                                        <td className="fw-semibold">{r.subject || "—"}</td>
+                                        <td>{r.type_name || r.type || "—"}</td>
+                                        <td style={{ fontSize: 13, color: "#6b7280" }}>{r.date}</td>
                                         <td>
-                                            <span className="badge bg-light text-dark">
-                                                Pedido #{f.requestId || "N/A"}
+                                            <span className={`badge bg-${statusColor[r.status] || "secondary"}`}>
+                                                {r.status || "Pendente"}
                                             </span>
                                         </td>
-                                        <td style={{ fontSize: 13, color: "#6b7280" }}>
-                                            {f.uploadedAt ? new Date(f.uploadedAt).toLocaleDateString('pt-PT') : "---"}
+                                        <td style={{ fontSize: 13 }}>
+                                            {r.assignedToName || <span className="text-muted fst-italic">Por atribuir</span>}
                                         </td>
-                                        <td>
-                                            <button 
-                                                className="btn btn-sm btn-outline-dark"
-                                                onClick={() => handleDownload(f.id, f.fileName)}
-                                            >
-                                                📥 Download
-                                            </button>
+                                        <td style={{ fontSize: 13, color: "#6b7280", maxWidth: 200 }}>
+                                            {r.notes
+                                                ? r.notes.length > 60 ? r.notes.slice(0, 60) + "..." : r.notes
+                                                : <span className="text-muted fst-italic">—</span>}
                                         </td>
                                     </tr>
                                 ))}
                             </tbody>
                         </table>
-                    )}
-                </div>
-            )}
-        </div>
-    );
-}   
-/* ───────────────────────── TICKETS ───────────────────────── */
-function Tickets() {
-    const [tickets, setTickets] = useState([
-        { id: 1, subject: "Dúvida sobre NIS2", message: "Quais são os requisitos mínimos?", date: "10/05/2026", status: "Respondido", reply: "Os requisitos mínimos incluem..." },
-        { id: 2, subject: "Relatório em falta", message: "O relatório Q4 não está disponível.", date: "15/05/2026", status: "Pendente", reply: "" },
-    ]);
-    const [form, setForm] = useState({ subject: "", message: "" });
-    const [showForm, setShowForm] = useState(false);
-
-    const handleSubmit = () => {
-        if (!form.subject || !form.message) return;
-        setTickets([...tickets, {
-            id: Date.now(), ...form,
-            date: new Date().toLocaleDateString("pt-PT"),
-            status: "Pendente", reply: "",
-        }]);
-        setForm({ subject: "", message: "" });
-        setShowForm(false);
-    };
-
-    return (
-        <div className="card p-3">
-            <div className="d-flex justify-content-between align-items-center mb-3">
-                <h6 className="mb-0">Tickets</h6>
-                <button className="btn btn-sm btn-dark" onClick={() => setShowForm(!showForm)}>
-                    {showForm ? "Cancelar" : "+ Novo Ticket"}
-                </button>
+                    </div>
+                )}
             </div>
-
-            {showForm && (
-                <div className="border p-3 mb-3 bg-light">
-                    <div className="mb-2">
-                        <label className="form-label fw-semibold" style={{ fontSize: 12 }}>Assunto *</label>
-                        <input className="form-control form-control-sm" placeholder="Assunto do ticket"
-                            value={form.subject} onChange={e => setForm({ ...form, subject: e.target.value })} />
-                    </div>
-                    <div className="mb-2">
-                        <label className="form-label fw-semibold" style={{ fontSize: 12 }}>Mensagem *</label>
-                        <textarea className="form-control form-control-sm" rows={3}
-                            placeholder="Descreva a sua questão ou pedido..."
-                            value={form.message} onChange={e => setForm({ ...form, message: e.target.value })} />
-                    </div>
-                    <button className="btn btn-sm btn-success" onClick={handleSubmit}>Enviar</button>
-                </div>
-            )}
-
-            <table className="table">
-                <thead>
-                    <tr><th>Assunto</th><th>Mensagem</th><th>Data</th><th>Estado</th><th>Resposta</th></tr>
-                </thead>
-                <tbody>
-                    {tickets.map(q => (
-                        <tr key={q.id}>
-                            <td style={{ fontWeight: 600 }}>{q.subject}</td>
-                            <td style={{ fontSize: 13, color: "#6b7280", maxWidth: 200 }}>{q.message}</td>
-                            <td style={{ fontSize: 13, color: "#6b7280" }}>{q.date}</td>
-                            <td>
-                                <span className={`badge ${q.status === "Respondido" ? "bg-success" : "bg-warning"}`}>
-                                    {q.status}
-                                </span>
-                            </td>
-                            <td style={{ fontSize: 13, color: "#6b7280", maxWidth: 200 }}>
-                                {q.reply || <span className="text-muted fst-italic">Sem resposta ainda</span>}
-                            </td>
-                        </tr>
-                    ))}
-                </tbody>
-            </table>
         </div>
     );
 }
-
-/* ───────────────────────── REQUESTS ───────────────────────── */
-
-
-function Requests() {
-    const [requests, setRequests] = useState([]);
-    const [requestTypes, setRequestTypes] = useState([]);
-    const [form, setForm] = useState({ type: "", notes: "" });
-    const [showForm, setShowForm] = useState(false);
-    const [loading, setLoading] = useState(true);
-
-    const statusColor = {
-        open: "warning",
-        in_progress: "info",
-        closed: "success"
-    };
-
-    useEffect(() => {
-        const fetchData = async () => {
-            try {
-                const [typesRes, requestsRes] = await Promise.all([
-                    axios.get("https://orion-dewp.onrender.com/api/request-types"),
-                    axios.get("https://orion-dewp.onrender.com/api/requests")
-                ]);
-
-                setRequestTypes(typesRes.data);
-                setRequests(requestsRes.data.requests);
-
-            } catch (err) {
-                console.error("Erro ao carregar dados:", err);
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        fetchData();
-    }, []);
-
-    const handleSubmit = async () => {
-        if (!form.type) return;
-
-        try {
-            const res = await axios.post(
-                "https://orion-dewp.onrender.com/api/requests",
-                {
-                    requestTypeId: Number(form.type),
-                    creatorId: Number(localStorage.getItem("userId") || 1),
-                    subject: "Pedido do cliente",
-                    description: form.notes
-                },
-                { withCredentials: true }
-            );
-
-            setRequests(prev => [...prev, res.data.request]);
-            setForm({ type: "", notes: "" });
-            setShowForm(false);
-
-        } catch (err) {
-            console.error("Erro ao submeter pedido:", err);
-            alert("Erro ao submeter pedido.");
-        }
-    };
-
-    if (loading) {
-        return <div className="card p-3">A carregar...</div>;
-    }
-
-    return (
-        <div className="card p-3 shadow-sm">
-            <div className="d-flex justify-content-between mb-3">
-                <h6>Pedidos</h6>
-                <button className="btn btn-sm btn-dark"
-                    onClick={() => setShowForm(!showForm)}>
-                    {showForm ? "Cancelar" : "+ Novo Pedido"}
-                </button>
-            </div>
-
-            {showForm && (
-                <div className="border p-3 mb-3 bg-light rounded">
-                    <select className="form-select form-select-sm"
-                        value={form.type}
-                        onChange={e => setForm({ ...form, type: e.target.value })}>
-                        <option value="">Selecionar tipo...</option>
-                        {requestTypes.map(t => (
-                            <option key={t.id} value={t.id}>
-                                {t.name}
-                            </option>
-                        ))}
-                    </select>
-
-                    <textarea
-                        className="form-control form-control-sm mt-2"
-                        rows={2}
-                        placeholder="Descrição..."
-                        value={form.notes}
-                        onChange={e => setForm({ ...form, notes: e.target.value })}
-                    />
-
-                    <button
-                        className="btn btn-sm btn-success mt-2"
-                        onClick={handleSubmit}
-                    >
-                        Submeter
-                    </button>
-                </div>
-            )}
-
-            <table className="table table-hover">
-                <thead>
-                    <tr>
-                        <th>ID</th>
-                        <th>Tipo</th>
-                        <th>Data</th>
-                        <th>Estado</th>
-                        <th>Descrição</th>
-                    </tr>
-                </thead>
-
-                <tbody>
-                    {requests.map(r => (
-                        <tr key={r.id}>
-                            <td>#{r.id}</td>
-                            <td>{r.type_name}</td>
-                            <td style={{ fontSize: 13 }}>
-                                {r.date}
-                            </td>
-                            <td>
-                                <span className={`badge bg-${statusColor[r.status] || "secondary"}`}>
-                                    {r.status}
-                                </span>
-                            </td>
-                            <td style={{ fontSize: 13 }}>
-                                {r.notes || "—"}
-                            </td>
-                        </tr>
-                    ))}
-                </tbody>
-            </table>
-        </div>
-    );
-}
-
 
 /* ───────────────────────── STAT CARD ───────────────────────── */
 function StatCard({ title, value, color }) {

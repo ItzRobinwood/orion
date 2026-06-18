@@ -25,6 +25,7 @@ const request_list = async (req, res) => {
 
             return {
                 id: r.id,
+                subject: r.subject,
                 type: r.RequestType ? r.RequestType.name : "Geral",
                 type_name: r.RequestType ? r.RequestType.name : "Geral",
                 date: r.createdAt ? new Date(r.createdAt).toLocaleDateString("pt-PT") : "",
