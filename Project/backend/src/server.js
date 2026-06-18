@@ -25,8 +25,7 @@ const newsRoutes = require('./routes/newsRoutes');
 const requestTypeRoutes = require("./routes/requestTypeRoutes"); // ✅ movido para aqui
 
 // associations
-// 🔴 CORREÇÃO AQUI: Adicionadas as chavetas { } para extrair a função corretamente!
-const { applyAssociations } = require('./models/associations');
+const applyAssociations = require('./models/associations');
 
 // seeds
 const seedUserTypes = require("./seeders/seedUserTypes");
