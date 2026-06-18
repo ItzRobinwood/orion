@@ -184,13 +184,90 @@ function Report() {
 
 /* ───────────────────────── DOCS ───────────────────────── */
 function Docs() {
-    const [subTab, setSubTab] = useState("docs");
-    const [assets, setAssets] = useState([]);
-    const [incident, setIncident] = useState({
-        date: "", type: "", description: "", impact: "", systems: "", actions: "",
-    });
-    const [uploads, setUploads] = useState([]);
+    const API = "https://orion-dewp.onrender.com/api";
 
+    // Definição dos campos específicos que vão ser gerados e guardados dentro de 'description'
+    const TYPE_FIELDS = {
+        1: { // ReportIncident
+            label: "Report de Incidente",
+            fields: [
+                { key: "incidentDate",  label: "Data do Incidente *",     type: "date" },
+                { key: "incidentType",  label: "Tipo de Incidente *",     type: "select",
+                  options: ["Acesso não autorizado", "Malware / Ransomware", "Phishing", "DoS/DDoS", "Fuga de informação", "Outro"] },
+                { key: "details",       label: "Descrição detalhada *",    type: "textarea" },
+                { key: "impact",        label: "Impacto estimado",        type: "select",
+                  options: ["Baixo", "Médio", "Alto", "Crítico"] },
+                { key: "systems",       label: "Sistemas Afetados",       type: "text",     placeholder: "Ex: Servidor Web, Email..." },
+                { key: "actions",       label: "Ações Imediatas Tomadas", type: "textarea" },
+            ]
+        },
+        2: { // Pentest
+            label: "Pentest",
+            fields: [
+                { key: "scope",         label: "Âmbito do Teste *",       type: "select",
+                  options: ["Rede interna", "Aplicação Web", "Engenharia social", "Físico", "Outro"] },
+                { key: "targets",       label: "Sistemas Alvo (IPs/URLs) *", type: "text",  placeholder: "Ex: 192.168.1.0/24, app.empresa.pt" },
+                { key: "objectives",    label: "Objetivos Principais *",  type: "textarea" },
+                { key: "startDate",     label: "Data Pretendida para o Teste", type: "date" },
+            ]
+        },
+        3: { // Documentation
+            label: "Documentação",
+            fields: [
+                { key: "docType",       label: "Tipo de Documento Solicitado *", type: "select",
+                  options: ["Política de Segurança", "Plano de Continuidade", "Procedimento", "Manual", "Outro"] },
+                { key: "context",       label: "Contexto / Requisitos *", type: "textarea" },
+            ]
+        },
+        4: { // Technological Assets
+            label: "Ativos Tecnológicos",
+            fields: [
+                { key: "assetName",     label: "Nome do Ativo *",         type: "text",     placeholder: "Ex: Servidor Web Principal" },
+                { key: "assetType",     label: "Tipo de Ativo *",         type: "select",
+                  options: ["Servidor", "Workstation", "Rede", "Aplicação", "Cloud", "Outro"] },
+                { key: "ip",            label: "Endereço IP / Subrede",   type: "text",     placeholder: "Ex: 192.168.1.10" },
+                { key: "location",      label: "Localização Física/Cloud", type: "text",     placeholder: "Ex: Datacenter A, AWS" },
+                { key: "notes",         label: "Notas Adicionais",        type: "textarea" },
+            ]
+        },
+        5: { // Others
+            label: "Outros",
+            fields: [
+                { key: "subtype",       label: "Especifique o Assunto *", type: "text",     placeholder: "Descreva brevemente o tipo de pedido" },
+                { key: "details",       label: "Descrição do Pedido *",   type: "textarea" },
+            ]
+        },
+        6: { // NIS2
+            label: "NIS2",
+            fields: [
+                { key: "nis2Area",      label: "Área NIS2 Relacionada *", type: "select",
+                  options: ["Gestão de Risco", "Resposta a Incidentes", "Segurança da Cadeia de Fornecimento", "Criptografia", "Continuidade de Negócio", "Outro"] },
+                { key: "deadline",      label: "Prazo Limite de Conformidade", type: "date" },
+                { key: "context",       label: "Descrição / Contexto Atual *", type: "textarea" },
+                { key: "compliance",    label: "Estado Atual de Conformidade", type: "select",
+                  options: ["Conforme", "Parcialmente conforme", "Não conforme", "Em avaliação"] },
+            ]
+        },
+    };
+
+    // Mapeamento idêntico aos IDs da tua tabela 'RequestTypes'
+    const REQUEST_TYPES = [
+        { id: 1, name: "Report de Incidente" },
+        { id: 2, name: "Pentest"             },
+        { id: 3, name: "Documentação"        },
+        { id: 4, name: "Ativos Tecnológicos" },
+        { id: 5, name: "Outros"             },
+        { id: 6, name: "NIS2"               },
+    ];
+
+    const [subTab, setSubTab]         = useState("form");
+    const [typeId, setTypeId]         = useState("");
+    const [formData, setFormData]     = useState({});
+    const [file, setFile]             = useState(null);
+    const [submitting, setSubmitting] = useState(false);
+    const [submitted, setSubmitted]   = useState(false);
+
+    // Lista estática de documentos (Mock para consulta rápida)
     const docs = [
         { id: 1, name: "Política de Segurança v3",       type: "PDF",  date: "02/03/2026", size: "1.1 MB" },
         { id: 2, name: "Relatório NIS2 - Q1 2026",       type: "PDF",  date: "10/04/2026", size: "2.4 MB" },
@@ -198,282 +275,216 @@ function Docs() {
         { id: 4, name: "Plano de Resposta a Incidentes", type: "PDF",  date: "01/01/2026", size: "3.2 MB" },
     ];
 
-    const handleExcel = (e) => {
-        const file = e.target.files[0];
-        if (!file) return;
-        const reader = new FileReader();
-        reader.onload = (evt) => {
-            try {
-                import("https://cdn.sheetjs.com/xlsx-0.20.1/package/xlsx.mjs").then(XLSX => {
-                    const wb = XLSX.read(evt.target.result, { type: "array" });
-                    const ws = wb.Sheets[wb.SheetNames[0]];
-                    const rows = XLSX.utils.sheet_to_json(ws);
-                    setAssets(rows.map((r, i) => ({
-                        id: i + 1,
-                        name:     r["Nome"]       || r["Name"]     || r["Ativo"]    || "-",
-                        type:     r["Tipo"]       || r["Type"]     || "-",
-                        ip:       r["IP"]         || r["Endereço IP"] || "-",
-                        location: r["Localização"] || r["Location"] || "-",
-                        owner:    r["Responsável"] || r["Owner"]   || "-",
-                        risk:     r["Risco"]      || r["Risk"]     || "-",
-                    })));
+    const currentConfig = typeId ? TYPE_FIELDS[typeId] : null;
+
+    const handleField = (key, value) => {
+        setFormData(prev => ({ ...prev, [key]: value }));
+    };
+
+    const handleTypeChange = (val) => {
+        setTypeId(val);
+        setFormData({});
+        setSubmitted(false);
+        setFile(null);
+    };
+
+    const handleSubmit = async () => {
+        if (!typeId) { alert("Por favor, seleciona o tipo de pedido nos botões acima."); return; }
+
+        const requiredFields = currentConfig.fields
+            .filter(f => f.label.includes("*"))
+            .map(f => f.key);
+        
+        const missing = requiredFields.find(k => !formData[k] || formData[k].trim() === "");
+        if (missing) { alert("Preenche todos os campos obrigatórios (*)."); return; }
+
+        setSubmitting(true);
+        try {
+            // Converte o formulário dinâmico num bloco de texto limpo para o campo 'description' TEXT NOT NULL
+            const formattedDescription = Object.entries(formData)
+                .map(([key, val]) => {
+                    const fieldLabel = currentConfig.fields.find(f => f.key === key)?.label.replace(" *", "") || key;
+                    return `${fieldLabel}: ${val}`;
+                })
+                .join("\n");
+
+            let res;
+
+            if (file) {
+                const multiPartForm = new FormData();
+                multiPartForm.append("requestTypeId", Number(typeId));
+                multiPartForm.append("subject", currentConfig.label);
+                multiPartForm.append("description", formattedDescription); 
+                multiPartForm.append("creatorId", 1);
+                multiPartForm.append("file", file);
+
+                res = await axios.post(`${API}/requests`, multiPartForm, {
+                    headers: { "Content-Type": "multipart/form-data" }
                 });
-            } catch {
-                alert("Erro ao processar ficheiro. Certifica-te que é um ficheiro .xlsx válido.");
+            } else {
+                res = await axios.post(`${API}/requests`, {
+                    requestTypeId: Number(typeId),
+                    subject: currentConfig.label,
+                    description: formattedDescription,
+                    creatorId: 1,
+                });
             }
-        };
-        reader.readAsArrayBuffer(file);
+
+            if (res.data.success || res.status === 200 || res.status === 201) {
+                setSubmitted(true);
+                setFormData({});
+                setTypeId("");
+                setFile(null);
+            }
+        } catch (err) {
+            console.error(err);
+            alert(err.response?.data?.message || "Erro ao submeter pedido para o servidor.");
+        } finally {
+            setSubmitting(false);
+        }
     };
 
-    const handleUpload = (e, category) => {
-        const file = e.target.files[0];
-        if (!file) return;
-        setUploads(prev => [...prev, {
-            id: Date.now(), name: file.name,
-            category, date: new Date().toLocaleDateString("pt-PT"),
-        }]);
-    };
+    const renderField = (field) => {
+        const val = formData[field.key] || "";
+        const common = "form-control form-control-sm";
 
-    const subTabs = [
-        { id: "docs",     label: "Documentação Disponível" },
-        { id: "assets",   label: "Ativos Tecnológicos"     },
-        { id: "incident", label: "Report de Incidente"     },
-        { id: "internal", label: "Documentação Interna"    },
-        { id: "pentest",  label: "Pen Tests"               },
-        { id: "evidence", label: "Outras Evidências"       },
-    ];
+        if (field.type === "select") return (
+            <select className="form-select form-select-sm" value={val}
+                onChange={e => handleField(field.key, e.target.value)}>
+                <option value="">Selecionar...</option>
+                {field.options.map(o => <option key={o}>{o}</option>)}
+            </select>
+        );
+        if (field.type === "textarea") return (
+            <textarea className={common} rows={3}
+                placeholder={field.placeholder || ""}
+                value={val} onChange={e => handleField(field.key, e.target.value)} />
+        );
+        return (
+            <input type={field.type} className={common}
+                placeholder={field.placeholder || ""}
+                value={val} onChange={e => handleField(field.key, e.target.value)} />
+        );
+    };
 
     return (
         <div className="card p-3">
+            {/* Navegação de Abas Principal */}
             <ul className="nav nav-tabs mb-3">
-                {subTabs.map(t => (
-                    <li className="nav-item" key={t.id}>
-                        <button className={`nav-link ${subTab === t.id ? "active" : ""}`}
-                            onClick={() => setSubTab(t.id)}>
-                            {t.label}
-                        </button>
-                    </li>
-                ))}
+                <li className="nav-item">
+                    <button className={`nav-link ${subTab === "form" ? "active" : ""}`} onClick={() => setSubTab("form")}>
+                        Novo Pedido
+                    </button>
+                </li>
+                <li className="nav-item">
+                    <button className={`nav-link ${subTab === "docs" ? "active" : ""}`} onClick={() => setSubTab("docs")}>
+                        Documentação Disponível
+                    </button>
+                </li>
             </ul>
 
-            {/* ── Documentação Disponível ── */}
-            {subTab === "docs" && (
-                <table className="table">
-                    <thead>
-                        <tr><th>Nome</th><th>Tipo</th><th>Tamanho</th><th>Data</th><th>Ação</th></tr>
-                    </thead>
-                    <tbody>
-                        {docs.map(d => (
-                            <tr key={d.id}>
-                                <td style={{ fontWeight: 600 }}>{d.name}</td>
-                                <td><span className="badge bg-secondary">{d.type}</span></td>
-                                <td style={{ fontSize: 13, color: "#6b7280" }}>{d.size}</td>
-                                <td style={{ fontSize: 13, color: "#6b7280" }}>{d.date}</td>
-                                <td><button className="btn btn-sm btn-outline-dark">Download</button></td>
-                            </tr>
-                        ))}
-                    </tbody>
-                </table>
-            )}
-
-            {/* ── Ativos Tecnológicos ── */}
-            {subTab === "assets" && (
+            {/* ── Aba 1: Novo Pedido Dinâmico ── */}
+            {subTab === "form" && (
                 <>
-                    <div className="border rounded p-3 mb-3 bg-light">
-                        <h6 className="mb-1">Upload de Ficheiro Excel</h6>
-                        <p className="text-muted mb-2" style={{ fontSize: 13 }}>
-                            Importa um ficheiro <strong>.xlsx</strong> com os ativos tecnológicos.
-                            Colunas esperadas: <code>Nome, Tipo, IP, Localização, Responsável, Risco</code>
-                        </p>
-                        <div className="d-flex gap-2 align-items-center">
-                            <input type="file" accept=".xlsx,.xls" className="form-control form-control-sm"
-                                style={{ maxWidth: 300 }} onChange={handleExcel} />
-                            <button className="btn btn-sm btn-outline-dark"
-                                onClick={() => setAssets([
-                                    { id: 1, name: "Servidor Web",      type: "Servidor", ip: "192.168.1.10", location: "Datacenter A", owner: "IT Dept", risk: "Alto"  },
-                                    { id: 2, name: "Firewall Principal", type: "Rede",     ip: "10.0.0.1",    location: "Rack 1",       owner: "IT Dept", risk: "Médio" },
-                                    { id: 3, name: "Workstation-01",    type: "Endpoint", ip: "192.168.1.50", location: "Escritório",   owner: "João P.", risk: "Baixo" },
-                                ])}>
-                                Carregar Exemplo
-                            </button>
+                    {submitted && (
+                        <div className="alert alert-success d-flex align-items-center gap-2 mb-3">
+                            <span>✅</span>
+                            <span>Pedido registado com sucesso na base de dados!</span>
+                        </div>
+                    )}
+
+                    <div className="mb-4">
+                        <label className="form-label fw-semibold">O que pretendes solicitar? *</label>
+                        <div className="d-flex flex-wrap gap-2">
+                            {REQUEST_TYPES.map(t => (
+                                <button key={t.id}
+                                    type="button"
+                                    onClick={() => handleTypeChange(String(t.id))}
+                                    className={`btn btn-sm ${typeId === String(t.id) ? "btn-dark" : "btn-outline-secondary"}`}>
+                                    {t.name}
+                                </button>
+                            ))}
                         </div>
                     </div>
-                    {assets.length > 0 && (
+
+                    {currentConfig && (
                         <>
-                            <div className="d-flex justify-content-between align-items-center mb-2">
-                                <span style={{ fontSize: 13, color: "#6b7280" }}>{assets.length} ativos importados</span>
-                                <button className="btn btn-sm btn-outline-danger" onClick={() => setAssets([])}>Limpar</button>
+                            <div className="border-top pt-3 mb-3">
+                                <h6 className="text-muted mb-3" style={{ fontSize: 13, textTransform: "uppercase", letterSpacing: 1 }}>
+                                    Formulário: {currentConfig.label}
+                                </h6>
+                                <div className="row g-3">
+                                    {currentConfig.fields.map(field => (
+                                        <div key={field.key}
+                                            className={field.type === "textarea" ? "col-12" : "col-md-6"}>
+                                            <label className="form-label fw-semibold" style={{ fontSize: 12 }}>
+                                                {field.label}
+                                            </label>
+                                            {renderField(field)}
+                                        </div>
+                                    ))}
+
+                                    <div className="col-12">
+                                        <label className="form-label fw-semibold" style={{ fontSize: 12 }}>
+                                            Anexar Documento / Evidência Associada
+                                        </label>
+                                        <input type="file" className="form-control form-control-sm"
+                                            style={{ maxWidth: 400 }}
+                                            onChange={e => setFile(e.target.files[0])} />
+                                        {file && (
+                                            <small className="text-success mt-1 d-block">
+                                                📎 {file.name} ({(file.size / 1024 / 1024).toFixed(2)} MB)
+                                            </small>
+                                        )}
+                                    </div>
+                                </div>
                             </div>
-                            <div style={{ overflowX: "auto" }}>
-                                <table className="table table-sm">
-                                    <thead>
-                                        <tr><th>#</th><th>Nome</th><th>Tipo</th><th>IP</th><th>Localização</th><th>Responsável</th><th>Risco</th></tr>
-                                    </thead>
-                                    <tbody>
-                                        {assets.map(a => (
-                                            <tr key={a.id}>
-                                                <td style={{ color: "#6b7280" }}>{a.id}</td>
-                                                <td style={{ fontWeight: 600 }}>{a.name}</td>
-                                                <td><span className="badge bg-secondary">{a.type}</span></td>
-                                                <td style={{ fontFamily: "monospace", fontSize: 12 }}>{a.ip}</td>
-                                                <td style={{ fontSize: 13 }}>{a.location}</td>
-                                                <td style={{ fontSize: 13 }}>{a.owner}</td>
-                                                <td>
-                                                    <span className={`badge bg-${a.risk === "Alto" ? "danger" : a.risk === "Médio" ? "warning" : "success"}`}>
-                                                        {a.risk}
-                                                    </span>
-                                                </td>
-                                            </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
+
+                            <div className="d-flex gap-2">
+                                <button className="btn btn-sm btn-success"
+                                    onClick={handleSubmit} disabled={submitting}>
+                                    {submitting ? "A guardar no sistema..." : "Submeter Pedido"}
+                                </button>
+                                <button className="btn btn-sm btn-outline-secondary"
+                                    onClick={() => { setTypeId(""); setFormData({}); setSubmitted(false); setFile(null); }}>
+                                    Limpar
+                                </button>
                             </div>
-                            <button className="btn btn-sm btn-success mt-2">Guardar na Base de Dados</button>
                         </>
+                    )}
+
+                    {!typeId && (
+                        <p className="text-muted" style={{ fontSize: 13 }}>
+                            Clica num dos botões acima para abrir o formulário correto.
+                        </p>
                     )}
                 </>
             )}
 
-            {/* ── Report de Incidente ── */}
-           {subTab === "incident" && (
-    <>
-        <p className="text-muted mb-3" style={{ fontSize: 13 }}>
-            Formulário baseado no modelo do{" "}
-            <a href="https://www.cncs.gov.pt" target="_blank" rel="noreferrer">cncs.gov.pt</a>.
-        </p>
-        <div className="row g-3">
-            <div className="col-md-6">
-                <label className="form-label fw-semibold" style={{ fontSize: 12 }}>Data do Incidente *</label>
-                <input type="date" className="form-control form-control-sm"
-                    value={incident.date} onChange={e => setIncident({ ...incident, date: e.target.value })} />
-            </div>
-            <div className="col-md-6">
-                <label className="form-label fw-semibold" style={{ fontSize: 12 }}>Tipo de Incidente *</label>
-                <select className="form-select form-select-sm"
-                    value={incident.type} onChange={e => setIncident({ ...incident, type: e.target.value })}>
-                    {[
-                        { id: 1, name: "ReportIncident" },
-                        { id: 2, name: "Pentest" },
-                        { id: 3, name: "Documentation" },
-                        { id: 4, name: "Technological assets" },
-                        { id: 5, name: "Others" },
-                    ].map(t => (
-                        <option key={t.id} value={t.id}>{t.name}</option>
-                    ))}
-                </select>
-            </div>
-            <div className="col-md-12">
-                <label className="form-label fw-semibold" style={{ fontSize: 12 }}>Descrição do Incidente *</label>
-                <textarea className="form-control form-control-sm" rows={3}
-                    placeholder="Descreva o incidente de forma detalhada..."
-                    value={incident.description} onChange={e => setIncident({ ...incident, description: e.target.value })} />
-            </div>
-            <div className="col-md-6">
-                <label className="form-label fw-semibold" style={{ fontSize: 12 }}>Impacto</label>
-                <select className="form-select form-select-sm"
-                    value={incident.impact} onChange={e => setIncident({ ...incident, impact: e.target.value })}>
-                    <option value="">Selecionar...</option>
-                    <option>Baixo</option>
-                    <option>Médio</option>
-                    <option>Alto</option>
-                    <option>Crítico</option>
-                </select>
-            </div>
-            <div className="col-md-6">
-                <label className="form-label fw-semibold" style={{ fontSize: 12 }}>Sistemas Afetados</label>
-                <input className="form-control form-control-sm"
-                    placeholder="Ex: Servidor Web, Email..."
-                    value={incident.systems} onChange={e => setIncident({ ...incident, systems: e.target.value })} />
-            </div>
-            <div className="col-md-12">
-                <label className="form-label fw-semibold" style={{ fontSize: 12 }}>Ações Tomadas</label>
-                <textarea className="form-control form-control-sm" rows={2}
-                    placeholder="Que medidas foram tomadas imediatamente?"
-                    value={incident.actions} onChange={e => setIncident({ ...incident, actions: e.target.value })} />
-            </div>
-            <div className="col-md-12">
-                <label className="form-label fw-semibold" style={{ fontSize: 12 }}>Anexar Evidências</label>
-                <input type="file" className="form-control form-control-sm"
-                    onChange={e => handleUpload(e, "Incidente")} />
-            </div>
-        </div>
-        
-        
-<button className="btn btn-sm btn-success mt-3" onClick={async () => {
-    if (!incident.date || !incident.type || !incident.description) {
-        alert("Por favor, preencha todos os campos obrigatórios (*).");
-        return;
-    }
-    try {
-        // 🟢 CORREÇÃO DEFINITIVA: Aponta para o seu servidor real (orion-dewp) com a rota certa
-        const response = await axios.post('https://orion-dewp.onrender.com/api/requests', {
-            requestTypeId: incident.type, // ✅ envia o ID numérico
-            notes: incident.description,
-            creatorId: 1
-        });
-                
-        if (response.data.success) {
-            alert(response.data.message); 
-            // Limpa o ecrã
-            setIncident({ date: "", type: "", description: "", impact: "", systems: "", actions: "" });
-        }
-    } catch (error) {
-        console.error("Erro na ligação à API:", error);
-        alert(error.response?.data?.message || "Erro de ligação ao servidor.");
-    }
-}}>
-    Submeter Incidente
-</button>
-
-
-    </>
-)}
-
-
-            {/* ── Outras tabs de upload ── */}
-            {["internal", "pentest", "evidence"].includes(subTab) && (
-                <>
-                    <div className="border rounded p-3 mb-3 bg-light">
-                        <h6 className="mb-2">
-                            {subTab === "internal" ? "Documentação Interna" : subTab === "pentest" ? "Pen Tests" : "Outras Evidências"}
-                        </h6>
-                        <p className="text-muted mb-2" style={{ fontSize: 13 }}>Seleciona o ficheiro que pretendes submeter.</p>
-                        <input type="file" className="form-control form-control-sm" style={{ maxWidth: 400 }}
-                            onChange={e => handleUpload(e,
-                                subTab === "internal" ? "Documentação Interna" :
-                                subTab === "pentest"  ? "Pen Test" : "Evidência"
-                            )} />
-                    </div>
-                    {uploads.filter(u =>
-                        (subTab === "internal" && u.category === "Documentação Interna") ||
-                        (subTab === "pentest"  && u.category === "Pen Test") ||
-                        (subTab === "evidence" && u.category === "Evidência")
-                    ).length > 0 && (
-                        <table className="table table-sm">
-                            <thead>
-                                <tr><th>Ficheiro</th><th>Categoria</th><th>Data</th></tr>
-                            </thead>
-                            <tbody>
-                                {uploads.filter(u =>
-                                    (subTab === "internal" && u.category === "Documentação Interna") ||
-                                    (subTab === "pentest"  && u.category === "Pen Test") ||
-                                    (subTab === "evidence" && u.category === "Evidência")
-                                ).map(u => (
-                                    <tr key={u.id}>
-                                        <td style={{ fontWeight: 600 }}>{u.name}</td>
-                                        <td><span className="badge bg-secondary">{u.category}</span></td>
-                                        <td style={{ fontSize: 13, color: "#6b7280" }}>{u.date}</td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    )}
-                </>
+            {/* ── Aba 2: Documentação Disponível (Consulta Rápida) ── */}
+            {subTab === "docs" && (
+                <div className="table-responsive">
+                    <table className="table align-middle">
+                        <thead>
+                            <tr><th>Nome do Ficheiro</th><th>Tipo</th><th>Tamanho</th><th>Data de Submissão</th><th>Ação</th></tr>
+                        </thead>
+                        <tbody>
+                            {docs.map(d => (
+                                <tr key={d.id}>
+                                    <td style={{ fontWeight: 600 }}>{d.name}</td>
+                                    <td><span className="badge bg-secondary">{d.type}</span></td>
+                                    <td style={{ fontSize: 13, color: "#6b7280" }}>{d.size}</td>
+                                    <td style={{ fontSize: 13, color: "#6b7280" }}>{d.date}</td>
+                                    <td><button className="btn btn-sm btn-outline-dark">Download</button></td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
             )}
         </div>
     );
 }
-
 /* ───────────────────────── TICKETS ───────────────────────── */
 function Tickets() {
     const [tickets, setTickets] = useState([

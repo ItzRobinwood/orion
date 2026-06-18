@@ -127,14 +127,17 @@ function Accounts() {
             const mapped = data.users
                 .filter(u => u.id_tipo === 3)
                 .map(u => {
-                    // Mapeia usando a lista de empresas atualizada
-                    const associatedCompany = currentAccounts.find(acc => acc.id === u.companyId);
+                    // 🔴 CORREÇÃO AQUI: Convertemos ambos os IDs para Number antes de comparar
+                    const associatedCompany = currentAccounts.find(acc =>
+                        Number(acc.id) === Number(u.id_empresa)
+                    );
 
                     return {
                         ...u,
                         id: u.id_Utilizador,
                         phone: u.telephone,
                         status: u.active ? "Ativo" : "Inativo",
+                        // Se encontrar a empresa usa o nome mapeado, senão exibe "Sem Empresa"
                         companyName: associatedCompany ? associatedCompany.company : "Sem Empresa"
                     };
                 });
@@ -403,11 +406,11 @@ function ClientsTable({ clients, setClients, reloadClients, accounts }) {
                 password: form.password,
                 telephone: form.phone,
                 id_tipo: 3, // Tipo 3 para Clientes
-                companyId: parseInt(form.companyId) // Envia o ID da Empresa selecionada
+                id_empresa: parseInt(form.companyId) // Envia o ID da Empresa selecionada
             });
 
             if (res.data.success) {
-                await reloadClients(); // Atualiza a lista geral
+                await reloadClients(accounts); // Atualiza a lista geral
                 setForm(getEmptyForm());
                 setShowForm(false);
             } else {
@@ -422,7 +425,7 @@ function ClientsTable({ clients, setClients, reloadClients, accounts }) {
         setEditingId(c.id_Utilizador || c.id);
         setEditForm({
             ...c,
-            companyId: c.companyId || "" // Garante que o ID antigo fica selecionado no dropdown
+            companyId: c.id_empresa || "" // Garante que o ID antigo fica selecionado no dropdown
         });
         setShowForm(false);
     };
@@ -441,11 +444,11 @@ function ClientsTable({ clients, setClients, reloadClients, accounts }) {
                 email: editForm.email,
                 telephone: editForm.phone,
                 status: editForm.status,
-                companyId: parseInt(editForm.companyId) // Atualiza a associação da empresa
+                id_empresa: parseInt(editForm.companyId) // Atualiza a associação da empresa
             });
 
             if (res.data.success) {
-                await reloadClients();
+                await reloadClients(accounts);
                 cancelEdit();
             } else {
                 alert("Error: " + res.data.message);
@@ -460,7 +463,7 @@ function ClientsTable({ clients, setClients, reloadClients, accounts }) {
         try {
             const res = await axios.delete(`https://orion-dewp.onrender.com/api/users/${id}`);
             if (res.data.success) {
-                await reloadClients();
+                await reloadClients(accounts);
             } else {
                 alert("Error: " + res.data.message);
             }
@@ -650,15 +653,13 @@ function ClientPersonForm({ form, setForm, title, submitLabel, generatePassword,
                 <div className="col-md-4">
                     <label className="form-label fw-semibold mb-1 text-primary" style={{ fontSize: 12 }}>Empresa Pertencente *</label>
                     <select
-                        className="form-select form-select-sm border-primary-subtle"
-                        value={form.companyId}
+                        className="form-select form-select-sm" // mudei para form-select-sm para combinar com os inputs
+                        value={form.companyId || ""} // 🔴 CORREÇÃO: Evita erro de componente não controlado
                         onChange={(e) => setForm({ ...form, companyId: e.target.value })}
                     >
-                        <option value="">-- Selecione uma Empresa --</option>
-                        {accounts.map((acc) => (
-                            <option key={acc.id} value={acc.id}>
-                                {acc.company}
-                            </option>
+                        <option value="">Selecione uma empresa...</option>
+                        {accounts && accounts.map(acc => ( // 🔴 SEGURANÇA: Evita quebras se accounts for undefined
+                            <option key={acc.id} value={acc.id}>{acc.company}</option>
                         ))}
                     </select>
                 </div>
@@ -683,7 +684,7 @@ function ClientPersonForm({ form, setForm, title, submitLabel, generatePassword,
                 <div className="col-md-4">
                     <label className="form-label fw-semibold mb-1" style={{ fontSize: 12 }}>Estado</label>
                     <select className="form-select form-select-sm"
-                        value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value })}>
+                        value={form.status || "Ativo"} onChange={(e) => setForm({ ...form, status: e.target.value })}>
                         <option>Ativo</option>
                         <option>Inativo</option>
                     </select>

@@ -108,7 +108,9 @@ exports.loginUser = async (req, res) => {
 exports.updateUser = async (req, res) => {
     try {
         const { id } = req.params; 
-        const { name, email, telephone, status, password, newPassword } = req.body;
+        // 🔴 1. Adicionamos o id_empresa na desestruturação do req.body
+        const { name, email, telephone, status, password, newPassword, id_empresa } = req.body;
+        
         const user = await User.findOne({ where: { id_Utilizador: id } });
         if (!user) {
             return res.status(404).json({
@@ -123,6 +125,12 @@ exports.updateUser = async (req, res) => {
         if (email) updateData.email = email;
         if (telephone) updateData.telephone = telephone;
         if (status) updateData.active = (status !== "Inativo");
+
+        // 🔴 2. Adicionamos a lógica para atualizar a empresa
+        // Se id_empresa vier no body, usamos o seu valor convertido ou null se for inválido/vazio
+        if (id_empresa !== undefined) {
+            updateData.id_empresa = id_empresa ? parseInt(id_empresa) : null;
+        }
 
         // 🟢 Se o pedido incluir alteração de password, valida a antiga antes de encriptar a nova
         if (password && newPassword) {
@@ -150,7 +158,6 @@ exports.updateUser = async (req, res) => {
         });
     }
 };
-
 // LISTAR TODOS OS UTILIZADORES
 exports.getUsers = async (req, res) => {
     try {
