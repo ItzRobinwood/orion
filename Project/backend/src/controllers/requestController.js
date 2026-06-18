@@ -28,9 +28,9 @@ const request_list = async (req, res) => {
                 type: r.RequestType ? r.RequestType.name : "Geral",
                 type_name: r.RequestType ? r.RequestType.name : "Geral",
                 date: r.createdAt ? new Date(r.createdAt).toLocaleDateString("pt-PT") : "",
-                status: statusReact, 
+                status: statusReact,
                 notes: r.description,
-                assignedToId: r.assignedTo ? r.assignedTo.id_Utilizador : "", 
+                assignedToId: r.assignedTo ? r.assignedTo.id_Utilizador : "",
                 assignedToName: r.assignedTo ? (r.assignedTo.name || "Sem nome") : "Sem atribuição"
             };
         });
@@ -47,7 +47,7 @@ const request_list = async (req, res) => {
 };
 
 // ==========================================
-// 2. ATRIBUIR GESTOR (PUT /api/requests/:id/assign) - CORRIGIDO 🚀
+// 2. ATRIBUIR GESTOR
 // ==========================================
 const assign_manager = async (req, res) => {
     try {
@@ -59,14 +59,9 @@ const assign_manager = async (req, res) => {
             return res.status(404).json({ success: false, message: "Pedido não encontrado." });
         }
 
-        // 🟢 CORREÇÃO: Atualiza o campo exato mapeado no teu requestModel.js
-        request.assignedToId = managerId ? Number(managerId) : null; 
-        
-        if (managerId) {
-            request.status = "in_progress";
-        } else {
-            request.status = "open"; 
-        }
+        request.assignedToId = managerId ? Number(managerId) : null;
+
+        request.status = managerId ? "in_progress" : "open";
 
         await request.save();
 
@@ -83,7 +78,7 @@ const assign_manager = async (req, res) => {
 };
 
 // ==========================================
-// 3. DETALHAR UM PEDIDO POR ID (GET /api/requests/:id)
+// 3. DETALHAR PEDIDO
 // ==========================================
 const request_detail = async (req, res) => {
     try {
@@ -101,10 +96,7 @@ const request_detail = async (req, res) => {
             return res.status(404).json({ success: false, message: 'Pedido não encontrado.' });
         }
 
-        return res.json({
-            success: true,
-            request: request
-        });
+        return res.json({ success: true, request });
 
     } catch (error) {
         return res.status(500).json({ success: false, message: error.message });
@@ -112,102 +104,100 @@ const request_detail = async (req, res) => {
 };
 
 // ==========================================
-// 4. CRIAR NOVO PEDIDO (POST /api/requests)
+// 4. CRIAR PEDIDO
 // ==========================================
 const request_create = async (req, res) => {
     try {
         if (!req.body || Object.keys(req.body).length === 0) {
             return res.status(400).json({
                 success: false,
-                message: 'O servidor não conseguiu ler os dados do formulário (req.body está vazio).'
+                message: 'Body vazio.'
             });
         }
 
         const {
-            requestTypeId, type,
+            requestTypeId,
             creatorId,
-            assignedToId,
             subject,
-            description, notes,
+            description,
+            assignedToId,
             subtype
         } = req.body;
 
-        const finalRequestTypeId = requestTypeId || type;
-        const finalDescription = description || notes;
-        const finalSubject = subject || "Pedido via Portal";
-
-        if (!finalRequestTypeId || !finalDescription) {
-            return res.status(400).json({ 
-                success: false, 
-                message: 'Por favor, selecione o tipo de pedido e preencha a descrição.' 
+        if (!requestTypeId || !description) {
+            return res.status(400).json({
+                success: false,
+                message: 'Tipo e descrição são obrigatórios.'
             });
         }
 
-        const requestType = await RequestType.findByPk(finalRequestTypeId);
+        const requestType = await RequestType.findByPk(requestTypeId);
         if (!requestType) {
-            return res.status(404).json({ 
-                success: false, 
-                message: 'O tipo de pedido selecionado é inválido.' 
+            return res.status(404).json({
+                success: false,
+                message: 'Tipo inválido.'
             });
         }
 
         const newRequest = await Request.create({
-            requestTypeId: Number(finalRequestTypeId),
-            creatorId: creatorId ? Number(creatorId) : 1, 
-            assignedToId: assignedToId || null, 
-            subject: finalSubject,
-            description: finalDescription,
-            subtype: requestType.name === 'Others' && subtype ? subtype.trim() : null, 
+            requestTypeId: Number(requestTypeId),
+            creatorId: creatorId ? Number(creatorId) : 1,
+            assignedToId: assignedToId || null,
+            subject: subject || "Pedido",
+            description,
+            subtype: subtype || null,
             status: 'open'
         });
 
+        // 📌 ficheiro opcional
         if (req.file) {
-    const base64 = req.file.buffer.toString('base64');
-    await RequestFile.create({
-        requestId: newRequest.id,
-        fileName: req.file.originalname,
-        filePath: base64,  // guarda o ficheiro em base64
-        uploadedAt: new Date()
-    });
-}
+            const base64 = req.file.buffer.toString('base64');
+
+            await RequestFile.create({
+                requestId: newRequest.id,
+                fileName: req.file.originalname,
+                filePath: base64,
+                uploadedAt: new Date()
+            });
+        }
 
         return res.status(201).json({
             success: true,
-            message: 'Pedido criado com sucesso! 🚀',
+            message: 'Pedido criado!',
             request: newRequest
         });
 
     } catch (error) {
         console.error("Erro ao criar pedido:", error.message);
-        return res.status(500).json({ 
-            success: false, 
-            message: 'Erro interno no servidor ao tentar criar o pedido.',
-            error: error.message 
+        return res.status(500).json({
+            success: false,
+            message: error.message
         });
     }
 };
 
 // ==========================================
-// 5. LISTAR FICHEIROS DISPONÍVEIS (GET /api/requests/files)
+// 5. LISTAR FICHEIROS
 // ==========================================
 const request_files_list = async (req, res) => {
     try {
         const files = await RequestFile.findAll({
             order: [['uploadedAt', 'DESC']]
         });
+
         return res.json(files);
     } catch (error) {
-        console.error("Erro ao listar ficheiros:", error.message);
         return res.status(500).json({ success: false, message: error.message });
     }
 };
 
 // ==========================================
-// 6. DESCARREGAR FICHEIRO POR ID (GET /api/requests/files/download/:id)
+// 6. DOWNLOAD FICHEIRO
 // ==========================================
 const request_file_download = async (req, res) => {
     try {
         const { id } = req.params;
+
         const fileRecord = await RequestFile.findByPk(id);
 
         if (!fileRecord) {
@@ -215,67 +205,72 @@ const request_file_download = async (req, res) => {
         }
 
         const buffer = Buffer.from(fileRecord.filePath, 'base64');
-res.setHeader('Content-Disposition', `attachment; filename="${fileRecord.fileName}"`);
-res.setHeader('Content-Type', 'application/octet-stream');
-return res.send(buffer);
+
+        res.setHeader('Content-Disposition', `attachment; filename="${fileRecord.fileName}"`);
+        res.setHeader('Content-Type', 'application/octet-stream');
+
+        return res.send(buffer);
+
     } catch (error) {
-        console.error("Erro no download:", error.message);
         return res.status(500).json({ success: false, message: error.message });
     }
 };
 
 // ==========================================
-// 7. ATUALIZAR PEDIDO (PUT /api/requests/:id)
+// 7. UPDATE
 // ==========================================
 const request_update = async (req, res) => {
     try {
-        const { id } = req.params;
-        const request = await Request.findByPk(id);
+        const request = await Request.findByPk(req.params.id);
 
         if (!request) {
-            return res.status(404).json({ success: false, message: 'Pedido não encontrado.' });
+            return res.status(404).json({ success: false, message: 'Não encontrado.' });
         }
 
         await request.update(req.body);
-        return res.json({ success: true, message: 'Pedido atualizado.', request });
+
+        return res.json({ success: true, request });
+
     } catch (error) {
         return res.status(500).json({ success: false, message: error.message });
     }
 };
 
 // ==========================================
-// 8. ELIMINAR PEDIDO (DELETE /api/requests/:id)
+// 8. DELETE
 // ==========================================
 const request_delete = async (req, res) => {
     try {
-        const { id } = req.params;
-        const request = await Request.findByPk(id);
+        const request = await Request.findByPk(req.params.id);
 
         if (!request) {
-            return res.status(404).json({ success: false, message: 'Pedido não encontrado.' });
+            return res.status(404).json({ success: false, message: 'Não encontrado.' });
         }
 
         await request.destroy();
-        return res.json({ success: true, message: 'Pedido eliminado.' });
+
+        return res.json({ success: true });
+
     } catch (error) {
         return res.status(500).json({ success: false, message: error.message });
     }
 };
 
 // ==========================================
-// 9. FECHAR PEDIDO (PUT /api/requests/:id/close)
+// 9. CLOSE
 // ==========================================
 const request_close = async (req, res) => {
     try {
-        const { id } = req.params;
-        const request = await Request.findByPk(id);
+        const request = await Request.findByPk(req.params.id);
 
         if (!request) {
-            return res.status(404).json({ success: false, message: 'Pedido não encontrado.' });
+            return res.status(404).json({ success: false, message: 'Não encontrado.' });
         }
 
         await request.update({ status: 'closed' });
-        return res.json({ success: true, message: 'Pedido fechado.', request });
+
+        return res.json({ success: true, request });
+
     } catch (error) {
         return res.status(500).json({ success: false, message: error.message });
     }
@@ -285,8 +280,8 @@ module.exports = {
     request_list,
     request_detail,
     request_create,
-    request_files_list,      
-    request_file_download,    
+    request_files_list,
+    request_file_download,
     request_update,
     request_delete,
     request_close,
