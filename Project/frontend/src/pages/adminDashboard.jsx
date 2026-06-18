@@ -118,17 +118,20 @@ function Accounts() {
         }
     };
 
-    // Esta função foi melhorada para aceitar opcionalmente os dados das empresas mais recentes
-    const reloadClients = async (currentAccounts = accounts) => {
+    // 🔴 CORREÇÃO: Removemos o "= accounts" traiçoeiro do parâmetro
+// 1. Função que carrega e mapeia os clientes cruzando com as empresas
+    const reloadClients = async (currentAccounts) => {
         try {
             const res = await axios.get("https://orion-dewp.onrender.com/api/users");
             const data = res.data;
 
+            // Se não for passado um array fresco por parâmetro, usa o estado atual
+            const targetAccounts = currentAccounts || accounts;
+
             const mapped = data.users
                 .filter(u => u.id_tipo === 3)
                 .map(u => {
-                    // 🔴 CORREÇÃO AQUI: Convertemos ambos os IDs para Number antes de comparar
-                    const associatedCompany = currentAccounts.find(acc =>
+                    const associatedCompany = targetAccounts.find(acc =>
                         Number(acc.id) === Number(u.id_empresa)
                     );
 
@@ -137,7 +140,6 @@ function Accounts() {
                         id: u.id_Utilizador,
                         phone: u.telephone,
                         status: u.active ? "Ativo" : "Inativo",
-                        // Se encontrar a empresa usa o nome mapeado, senão exibe "Sem Empresa"
                         companyName: associatedCompany ? associatedCompany.company : "Sem Empresa"
                     };
                 });
@@ -148,6 +150,7 @@ function Accounts() {
         }
     };
 
+    // 2. Função que carrega as empresas e despoleta a primeira carga de clientes
     const reloadCompanies = async () => {
         try {
             const res = await axios.get("https://orion-dewp.onrender.com/api/companies");
@@ -174,30 +177,26 @@ function Accounts() {
             }));
 
             setAccounts(mapped);
-            // IMPORTANTE: Passamos o mapeamento diretamente para atualizar os clientes na hora!
+            // Passamos o mapeamento logo aqui para a primeira renderização vir correta
             await reloadClients(mapped);
         } catch (err) {
             console.error("Error loading companies:", err);
         }
     };
 
-    // 1. Primeiro ciclo de vida: Carrega dados independentes e as empresas
+    // 3. CICLO DE VIDA ÚNICO: Dispara apenas UMA VEZ quando a página monta
     useEffect(() => {
         reloadAdmins();
         reloadManagers();
         reloadCompanies();
-    }, []);
+    }, []); // 🔴 Mantém as dependências vazias aqui para evitar loops de requests à API!
 
-    return (
-        <div className="d-flex flex-column gap-4">
-            <CompaniesTable accounts={accounts} setAccounts={setAccounts} reloadCompanies={reloadCompanies} />
-            <AdminsTable admins={admins} setAdmins={setAdmins} reloadAdmins={reloadAdmins} />
-            <ManagersTable managers={managers} setManagers={setManagers} reloadManagers={reloadManagers} />
-            {/* Adicionada a prop accounts para o ClientsTable poder usar no dropdown de criação/edição */}
-            <ClientsTable clients={clients} setClients={setClients} reloadClients={reloadClients} accounts={accounts} />
-        </div>
-    );
-}
+    // 4. SINCRONIZAÇÃO: Atualiza os nomes na tabela sempre que a lista de empresas mudar localmente
+    useEffect(() => {
+        if (accounts.length > 0) {
+            reloadClients(accounts);
+        }
+    }, [accounts]);
 
 
 function CompaniesTable({ accounts, setAccounts, reloadCompanies }) {
