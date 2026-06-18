@@ -1078,47 +1078,43 @@ function Requests() {
     const reloadRequests = async () => {
         try {
             setLoading(true);
-
-            // Chamada Axios à tua API no Render
             const response = await axios.get("https://orion-dewp.onrender.com/api/requests");
             const data = response.data;
 
+            // ← ADICIONA ISTO TEMPORARIAMENTE
+            console.log("RAW API DATA:", JSON.stringify(data.requests?.[0], null, 2));
+
             if (data.success && data.requests) {
-                // Mapeamos os relacionamentos que o teu Sequelize gerou
                 const mappedRequests = data.requests.map(r => ({
                     id: r.id,
-                    title: r.subject, // Usa o campo 'subject' do teu modelo Request
+                    title: r.subject,
                     description: r.description,
-                    // Se o criador tiver empresa associada mostra o nome dele, senão usa um padrão
-                    company: r.creator?.name || "CyberBox Cliente",
-                    // Formata a data 'openedAt' do teu modelo
-                    date: r.openedAt ? new Date(r.openedAt).toLocaleDateString("pt-PT") : "N/A",
+                    // Tenta ambos os campos
+                    company: r.creator?.nome || r.creator?.name || r.creator?.username || "Cliente",
+                    date: r.createddAt
+                        ? new Date(r.openedAt).toLocaleDateString("pt-PT")
+                        : r.createdAt
+                            ? new Date(r.createdAt).toLocaleDateString("pt-PT")
+                            : "N/A",
                     itemsCount: r.subtype ? 1 : 0,
-                    // Tipo principal vem do include { model: RequestType }
-                    type: r.RequestType?.name || "Geral",
+                    // Tenta várias formas que o Sequelize pode retornar o include
+                    type: r.RequestType?.name
+                        || r.request_type?.name
+                        || r.type?.name
+                        || r.RequestType?.nome
+                        || "Geral",
                     subtype: r.subtype,
-                    // Nome do utilizador atribuído obtido através do alias 'assignedTo'
-                    assignedTo: r.assignedTo?.nome || r.assignedTo?.name || "Sem atribuição",
+                    assignedTo: r.assignedTo?.nome
+                        || r.assignedTo?.name
+                        || r.assignedTo?.username
+                        || "Sem atribuição",
                     status: translateStatus(r.status)
                 }));
                 setRequests(mappedRequests);
             }
         } catch (err) {
-            console.error("Error loading requests with Axios:", err.message);
-            // Fallback de segurança para a interface não quebrar se a BD estiver vazia
-            setRequests([
-                {
-                    id: 1,
-                    title: "Auditoria de Segurança Completa (Demo)",
-                    description: "Pedido de auditoria completa aos sistemas de segurança da organização",
-                    company: "TechCorp",
-                    date: "03/06/2026",
-                    itemsCount: 2,
-                    type: "Pentest",
-                    assignedTo: "Admin Principal",
-                    status: "Em Execução"
-                }
-            ]);
+            console.error("Error:", err.message);
+            // fallback...
         } finally {
             setLoading(false);
         }
@@ -1127,6 +1123,44 @@ function Requests() {
     useEffect(() => {
         reloadRequests();
     }, []);
+
+    const [assignModalOpen, setAssignModalOpen] = useState(false);
+    const [selectedRequestId, setSelectedRequestId] = useState(null);
+    const [managers, setManagers] = useState([]);
+
+    const openAssignModal = async (requestId) => {
+        setSelectedRequestId(requestId);
+        try {
+            const res = await axios.get("https://orion-dewp.onrender.com/api/users?role=manager");
+            setManagers(res.data.users || []);
+        } catch (err) {
+            console.error("Erro ao carregar managers:", err);
+        }
+        setAssignModalOpen(true);
+    };
+
+    const handleAssign = async (managerId, managerName) => {
+    try {
+        await axios.patch(
+            `https://orion-dewp.onrender.com/api/requests/${selectedRequestId}/assign`,
+            { assignedToId: managerId }
+        );
+
+        setRequests(prev =>
+            prev.map(r =>
+                r.id === selectedRequestId
+                    ? { ...r, assignedTo: managerName }
+                    : r
+            )
+        );
+
+        setAssignModalOpen(false);
+        setSelectedRequestId(null);
+    } catch (err) {
+        console.error("Erro ao atribuir:", err);
+        alert("Erro ao atribuir manager. Tenta novamente.");
+    }
+};
 
     const totalRequests = requests.length;
     const countByStatus = (status) => requests.filter(r => r.status === status).length;
@@ -1177,14 +1211,6 @@ function Requests() {
                 <div className="col">
                     <div className="card p-3 d-flex flex-row align-items-center gap-3 shadow-sm">
                         <div>
-                            <div className="text-muted small">Aprovados</div>
-                            <h4 className="fw-bold text-success m-0">{countByStatus("Aprovados")}</h4>
-                        </div>
-                    </div>
-                </div>
-                <div className="col">
-                    <div className="card p-3 d-flex flex-row align-items-center gap-3 shadow-sm">
-                        <div>
                             <div className="text-muted small">Em Execução</div>
                             <h4 className="fw-bold text-warning m-0">{countByStatus("Em Execução")}</h4>
                         </div>
@@ -1206,7 +1232,7 @@ function Requests() {
                     <span>Filtros</span>
                 </div>
                 <div className="d-flex gap-2">
-                    {["Todos", "Pendente", "Aprovados", "Em Execução", "Concluídos"].map((status) => (
+                    {["Todos", "Pendente", "Em Execução", "Concluídos"].map((status) => (
                         <button
                             key={status}
                             onClick={() => setFilter(status)}
@@ -1240,9 +1266,15 @@ function Requests() {
                             </div>
                         </div>
                         <div>
-                            <button className="btn btn-sm btn-link text-primary fs-5 p-0">
-                                👁️
-                            </button>
+                            <div>
+                                <button
+                                    className="btn btn-sm btn-outline-primary me-1"
+                                    onClick={() => openAssignModal(request.id)}
+                                    title="Atribuir manager"
+                                >
+                                    + Atribuir
+                                </button>
+                            </div>
                         </div>
                     </div>
                 ))}
@@ -1253,6 +1285,45 @@ function Requests() {
                     </div>
                 )}
             </div>
+            {assignModalOpen && (
+                <div className="modal show d-block" style={{ backgroundColor: "rgba(0,0,0,0.4)" }}>
+                    <div className="modal-dialog modal-dialog-centered">
+                        <div className="modal-content">
+                            <div className="modal-header">
+                                <h5 className="modal-title">Atribuir manager</h5>
+                                <button className="btn-close" onClick={() => setAssignModalOpen(false)} />
+                            </div>
+                            <div className="modal-body">
+                                <p className="text-muted small mb-3">Seleciona um manager para este pedido:</p>
+                                <div className="d-flex flex-column gap-2">
+                                    {managers.map(m => (
+                                        <div
+                                            key={m.id}
+                                            className="d-flex align-items-center gap-3 p-2 border rounded cursor-pointer"
+                                            style={{ cursor: "pointer" }}
+                                            onClick={() => handleAssign(m.id)}
+                                        >
+                                            <div className="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center"
+                                                style={{ width: 36, height: 36, fontSize: 13, fontWeight: 500 }}>
+                                                {(m.nome || m.name || "?").substring(0, 2).toUpperCase()}
+                                            </div>
+                                            <div>
+                                                <div className="fw-medium" style={{ fontSize: 14 }}>{m.nome || m.name}</div>
+                                                <div className="text-muted" style={{ fontSize: 12 }}>{m.role || "Manager"}</div>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                            <div className="modal-footer">
+                                <button className="btn btn-sm btn-secondary" onClick={() => setAssignModalOpen(false)}>
+                                    Cancelar
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
