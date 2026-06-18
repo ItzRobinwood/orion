@@ -642,136 +642,133 @@ function Requests() {
     const [showForm, setShowForm] = useState(false);
     const [loading, setLoading] = useState(true);
 
-    const statusColor = { 
-        Aprovado: "success", 
-        "Em análise": "info", 
-        Pendente: "warning", 
-        Rejeitado: "danger" 
+    const statusColor = {
+        open: "warning",
+        in_progress: "info",
+        closed: "success"
     };
 
-    // Busca os tipos de pedido e os pedidos do cliente ao carregar usando Axios
     useEffect(() => {
         const fetchData = async () => {
             try {
-             // Mantenha o endereço do Render + a rota específica de cada pedido
-           const [typesRes, requestsRes] = await Promise.all([
-                axios.get("https://orion-dewp.onrender.com/api/request-types"), // ✅ rota correta
-                axios.get("https://orion-dewp.onrender.com/api/requests")
-            ]);
+                const [typesRes, requestsRes] = await Promise.all([
+                    axios.get("https://orion-dewp.onrender.com/api/request-types"),
+                    axios.get("https://orion-dewp.onrender.com/api/requests")
+                ]);
 
-            setRequestTypes(typesRes.data);  // → [{ id: 1, name: "ReportIncident" }, ...]
-            setRequests(requestsRes.data.requests);
-
-                // No Axios, os dados vindos do servidor já estão em .data
                 setRequestTypes(typesRes.data);
                 setRequests(requestsRes.data.requests);
+
             } catch (err) {
-                console.error("Erro ao carregar dados com Axios:", err);
+                console.error("Erro ao carregar dados:", err);
             } finally {
                 setLoading(false);
             }
         };
+
         fetchData();
     }, []);
 
-    // Submete o novo pedido usando Axios
     const handleSubmit = async () => {
         if (!form.type) return;
+
         try {
-            // Convertido para axios.post. O JSON.stringify deixa de ser necessário!
-            const res = await axios.post("https://orion-dewp.onrender.com/api/requests", 
-                { 
-                    type: form.type, 
-                    notes: form.notes 
-                },
+            const res = await axios.post(
+                "https://orion-dewp.onrender.com/api/requests",
                 {
-                    // Equivalente ao credentials: "include" do fetch (envia cookies/sessões)
-                    withCredentials: true 
-                }
+                    requestTypeId: Number(form.type),
+                    creatorId: Number(localStorage.getItem("userId") || 1),
+                    subject: "Pedido do cliente",
+                    description: form.notes
+                },
+                { withCredentials: true }
             );
 
-            // O novo objeto criado vem dentro de res.data
-            const newRequest = res.data;
-            
-            setRequests([...requests, newRequest]);
+            setRequests(prev => [...prev, res.data.request]);
             setForm({ type: "", notes: "" });
             setShowForm(false);
+
         } catch (err) {
-            console.error("Erro ao submeter pedido com Axios:", err);
-            alert("Não foi possível submeter o pedido.");
+            console.error("Erro ao submeter pedido:", err);
+            alert("Erro ao submeter pedido.");
         }
     };
 
     if (loading) {
-        return (
-            <div className="card p-3">
-                <p className="text-muted mb-0">A carregar...</p>
-            </div>
-        );
+        return <div className="card p-3">A carregar...</div>;
     }
 
     return (
         <div className="card p-3 shadow-sm">
-            <div className="d-flex justify-content-between align-items-center mb-3">
-                <h6 className="mb-0 fw-bold">Pedidos</h6>
-                <button className="btn btn-sm btn-dark" onClick={() => setShowForm(!showForm)}>
+            <div className="d-flex justify-content-between mb-3">
+                <h6>Pedidos</h6>
+                <button className="btn btn-sm btn-dark"
+                    onClick={() => setShowForm(!showForm)}>
                     {showForm ? "Cancelar" : "+ Novo Pedido"}
                 </button>
             </div>
 
             {showForm && (
                 <div className="border p-3 mb-3 bg-light rounded">
-                    <div className="mb-2">
-                        <label className="form-label fw-semibold" style={{ fontSize: 12 }}>Tipo de Pedido *</label>
-                        <select className="form-select form-select-sm"
-                            value={form.type} onChange={e => setForm({ ...form, type: e.target.value })}>
-                            <option value="">Selecionar...</option>
-                            {requestTypes.map(t => (
-                                <option key={t.id} value={t.id}>{t.name}</option>
-                            ))}
-                        </select>
-                    </div>
-                    <div className="mb-2">
-                        <label className="form-label fw-semibold" style={{ fontSize: 12 }}>Notas / Descrição</label>
-                        <textarea className="form-control form-control-sm" rows={2}
-                            placeholder="Informação adicional sobre o pedido..."
-                            value={form.notes} onChange={e => setForm({ ...form, notes: e.target.value })} />
-                    </div>
-                    <button className="btn btn-sm btn-success" onClick={handleSubmit}>Submeter Pedido</button>
+                    <select className="form-select form-select-sm"
+                        value={form.type}
+                        onChange={e => setForm({ ...form, type: e.target.value })}>
+                        <option value="">Selecionar tipo...</option>
+                        {requestTypes.map(t => (
+                            <option key={t.id} value={t.id}>
+                                {t.name}
+                            </option>
+                        ))}
+                    </select>
+
+                    <textarea
+                        className="form-control form-control-sm mt-2"
+                        rows={2}
+                        placeholder="Descrição..."
+                        value={form.notes}
+                        onChange={e => setForm({ ...form, notes: e.target.value })}
+                    />
+
+                    <button
+                        className="btn btn-sm btn-success mt-2"
+                        onClick={handleSubmit}
+                    >
+                        Submeter
+                    </button>
                 </div>
             )}
 
-            <div className="table-responsive">
-                <table className="table table-hover mb-0 align-middle">
-                    <thead>
-                        <tr><th>ID</th><th>Tipo</th><th>Data</th><th>Estado</th><th>Notas</th></tr>
-                    </thead>
-                    <tbody>
-                        {requests.map(r => (
-                            <tr key={r.id}>
-                                <td style={{ color: "#0d6efd", fontWeight: 600 }}>#{r.id}</td>
-                                <td>{r.type_name || r.type}</td>
-                                <td style={{ fontSize: 13, color: "#6b7280" }}>{r.date}</td>
-                                <td>
-                                    <span className={`badge bg-${statusColor[r.status] || 'secondary'}`}>
-                                        {r.status}
-                                    </span>
-                                </td>
-                                <td style={{ fontSize: 13, color: "#6b7280" }}>
-                                    {r.notes || <span className="text-muted fst-italic">—</span>}
-                                </td>
-                            </tr>
-                        ))}
-                        {requests.length === 0 && (
-                            <tr>
-                                <td colSpan={5} className="text-center text-muted py-3">
-                                    Nenhum pedido registado.
-                                </td>
-                            </tr>
-                        )}
-                    </tbody>
-                </table>
-            </div>
+            <table className="table table-hover">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Tipo</th>
+                        <th>Data</th>
+                        <th>Estado</th>
+                        <th>Descrição</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    {requests.map(r => (
+                        <tr key={r.id}>
+                            <td>#{r.id}</td>
+                            <td>{r.type_name}</td>
+                            <td style={{ fontSize: 13 }}>
+                                {r.date}
+                            </td>
+                            <td>
+                                <span className={`badge bg-${statusColor[r.status] || "secondary"}`}>
+                                    {r.status}
+                                </span>
+                            </td>
+                            <td style={{ fontSize: 13 }}>
+                                {r.notes || "—"}
+                            </td>
+                        </tr>
+                    ))}
+                </tbody>
+            </table>
         </div>
     );
 }
