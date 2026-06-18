@@ -650,15 +650,13 @@ function ClientPersonForm({ form, setForm, title, submitLabel, generatePassword,
                 <div className="col-md-4">
                     <label className="form-label fw-semibold mb-1 text-primary" style={{ fontSize: 12 }}>Empresa Pertencente *</label>
                     <select
-                        className="form-select form-select-sm border-primary-subtle"
-                        value={form.companyId}
+                        className="form-select form-select-sm" // mudei para form-select-sm para combinar com os inputs
+                        value={form.companyId || ""} // 🔴 CORREÇÃO: Evita erro de componente não controlado
                         onChange={(e) => setForm({ ...form, companyId: e.target.value })}
                     >
-                        <option value="">-- Selecione uma Empresa --</option>
-                        {accounts.map((acc) => (
-                            <option key={acc.id} value={acc.id}>
-                                {acc.company}
-                            </option>
+                        <option value="">Selecione uma empresa...</option>
+                        {accounts && accounts.map(acc => ( // 🔴 SEGURANÇA: Evita quebras se accounts for undefined
+                            <option key={acc.id} value={acc.id}>{acc.company}</option>
                         ))}
                     </select>
                 </div>
@@ -683,7 +681,7 @@ function ClientPersonForm({ form, setForm, title, submitLabel, generatePassword,
                 <div className="col-md-4">
                     <label className="form-label fw-semibold mb-1" style={{ fontSize: 12 }}>Estado</label>
                     <select className="form-select form-select-sm"
-                        value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value })}>
+                        value={form.status || "Ativo"} onChange={(e) => setForm({ ...form, status: e.target.value })}>
                         <option>Ativo</option>
                         <option>Inativo</option>
                     </select>

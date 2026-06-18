@@ -41,6 +41,17 @@ const User = sequelize.define("User", {
     allowNull: false,
     defaultValue: DataTypes.NOW,
   },
+
+  id_tipo: {
+  type: DataTypes.INTEGER,
+  allowNull: false,
+},
+
+id_empresa: {
+  type: DataTypes.INTEGER,
+  allowNull: true, // true para permitir que Admins fiquem sem empresa
+}
+
 }, {
     timestamps: false
 },
