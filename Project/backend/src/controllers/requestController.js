@@ -3,6 +3,7 @@ const Request = require('../models/requestModel');
 const RequestType = require('../models/requestTypeModel');
 const User = require('../models/User');
 const RequestFile = require('../models/requestFilesModel');
+const { createLog } = require('./logsController');
 
 // ==========================================
 // 1. LISTAR TODOS OS PEDIDOS (GET /api/requests)
@@ -75,6 +76,13 @@ const assign_manager = async (req, res) => {
         request.status = resolvedId ? "in_progress" : "open";
 
         await request.save();
+
+        await createLog({
+            action: "ASSIGN",
+            entity: "Request",
+            details: `Pedido #${id} atribuído ao gestor ${resolvedId}`,
+            ip: req.ip
+        });
 
         return res.json({
             success: true,
@@ -171,6 +179,14 @@ const request_create = async (req, res) => {
                 uploadedAt: new Date()
             });
         }
+
+        await createLog({
+            action: "CREATE",
+            entity: "Request",
+            details: `Novo pedido criado: ${newRequest.subject}`,
+            ip: req.ip,
+            userId: creatorId || null
+        });
 
         return res.status(201).json({
             success: true,

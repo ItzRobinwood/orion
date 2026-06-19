@@ -24,6 +24,7 @@ const companiesRoutes = require('./routes/companiesRoutes');
 const newsRoutes = require('./routes/newsRoutes');
 const requestTypeRoutes = require("./routes/requestTypeRoutes");
 const questionsRoutes = require('./routes/questionsRoutes');
+const logsRoutes = require('./routes/logsRoutes');
 
 // associations
 const applyAssociations = require('./models/associations');
@@ -52,6 +53,7 @@ app.use('/api', companiesRoutes);
 app.use('/api', newsRoutes);
 app.use("/api", requestTypeRoutes);
 app.use('/api', questionsRoutes);
+app.use('/api', logsRoutes);
 
 app.get("/", (req, res) => {
   res.send("CyberBox API está online e funcional! 🚀");

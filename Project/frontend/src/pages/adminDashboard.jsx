@@ -67,20 +67,93 @@ function Card({ title, value, color }) {
 }
 
 function Dashboard() {
+    const [stats, setStats] = useState({ users: 0, tickets: 0, requests: 0 });
+    const [logs, setLogs] = useState([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        const loadDashboard = async () => {
+            try {
+                const [statsRes, logsRes] = await Promise.all([
+                    axios.get("https://orion-dewp.onrender.com/api/stats"),
+                    axios.get("https://orion-dewp.onrender.com/api/logs")
+                ]);
+
+                if (statsRes.data.success) setStats(statsRes.data.stats);
+                if (logsRes.data.success) setLogs(logsRes.data.logs);
+            } catch (err) {
+                console.error("Erro ao carregar dashboard:", err);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        loadDashboard();
+    }, []);
+
+    const actionColor = (action) => {
+        switch (action) {
+            case "LOGIN": return "text-primary";
+            case "CREATE": return "text-success";
+            case "ASSIGN": return "text-warning";
+            case "REPLY": return "text-info";
+            case "CLOSE": return "text-secondary";
+            default: return "text-dark";
+        }
+    };
+
+    const actionIcon = (action) => {
+        switch (action) {
+            case "LOGIN": return "🔐";
+            case "CREATE": return "➕";
+            case "ASSIGN": return "👤";
+            case "REPLY": return "💬";
+            case "CLOSE": return "✅";
+            default: return "📋";
+        }
+    };
+
+    if (loading) return <div className="text-center my-5"><h5>A carregar dashboard...</h5></div>;
+
     return (
         <>
+            {/* Cards de estatísticas */}
             <div className="row g-3 mb-4">
-                <Card title="Utilizadores" value="24" color="primary" />
-                <Card title="Tickets" value="7" color="danger" />
-                <Card title="Pedidos" value="12" color="warning" />
-                <Card title="Documentos" value="38" color="success" />
+                <Card title="Utilizadores" value={stats.users} color="primary" />
+                <Card title="Tickets" value={stats.tickets} color="danger" />
+                <Card title="Pedidos" value={stats.requests} color="warning" />
             </div>
-            <div className="card p-3">
-                <h6>Atividade recente</h6>
+
+            {/* Atividade recente */}
+            <div className="card p-3 shadow-sm">
+                <div className="d-flex justify-content-between align-items-center mb-3">
+                    <h6 className="fw-bold m-0">Atividade Recente</h6>
+                    <span className="badge bg-secondary">{logs.length} registos</span>
+                </div>
                 <ul className="list-group list-group-flush">
-                    <li className="list-group-item">Admin fez login</li>
-                    <li className="list-group-item">Ticket #T002 atualizado</li>
-                    <li className="list-group-item">Novo utilizador criado</li>
+                    {logs.length === 0 && (
+                        <li className="list-group-item text-muted text-center">
+                            Nenhuma atividade registada.
+                        </li>
+                    )}
+                    {logs.map(log => (
+                        <li key={log.id} className="list-group-item d-flex justify-content-between align-items-start py-2">
+                            <div>
+                                <span className="me-2">{actionIcon(log.action)}</span>
+                                <span className={`fw-semibold me-1 ${actionColor(log.action)}`}>
+                                    [{log.action}]
+                                </span>
+                                <span className="text-dark">{log.details}</span>
+                                <div className="text-muted" style={{ fontSize: 11 }}>
+                                    👤 {log.user} · 🌐 {log.ip}
+                                </div>
+                            </div>
+                            <div className="text-end text-muted" style={{ fontSize: 11, minWidth: 80 }}>
+                                <div>{log.date}</div>
+                                <div>{log.time}</div>
+                            </div>
+                        </li>
+                    ))}
                 </ul>
             </div>
         </>
