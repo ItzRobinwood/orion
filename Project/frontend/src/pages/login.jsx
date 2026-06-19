@@ -25,6 +25,9 @@ const handleLogin = async (e) => {
         if (data.success) {
             const userType = data.user.id_tipo;
 
+            localStorage.setItem("userId", data.user.id_Utilizador);
+            localStorage.setItem("userName", data.user.name);
+
             if (userType === 1) {
                 navigate('/adminDashboard');
             } else if (userType === 2) {
