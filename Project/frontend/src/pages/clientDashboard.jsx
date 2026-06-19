@@ -772,9 +772,7 @@ function Requests() {
                                             {r.assignedToName || <span className="text-muted fst-italic">Por atribuir</span>}
                                         </td>
                                         <td style={{ fontSize: 13, color: "#6b7280", maxWidth: 200 }}>
-                                            {r.notes
-                                                ? r.notes.length > 60 ? r.notes.slice(0, 60) + "..." : r.notes
-                                                : <span className="text-muted fst-italic">—</span>}
+                                            {r.description ? r.description.length > 250 ? r.description.slice(0, 250) + "..." : r.description : "—"}
                                         </td>
                                     </tr>
                                 ))}
