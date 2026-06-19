@@ -546,15 +546,6 @@ function Requests() {
         try {
             const res = await axios.get(`${API}/requests`);
             const allRequests = res.data.requests || [];
-
-            // ✅ DEBUG — remove depois
-            console.log("managerId:", managerId);
-            console.log("todos os requests:", allRequests.map(r => ({
-                id: r.id,
-                assignedToId: r.assignedToId,
-                status: r.status
-            })));
-
             setRequests(allRequests);
         } catch (err) {
             console.error("Erro ao carregar pedidos:", err);
@@ -577,7 +568,6 @@ function Requests() {
     const fetchFiles = async (requestId) => {
         try {
             const res = await axios.get(`${API}/requests/${requestId}/files`);
-
             setRequestFiles(prev => ({
                 ...prev,
                 [requestId]: res.data || []
@@ -593,7 +583,6 @@ function Requests() {
         "Concluído": "closed",
     };
 
-    // ✅ Só mostra requests atribuídos a este gestor E que não estejam pendentes
     const visibleRequests = requests.filter(r =>
         r.assignedToId === managerId &&
         (r.status === "in_progress" || r.status === "closed")
@@ -679,18 +668,23 @@ function Requests() {
                                 <div className="text-muted small mb-2">
                                     🏢 {r.company || "—"} · 📅 {r.date}
                                 </div>
+                                
                                 {expandedId === r.id && r.description && (
                                     <div className="mt-2 p-2 bg-light rounded border small text-muted">
-
                                         <div className="mb-2">
                                             {r.description}
                                         </div>
 
                                         {(requestFiles[r.id] || []).length > 0 && (
-                                            <div className="border-top pt-2 mt-2">
-                                                <div className="fw-semibold mb-2">📎 Documentos recebidos</div>
+                                        <div className="border-top pt-2 mt-2">
+                                            <div className="fw-semibold mb-2">📎 Documentos recebidos</div>
 
-                                                {(requestFiles[r.id] || []).map(f => (
+                                            {(requestFiles[r.id] || [])
+                                                // 🟢 FILTRO CORRIGIDO: 
+                                                // Mantém apenas ficheiros cujo userId seja DIFERENTE do id do gestor atual.
+                                                // Convertemos ambos para String para evitar falhas caso um seja texto e outro número.
+                                                .filter(f => f.userId && String(f.userId) !== String(managerId))
+                                                .map(f => (
                                                     <div key={f.id} className="d-flex justify-content-between align-items-center mb-1">
                                                         <span>📄 {f.fileName}</span>
 
@@ -701,17 +695,21 @@ function Requests() {
                                                             Ver / Download
                                                         </a>
                                                     </div>
-                                                ))}
-                                            </div>
-                                        )}
-
+                                                ))
+                                            }
+                                            
+                                            {/* Mensagem de feedback caso todos os ficheiros tenham sido enviados pelo gestor */}
+                                            {(requestFiles[r.id] || []).filter(f => f.userId && String(f.userId) !== String(managerId)).length === 0 && (
+                                                <div className="text-muted small fst-italic">Nenhum documento recebido do cliente para este pedido.</div>
+                                            )}
+                                        </div>
+                                    )}
                                     </div>
                                 )}
                             </div>
 
                             {/* Ações */}
                             <div className="d-flex flex-column gap-1 ms-3" style={{ minWidth: 160 }}>
-                                {/* Gestor só pode mover de in_progress para closed */}
                                 <select
                                     className="form-select form-select-sm"
                                     value={r.status}
@@ -728,7 +726,6 @@ function Requests() {
                                     onClick={() => {
                                         const opening = expandedId !== r.id;
                                         setExpandedId(opening ? r.id : null);
-
                                         if (opening) {
                                             fetchFiles(r.id);
                                         }

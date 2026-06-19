@@ -696,6 +696,7 @@ function Requests() {
                 multiPartForm.append("subject", formData.subject?.trim());
                 multiPartForm.append("description", formattedDescription);
                 multiPartForm.append("creatorId", Number(activeUserId));
+                multiPartForm.append("userId", Number(activeUserId));
                 multiPartForm.append("file", file);
                 res = await axios.post(`${API}/requests`, multiPartForm, {
                     headers: { "Content-Type": "multipart/form-data" }
