@@ -49,8 +49,8 @@ export default function ClientDashboard() {
                         {item.label}
                     </button>
                 ))}
-                
-                    <div>
+
+                <div>
 
                     <button
                         className="btn btn-danger w-100 mb-3"
@@ -112,6 +112,7 @@ function Dashboard({ setActive, user }) {
 
     return (
         <>
+            {/* Cartões de Estatísticas */}
             <div className="row g-3 mb-4">
                 <StatCard title="Documentos" value="12" color="primary" />
                 <StatCard title="Pedidos Ativos" value="3" color="info" />
@@ -119,30 +120,71 @@ function Dashboard({ setActive, user }) {
             </div>
 
             <div className="row g-3">
-                <div className="col-md-6">
-                    <div className="card p-3">
-                        <h6 className="mb-3">
-                            Registos de {user?.nome || "Utilizador"}
-                        </h6>
+                <div className="col-12">
+                    <div className="card border-0 shadow-sm p-4 w-100">
 
-                        {loading && <p className="text-muted">A carregar...</p>}
-                        {erro && <p className="text-danger">{erro}</p>}
+                        {/* Cabeçalho limpo */}
+                        <div className="mb-4">
+                            <h6 className="fw-bold text-dark m-0 fs-5">
+                                Registos de {user?.nome || "Utilizador"}
+                            </h6>
+                        </div>
 
-                        {!loading && !erro && logs.length === 0 && (
-                            <p className="text-muted">Sem registos.</p>
+                        {/* Estados de Loading, Erro e Vazio */}
+                        {loading && (
+                            <div className="text-center py-5 text-muted">
+                                <div className="spinner-border spinner-border-sm me-2" role="status"></div>
+                                <span>A carregar atividade...</span>
+                            </div>
                         )}
 
-                        <ul className="list-group list-group-flush">
-                            {logs.map((log) => (
-                                <li
-                                    key={log.id}
-                                    className="list-group-item d-flex justify-content-between"
-                                >
-                                    <span>{log.action}{log.entity ? ` — ${log.entity}` : ""}</span>
-                                    <small className="text-muted">{log.date}</small>
-                                </li>
-                            ))}
-                        </ul>
+                        {erro && (
+                            <div className="alert alert-danger-soft text-danger p-3 rounded text-center my-2 w-100" style={{ backgroundColor: '#fdf2f2', border: '1px solid #fde8e8' }}>
+                                {erro}
+                            </div>
+                        )}
+
+                        {!loading && !erro && logs.length === 0 && (
+                            <div className="text-center py-5 text-muted bg-light rounded-3 border border-dashed my-2 w-100">
+                                <p className="m-0 small fw-medium">Sem registos de atividade até ao momento.</p>
+                            </div>
+                        )}
+
+                        {/* Lista que preenche o espaço com Texto Limpo */}
+                        {!loading && !erro && logs.length > 0 && (
+                            <ul className="list-group list-group-flush w-100">
+                                {logs.map((log) => (
+                                    <li
+                                        key={log.id}
+                                        className="list-group-item d-flex justify-content-between align-items-center px-0 py-3"
+                                    >
+                                        {/* Conteúdo da Ação à esquerda */}
+                                        <div className="flex-grow-1 pe-3">
+                                            <span className="text-dark fw-medium">
+                                                {log.action}
+                                                {log.entity && (
+                                                    <span className="text-muted fw-normal"> — {log.entity}</span>
+                                                )}
+                                            </span>
+                                        </div>
+
+                                        {/* Data (por cima) e Hora (por baixo) à extrema direita */}
+                                        <div className="text-end flex-shrink-0 d-flex flex-column lh-sm" style={{ minWidth: '90px' }}>
+                                            {/* Data por cima */}
+                                            <span className="text-muted fw-medium" style={{ fontSize: '0.85rem' }}>
+                                                {log.date}
+                                            </span>
+                                            {/* Hora por baixo */}
+                                            {log.time && (
+                                                <span className="text-muted-light small" style={{ fontSize: '0.75rem', opacity: 0.8 }}>
+                                                    {log.time}
+                                                </span>
+                                            )}
+                                        </div>
+                                    </li>
+                                ))}
+                            </ul>
+                        )}
                     </div>
                 </div>
             </div>
