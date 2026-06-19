@@ -1127,6 +1127,9 @@ function Tickets() {
     const [expanded, setExpanded] = useState(null);
     const [messages, setMessages] = useState({});
     const [filter, setFilter] = useState("Todos");
+    const [assignModalOpen, setAssignModalOpen] = useState(false);
+    const [selectedTicketId, setSelectedTicketId] = useState(null);
+    const [managers, setManagers] = useState([]);
 
     useEffect(() => {
         fetchTickets();
@@ -1157,6 +1160,32 @@ function Tickets() {
             } catch (err) {
                 console.error("Erro ao carregar mensagens:", err);
             }
+        }
+    };
+
+    const openAssignModal = async (ticketId) => {
+        setSelectedTicketId(ticketId);
+        try {
+            const res = await axios.get("https://orion-dewp.onrender.com/api/users");
+            const onlyManagers = res.data.users.filter(u => u.id_tipo === 2);
+            setManagers(onlyManagers);
+        } catch (err) {
+            console.error("Erro ao carregar managers:", err);
+        }
+        setAssignModalOpen(true);
+    };
+
+    const handleAssign = async (managerId, managerName) => {
+        try {
+            await axios.put(
+                `https://orion-dewp.onrender.com/api/questions/${selectedTicketId}/assign`,
+                { assignedToId: managerId }
+            );
+            setAssignModalOpen(false);
+            setSelectedTicketId(null);
+            await reloadQuestions();
+        } catch (err) {
+            alert("Erro ao atribuir gestor.");
         }
     };
 
@@ -1498,9 +1527,8 @@ function Requests() {
                         <div>
                             <div>
                                 <button
-                                    className="btn btn-sm btn-outline-primary me-1"
+                                    className="btn btn-sm btn-outline-primary"
                                     onClick={() => openAssignModal(request.id)}
-                                    title="Atribuir manager"
                                 >
                                     + Atribuir
                                 </button>
@@ -1515,31 +1543,32 @@ function Requests() {
                     </div>
                 )}
             </div>
+
             {assignModalOpen && (
                 <div className="modal show d-block" style={{ backgroundColor: "rgba(0,0,0,0.4)" }}>
                     <div className="modal-dialog modal-dialog-centered">
                         <div className="modal-content">
                             <div className="modal-header">
-                                <h5 className="modal-title">Atribuir manager</h5>
+                                <h5 className="modal-title">Atribuir gestor ao ticket</h5>
                                 <button className="btn-close" onClick={() => setAssignModalOpen(false)} />
                             </div>
                             <div className="modal-body">
-                                <p className="text-muted small mb-3">Seleciona um manager para este pedido:</p>
+                                <p className="text-muted small mb-3">Seleciona um gestor:</p>
                                 <div className="d-flex flex-column gap-2">
                                     {managers.map(m => (
                                         <div
-                                            key={m.id}
-                                            className="d-flex align-items-center gap-3 p-2 border rounded cursor-pointer"
+                                            key={m.id_Utilizador}
+                                            className="d-flex align-items-center gap-3 p-2 border rounded"
                                             style={{ cursor: "pointer" }}
-                                            onClick={() => handleAssign(m.id_Utilizador || m.id, m.name)}
+                                            onClick={() => handleAssign(m.id_Utilizador, m.name)}
                                         >
                                             <div className="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center"
-                                                style={{ width: 36, height: 36, fontSize: 13, fontWeight: 500 }}>
-                                                {(m.nome || m.name || "?").substring(0, 2).toUpperCase()}
+                                                style={{ width: 36, height: 36, fontSize: 13 }}>
+                                                {(m.name || "?").substring(0, 2).toUpperCase()}
                                             </div>
                                             <div>
-                                                <div className="fw-medium" style={{ fontSize: 14 }}>{m.nome || m.name}</div>
-                                                <div className="text-muted" style={{ fontSize: 12 }}>{m.role || "Manager"}</div>
+                                                <div className="fw-medium" style={{ fontSize: 14 }}>{m.name}</div>
+                                                <div className="text-muted" style={{ fontSize: 12 }}>Gestor</div>
                                             </div>
                                         </div>
                                     ))}

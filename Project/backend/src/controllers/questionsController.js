@@ -14,7 +14,7 @@ exports.getQuestions = async (req, res) => {
                     order: [['sentAt', 'ASC']] 
                 },
                 { model: User, as: 'creator', attributes: ['name', 'email'] },
-                { model: User, as: 'assignedTo', attributes: ['name'] }
+                { model: User, as: 'assignedTo', attributes: ['id', 'name'] } // ✅ Adicionado 'id' aqui para garantir que o Sequelize o traz da BD
             ],
             order: [['openedAt', 'DESC']]
         });
@@ -33,6 +33,7 @@ exports.getQuestions = async (req, res) => {
                 status: q.messages?.length > 0 ? "Respondido" : "Pendente",
                 createdBy: q.creator?.name || "Cliente",
                 assignedTo: q.assignedTo?.name || "Sem atribuição",
+                assignedToId: q.assignedTo?.id || null, // ✅ RETORNA O ID AQUI (vai como número se o ID for numérico)
                 messagesCount: q.messages?.length || 0,
                 lastReply: lastReply
                     ? `${lastReply.sender?.name || "?"}: ${lastReply.message}`
@@ -46,7 +47,6 @@ exports.getQuestions = async (req, res) => {
         return res.status(500).json({ success: false, message: error.message });
     }
 };
-
 exports.createQuestion = async (req, res) => {
     try {
         const { subject, creatorId } = req.body;
@@ -157,6 +157,25 @@ exports.getMessages = async (req, res) => {
         }));
 
         return res.json({ success: true, messages: mapped });
+    } catch (error) {
+        return res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+exports.assignQuestion = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { assignedToId } = req.body;
+
+        const question = await Question.findByPk(id);
+        if (!question) {
+            return res.status(404).json({ success: false, message: "Ticket não encontrado." });
+        }
+
+        await question.update({ assignedToId: assignedToId || null });
+
+        return res.json({ success: true, message: "Gestor atribuído com sucesso!" });
+
     } catch (error) {
         return res.status(500).json({ success: false, message: error.message });
     }

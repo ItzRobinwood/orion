@@ -711,7 +711,8 @@ function Tickets() {
     const [messages, setMessages] = useState({});
     const [replyText, setReplyText] = useState("");
 
-    const managerId = localStorage.getItem("userId") || 1;
+    // Alterado para garantir que é tratado como Number em toda a parte
+    const managerId = Number(localStorage.getItem("userId") || 1);
 
     const reloadTickets = async () => {
         setLoading(true);
@@ -745,7 +746,7 @@ function Tickets() {
         try {
             await axios.post(`${API}/questions/${ticketId}/reply`, {
                 message: replyText,
-                userId: Number(managerId),
+                userId: managerId, // já está tipado como Number acima
             });
             setReplyText("");
             const res = await axios.get(`${API}/questions/${ticketId}/messages`);
@@ -768,18 +769,22 @@ function Tickets() {
 
     const STATUS_COLOR = { "Pendente": "warning", "Respondido": "success", "Fechado": "secondary" };
 
-    const filtered = filter === "Todos" ? tickets : tickets.filter(t => t.status === filter);
+    // 1️⃣ Primeiro: Filtra apenas os tickets atribuídos a este manager
+    const visibleTickets = tickets.filter(t => t.assignedToId === managerId);
+
+    // 2️⃣ Segundo: Aplica o filtro da Tab ("Todos", "Pendente", etc.) sobre os tickets visíveis
+    const filtered = filter === "Todos" ? visibleTickets : visibleTickets.filter(t => t.status === filter);
 
     if (loading) return <div className="text-center my-5"><p className="text-muted">A carregar tickets...</p></div>;
 
     return (
         <div className="d-flex flex-column gap-3">
-            {/* Contadores */}
+            {/* Contadores (atualizados para refletir apenas os tickets do manager logado) */}
             <div className="row g-3 mb-1">
                 {[
-                    { label: "Total", value: tickets.length, color: "dark" },
-                    { label: "Pendentes", value: tickets.filter(t => t.status === "Pendente").length, color: "warning" },
-                    { label: "Respondidos", value: tickets.filter(t => t.status === "Respondido").length, color: "success" },
+                    { label: "Total", value: visibleTickets.length, color: "dark" },
+                    { label: "Pendentes", value: visibleTickets.filter(t => t.status === "Pendente").length, color: "warning" },
+                    { label: "Respondidos", value: visibleTickets.filter(t => t.status === "Respondido").length, color: "success" },
                 ].map(s => (
                     <div className="col" key={s.label}>
                         <div className="card p-3 text-center">
@@ -838,7 +843,7 @@ function Tickets() {
                                     <div className="mt-3 border-top pt-3">
                                         <div className="d-flex flex-column gap-2 mb-3" style={{ maxHeight: 280, overflowY: "auto" }}>
                                             {(messages[t.id] || []).map(m => {
-                                                const isManager = m.userId === Number(managerId);
+                                                const isManager = m.userId === managerId;
                                                 return (
                                                     <div
                                                         key={m.id}
