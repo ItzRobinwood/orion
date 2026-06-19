@@ -16,7 +16,6 @@ require("./models/requestFilesModel.js");
 require("./models/questions.js");
 require("./models/messagesQuestions.js");
 require("./models/requestStatus.js");
-require("./models/contentModel");
 
 // routes
 const requestRoutes = require("./routes/requestRoutes");
@@ -26,7 +25,6 @@ const newsRoutes = require('./routes/newsRoutes');
 const requestTypeRoutes = require("./routes/requestTypeRoutes");
 const questionsRoutes = require('./routes/questionsRoutes');
 const logsRoutes = require('./routes/logsRoutes');
-const contentRoutes = require("./routes/contentRoutes");
 
 // associations
 const applyAssociations = require('./models/associations');
@@ -34,7 +32,6 @@ const applyAssociations = require('./models/associations');
 // seeds
 const seedUserTypes = require("./seeders/seedUserTypes");
 const seedRequestTypes = require("./seeders/seedRequestTypes");
-const seedContent = require("./seeders/seedContent");
 
 // services
 const cron = require('node-cron');
@@ -57,7 +54,6 @@ app.use('/api', newsRoutes);
 app.use("/api", requestTypeRoutes);
 app.use('/api', questionsRoutes);
 app.use('/api', logsRoutes);
-app.use('/api', contentRoutes);
 
 app.get("/", (req, res) => {
   res.send("CyberBox API está online e funcional! 🚀");
@@ -73,7 +69,7 @@ sequelize.sync({ alter: false }).then(async () => {
 
   await seedUserTypes();
   await seedRequestTypes();
-  await seedContent();
+
 
   buscarNoticiasOnline();
   cron.schedule('0 * * * *', () => {
