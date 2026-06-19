@@ -335,127 +335,230 @@ function Docs() {
 /* ───────────────────────── TICKETS ───────────────────────── */
 // Comunicação direta com o suporte CyberBox.
 // Usado para dúvidas, problemas técnicos e reporte de incidentes.
+// Substitui a função Tickets() no clientDashboard.jsx por esta
+
 function Tickets() {
-    const [tickets, setTickets] = useState([
-        { id: 1, subject: "Dúvida sobre NIS2", category: "Dúvida", priority: "Baixa", message: "Quais são os requisitos mínimos?", date: "10/05/2026", status: "Respondido", reply: "Os requisitos mínimos incluem gestão de risco, resposta a incidentes e relatório às autoridades em 24h." },
-        { id: 2, subject: "Incidente de phishing detetado", category: "Incidente", priority: "Alta", message: "Recebemos emails suspeitos a imitar o nosso banco.", date: "15/05/2026", status: "Pendente", reply: "" },
-    ]);
+    const [tickets, setTickets]     = useState([]);
+    const [loading, setLoading]     = useState(true);
+    const [showForm, setShowForm]   = useState(false);
+    const [expanded, setExpanded]   = useState(null);
+    const [form, setForm]           = useState({ subject: "" });
+    const [replyText, setReplyText] = useState("");
+    const [submitting, setSubmitting] = useState(false);
+    const [messages, setMessages] = useState({});
 
-    const [form, setForm] = useState({ subject: "", category: "Dúvida", priority: "Baixa", message: "" });
-    const [showForm, setShowForm] = useState(false);
-    const [expanded, setExpanded] = useState(null);
+    const activeUserId = localStorage.getItem("userId") || 1;
 
-    const priorityColor = { Alta: "danger", Média: "warning", Baixa: "secondary" };
-    const statusColor   = { Respondido: "success", Pendente: "warning", "Em Análise": "info" };
+    const statusColor = { Respondido: "success", Pendente: "warning" };
 
-    const handleSubmit = () => {
-        if (!form.subject || !form.message) return;
-        setTickets([...tickets, {
-            id: Date.now(),
-            ...form,
-            date: new Date().toLocaleDateString("pt-PT"),
-            status: "Pendente",
-            reply: "",
-        }]);
-        setForm({ subject: "", category: "Dúvida", priority: "Baixa", message: "" });
-        setShowForm(false);
+    useEffect(() => {
+        fetchTickets();
+    }, []);
+
+    const fetchTickets = async () => {
+        setLoading(true);
+        try {
+            const res = await axios.get(`${API}/questions`);
+            setTickets(res.data.questions || []);
+        } catch (err) {
+            console.error("Erro ao carregar tickets:", err);
+        } finally {
+            setLoading(false);
+        }
     };
+
+    const handleExpand = async (ticketId) => {
+        if (expanded === ticketId) {
+            setExpanded(null);
+            return;
+        }
+        setExpanded(ticketId);
+        if (!messages[ticketId]) {
+            try {
+                const res = await axios.get(`${API}/questions/${ticketId}/messages`);
+                setMessages(prev => ({ ...prev, [ticketId]: res.data.messages || [] }));
+            } catch (err) {
+                console.error("Erro ao carregar mensagens:", err);
+            }
+        }
+    };
+
+    const handleCreate = async () => {
+        if (!form.subject.trim()) {
+            alert("O assunto é obrigatório.");
+            return;
+        }
+        setSubmitting(true);
+        try {
+            await axios.post(`${API}/questions`, {
+                subject: form.subject,
+                creatorId: Number(activeUserId)
+            });
+            setForm({ subject: "" });
+            setShowForm(false);
+            await fetchTickets();
+        } catch (err) {
+            alert("Erro ao criar ticket.");
+        } finally {
+            setSubmitting(false);
+        }
+    };
+
+    const handleReply = async (ticketId) => {
+        if (!replyText.trim()) return;
+        try {
+            await axios.post(`${API}/questions/${ticketId}/reply`, {
+                message: replyText,
+                userId: Number(activeUserId)
+            });
+            setReplyText("");
+            await fetchTickets();
+        } catch (err) {
+            alert("Erro ao enviar mensagem.");
+        }
+    };
+
+    if (loading) return <div className="card p-3"><p className="text-muted">A carregar tickets...</p></div>;
 
     return (
         <div className="d-flex flex-column gap-3">
+
+            {/* Header */}
             <div className="card p-3">
                 <div className="d-flex justify-content-between align-items-center">
                     <div>
                         <h6 className="mb-0 fw-bold">Tickets de Suporte</h6>
-                        <p className="text-muted small mb-0">Dúvidas, problemas técnicos ou reporte de incidentes.</p>
+                        <p className="text-muted small mb-0">
+                            Dúvidas, problemas técnicos ou reporte de incidentes.
+                        </p>
                     </div>
-                    <button className="btn btn-sm btn-dark" onClick={() => setShowForm(!showForm)}>
+                    <button className="btn btn-sm btn-dark"
+                        onClick={() => setShowForm(!showForm)}>
                         {showForm ? "Cancelar" : "+ Novo Ticket"}
                     </button>
                 </div>
 
+                {/* Formulário de criação */}
                 {showForm && (
                     <div className="border rounded p-3 mt-3 bg-light">
-                        <div className="row g-3">
-                            <div className="col-md-6">
-                                <label className="form-label fw-semibold" style={{ fontSize: 12 }}>Assunto *</label>
-                                <input className="form-control form-control-sm" placeholder="Descreve o problema ou dúvida"
-                                    value={form.subject} onChange={e => setForm({ ...form, subject: e.target.value })} />
-                            </div>
-                            <div className="col-md-3">
-                                <label className="form-label fw-semibold" style={{ fontSize: 12 }}>Categoria</label>
-                                <select className="form-select form-select-sm"
-                                    value={form.category} onChange={e => setForm({ ...form, category: e.target.value })}>
-                                    <option>Dúvida</option>
-                                    <option>Incidente</option>
-                                    <option>Problema Técnico</option>
-                                    <option>Outro</option>
-                                </select>
-                            </div>
-                            <div className="col-md-3">
-                                <label className="form-label fw-semibold" style={{ fontSize: 12 }}>Prioridade</label>
-                                <select className="form-select form-select-sm"
-                                    value={form.priority} onChange={e => setForm({ ...form, priority: e.target.value })}>
-                                    <option>Baixa</option>
-                                    <option>Média</option>
-                                    <option>Alta</option>
-                                </select>
-                            </div>
-                            <div className="col-12">
-                                <label className="form-label fw-semibold" style={{ fontSize: 12 }}>Mensagem *</label>
-                                <textarea className="form-control form-control-sm" rows={4}
-                                    placeholder="Descreve com detalhe o que aconteceu ou o que precisas de saber..."
-                                    value={form.message} onChange={e => setForm({ ...form, message: e.target.value })} />
-                            </div>
-                        </div>
-                        <button className="btn btn-sm btn-success mt-3" onClick={handleSubmit}>Enviar Ticket</button>
+                        <label className="form-label fw-semibold" style={{ fontSize: 12 }}>
+                            Assunto *
+                        </label>
+                        <input
+                            className="form-control form-control-sm mb-3"
+                            placeholder="Descreve brevemente o problema ou dúvida"
+                            value={form.subject}
+                            onChange={e => setForm({ subject: e.target.value })}
+                        />
+                        <button className="btn btn-sm btn-success"
+                            onClick={handleCreate} disabled={submitting}>
+                            {submitting ? "A criar..." : "Criar Ticket"}
+                        </button>
                     </div>
                 )}
             </div>
 
             {/* Lista de tickets */}
-            {tickets.map(t => (
+            {tickets.length === 0 ? (
+                <div className="text-center text-muted py-5 border rounded bg-white">
+                    <div style={{ fontSize: 32 }}>🎫</div>
+                    <p className="mt-2 mb-0">Nenhum ticket aberto.</p>
+                    <small>Clica em "+ Novo Ticket" para submeter uma questão.</small>
+                </div>
+            ) : (
+                tickets.map(t => (
                 <div key={t.id} className="card p-3 border-start border-4"
-                    style={{ borderColor: t.priority === "Alta" ? "#dc3545" : t.priority === "Média" ? "#ffc107" : "#6c757d" }}>
+                    style={{ borderLeftColor: t.status === "Respondido" ? "#198754" : "#ffc107" }}>
+
+                    {/* Cabeçalho do ticket */}
                     <div className="d-flex justify-content-between align-items-start">
                         <div>
                             <div className="d-flex align-items-center gap-2 mb-1">
                                 <span className="fw-semibold">#{t.id} — {t.subject}</span>
-                                <span className={`badge bg-${priorityColor[t.priority]}`}>{t.priority}</span>
-                                <span className="badge bg-light text-dark border">{t.category}</span>
+                                <span className={`badge bg-${statusColor[t.status] || "secondary"}`}>
+                                    {t.status}
+                                </span>
                             </div>
-                            <p className="text-muted small mb-1">{t.message}</p>
-                            <small className="text-muted">Submetido em {t.date}</small>
+                            <small className="text-muted">
+                                Submetido em {t.date}
+                                {t.assignedTo !== "Sem atribuição" && (
+                                    <> · Atribuído a <strong>{t.assignedTo}</strong></>
+                                )}
+                            </small>
                         </div>
-                        <div className="d-flex flex-column align-items-end gap-2">
-                            <span className={`badge bg-${statusColor[t.status] || "secondary"}`}>{t.status}</span>
-                            {t.reply && (
-                                <button className="btn btn-sm btn-outline-primary"
-                                    onClick={() => setExpanded(expanded === t.id ? null : t.id)}>
-                                    {expanded === t.id ? "Fechar resposta" : "Ver resposta"}
-                                </button>
-                            )}
-                        </div>
+                        <button
+                            className="btn btn-sm btn-outline-secondary"
+                            onClick={() => handleExpand(t.id)}>
+                            {expanded === t.id ? "Fechar" : "Ver conversa"}
+                        </button>
                     </div>
 
-                    {expanded === t.id && t.reply && (
-                        <div className="mt-3 p-3 bg-light border rounded">
-                            <small className="fw-semibold text-success d-block mb-1">✅ Resposta da CyberBox:</small>
-                            <p className="mb-0 small">{t.reply}</p>
+                    {/* Preview da última resposta */}
+                    {t.status === "Respondido" && expanded !== t.id && (
+                        <div className="mt-2 p-2 bg-light rounded border small text-muted">
+                            💬 {t.lastReply}
+                        </div>
+                    )}
+
+                    {/* Conversa expandida */}
+                    {expanded === t.id && (
+                        <div className="mt-3 border-top pt-3">
+
+                            {/* Mensagens */}
+                            <div className="d-flex flex-column gap-2 mb-3" style={{ maxHeight: 300, overflowY: "auto" }}>
+                                {(messages[t.id] || []).length === 0 ? (
+                                    <p className="text-muted small">Ainda sem mensagens. Aguarda resposta da CyberBox.</p>
+                                ) : (
+                                    (messages[t.id] || []).map(m => (
+                                        <div key={m.id}
+                                            className={`p-2 rounded small ${m.userId === Number(activeUserId) ? "bg-primary text-white ms-5" : "bg-light border me-5"}`}>
+                                            <div className="fw-semibold mb-1" style={{ fontSize: 11 }}>
+                                                {m.sender?.name || "Utilizador"}
+                                            </div>
+                                            {m.message}
+                                            <div className="mt-1 opacity-75" style={{ fontSize: 10 }}>
+                                                {m.sentAt ? new Date(m.sentAt).toLocaleString("pt-PT") : ""}
+                                            </div>
+                                        </div>
+                                    ))
+                                )}
+                            </div>
+
+                            {/* Campo de resposta */}
+                            {t.status !== "closed" && (
+                                <div className="d-flex gap-2">
+                                    <input
+                                        className="form-control form-control-sm"
+                                        placeholder="Escreve uma mensagem..."
+                                        value={replyText}
+                                        onChange={e => setReplyText(e.target.value)}
+                                        onKeyDown={e => e.key === "Enter" && handleReply(t.id)}
+                                    />
+                                    <button className="btn btn-sm btn-primary"
+                                        onClick={async () => {
+                                            await handleReply(t.id);
+                                            const res = await axios.get(`${API}/questions/${t.id}/messages`);
+                                            setMessages(prev => ({ ...prev, [t.id]: res.data.messages || [] }));
+                                        }}>
+                                        Enviar
+                                    </button>
+                                </div>
+                            )}
+
+                            {t.status === "closed" && (
+                                <div className="alert alert-secondary py-2 small">
+                                    🔒 Este ticket está fechado.
+                                </div>
+                            )}
                         </div>
                     )}
                 </div>
-            ))}
-
-            {tickets.length === 0 && (
-                <div className="text-center text-muted py-5 border rounded bg-white">
-                    <div style={{ fontSize: 32 }}>🎫</div>
-                    <p className="mt-2 mb-0">Nenhum ticket aberto.</p>
-                </div>
+            ))
             )}
         </div>
     );
 }
+
 
 /* ───────────────────────── PEDIDOS ───────────────────────── */
 // O cliente solicita um serviço à CyberBox (pentest, auditoria, NIS2, etc.)

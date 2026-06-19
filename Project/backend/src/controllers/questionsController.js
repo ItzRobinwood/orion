@@ -9,7 +9,8 @@ exports.getQuestions = async (req, res) => {
                 {
                     model: MessageQuestion,
                     as: 'messages',
-                    include: [{ model: User, as: 'sender', attributes: ['name'] }]
+                    include: [{ model: User, as: 'sender', attributes: ['name'] }],
+                    order: [['sentAt', 'ASC']] 
                 },
                 { model: User, as: 'creator', attributes: ['name', 'email'] },
                 { model: User, as: 'assignedTo', attributes: ['name'] }
@@ -114,6 +115,20 @@ exports.closeQuestion = async (req, res) => {
         await question.update({ status: 'closed', closedAt: new Date() });
 
         return res.json({ success: true, message: "Questão fechada com sucesso!" });
+    } catch (error) {
+        return res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+exports.getMessages = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const messages = await MessageQuestion.findAll({
+            where: { questionId: id },
+            include: [{ model: User, as: 'sender', attributes: ['name'] }],
+            order: [['sentAt', 'ASC']]
+        });
+        return res.json({ success: true, messages });
     } catch (error) {
         return res.status(500).json({ success: false, message: error.message });
     }
