@@ -12,7 +12,7 @@ const RequestFile = sequelize.define('RequestFile', {
         allowNull: false
     },
     filePath: {
-        type: DataTypes.STRING,
+        type: DataTypes.TEXT,
         allowNull: false
     },
     // 🟢 COLUNA EM FALTA ADICIONADA: Sem isto, as associações quebram o backend!
@@ -24,6 +24,17 @@ const RequestFile = sequelize.define('RequestFile', {
             key: 'id'
         }
     },
+
+    userId: {
+        type: DataTypes.INTEGER,
+        allowNull: true, // Mantenha true se existirem ficheiros antigos sem dono
+        field: 'userId',
+        references: {
+            model: 'Users', // Nome exato da sua tabela de utilizadores na BD
+            key: 'id_Utilizador' // Nome da chave primária no seu model User
+        }
+    },
+
     uploadedAt: {
         type: DataTypes.DATE,
         defaultValue: DataTypes.NOW

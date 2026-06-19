@@ -960,6 +960,9 @@ function Docs() {
     const [showForm, setShowForm] = useState(false);
     const [filter, setFilter] = useState("Todos");
 
+    // 🔑 Captura o ID do gestor logado que guardou no componente Login
+    const loggedInUserId = localStorage.getItem("userId") ? Number(localStorage.getItem("userId")) : null;
+
     const DOC_TYPES = ["Todos", "Relatório", "Pentest", "Política", "Procedimento", "Outro"];
 
     useEffect(() => {
@@ -972,6 +975,8 @@ function Docs() {
         try {
             const res = await axios.get(`${API}/requests/files`);
             const data = res.data?.files || res.data;
+
+            console.log("Ficheiros vindos do Backend:", data);
             if (Array.isArray(data)) setDocs(data);
         } catch (err) {
             console.error("Erro ao carregar documentos:", err);
@@ -999,6 +1004,12 @@ function Docs() {
             const fd = new FormData();
             fd.append("file", form.file);
             fd.append("requestId", form.requestId);
+            
+            // 🟢 GARANTIA: Envia também o userId do gestor para ficar registado na Base de Dados
+            if (loggedInUserId) {
+                fd.append("userId", loggedInUserId);
+            }
+
             await axios.post(`${API}/requests/files/upload`, fd, {
                 headers: { "Content-Type": "multipart/form-data" },
             });
@@ -1056,7 +1067,15 @@ function Docs() {
         "Política": "warning", "Procedimento": "info", "Outro": "secondary",
     };
 
-    const filteredDocs = filter === "Todos" ? docs : docs.filter(f => inferType(f.fileName) === filter);
+    // 🟢 FILTRAGEM DUPLA: Primeiro apenas os docs do utilizador atual, depois pelo tipo selecionado
+    const filteredDocs = docs.filter(f => {
+    // Se o ficheiro não tem userId, ignora
+    if (!f.userId) return false;
+    
+    // Compara ambos convertidos para String para evitar erros de tipo (ex: 11 vs "11")
+    return String(f.userId) === String(loggedInUserId);
+});
+
 
     return (
         <div className="card p-3">
@@ -1098,7 +1117,8 @@ function Docs() {
                                 type="file"
                                 className="form-control form-control-sm"
                                 onChange={e => setForm(prev => ({ ...prev, file: e.target.files[0] }))}
-                            />
+                            >
+                            </input>
                             {form.file && <small className="text-success mt-1 d-block">📎 {form.file.name}</small>}
                         </div>
                         <div className="col-md-2 d-flex align-items-end">
@@ -1132,7 +1152,7 @@ function Docs() {
             ) : filteredDocs.length === 0 ? (
                 <div className="text-center text-muted py-5 border rounded">
                     <div style={{ fontSize: 32 }}>📂</div>
-                    <p className="mt-2 mb-0">Nenhum documento disponível.</p>
+                    <p className="mt-2 mb-0">Nenhum documento disponível para a sua conta.</p>
                 </div>
             ) : (
                 <div className="table-responsive">

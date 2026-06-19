@@ -372,6 +372,7 @@ const request_file_upload = async (req, res) => {
         const base64 = req.file.buffer.toString('base64');
         const file = await RequestFile.create({
             requestId: Number(requestId),
+            userId: userId ? Number(userId) : null,
             fileName: req.file.originalname,
             filePath: base64,
             uploadedAt: new Date()
