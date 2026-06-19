@@ -7,6 +7,12 @@ const API = "https://orion-dewp.onrender.com/api";
 export default function ClientDashboard() {
     const [active, setActive] = useState("dashboard");
 
+    const user = {
+        id: localStorage.getItem("userId"),
+        nome: localStorage.getItem("userName"),
+    };
+
+
     const nav = [
         { id: "dashboard", label: "Dashboard" },
         { id: "docs", label: "Documentação" },
@@ -18,7 +24,7 @@ export default function ClientDashboard() {
 
     const renderContent = () => {
         switch (active) {
-            case "dashboard": return <Dashboard setActive={setActive} />;
+            case "dashboard": return <Dashboard setActive={setActive} user={user} />;
             case "docs": return <Docs />;
             case "tickets": return <Tickets />;
             case "requests": return <Requests />;
@@ -68,7 +74,37 @@ export default function ClientDashboard() {
 }
 
 /* ───────────────────────── DASHBOARD ───────────────────────── */
-function Dashboard({ setActive }) {
+
+function Dashboard({ setActive, user }) {
+    const [logs, setLogs] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [erro, setErro] = useState(null);
+
+    useEffect(() => {
+        if (!user?.id) return;
+
+        
+        async function fetchLogs() {
+            try {
+                setLoading(true);
+                const res = await axios.get(`${API}/logs/user/${user.id}`);
+                if (res.data.success) {
+                    setLogs(res.data.logs);
+                } else {
+                    setErro(res.data.message || "Falha ao carregar registos");
+                }
+            } catch (err) {
+                setErro(
+                    err.response?.data?.message || "Falha ao carregar registos"
+                );
+            } finally {
+                setLoading(false);
+            }
+        }
+
+        fetchLogs();
+    }, [user?.id]);
+
     return (
         <>
             <div className="row g-3 mb-4">
@@ -80,20 +116,27 @@ function Dashboard({ setActive }) {
             <div className="row g-3">
                 <div className="col-md-6">
                     <div className="card p-3">
-                        <h6 className="mb-3">Registos</h6>
+                        <h6 className="mb-3">
+                            Registos de {user?.nome || "Utilizador"}
+                        </h6>
+
+                        {loading && <p className="text-muted">A carregar...</p>}
+                        {erro && <p className="text-danger">{erro}</p>}
+
+                        {!loading && !erro && logs.length === 0 && (
+                            <p className="text-muted">Sem registos.</p>
+                        )}
+
                         <ul className="list-group list-group-flush">
-                            <li className="list-group-item d-flex justify-content-between">
-                                <span>Relatório Q1 disponível</span>
-                                <small className="text-muted">Hoje</small>
-                            </li>
-                            <li className="list-group-item d-flex justify-content-between">
-                                <span>Pedido #P002 em análise</span>
-                                <small className="text-muted">Ontem</small>
-                            </li>
-                            <li className="list-group-item d-flex justify-content-between">
-                                <span>Ticket #T001 respondido</span>
-                                <small className="text-muted">12/05/2026</small>
-                            </li>
+                            {logs.map((log) => (
+                                <li
+                                    key={log.id}
+                                    className="list-group-item d-flex justify-content-between"
+                                >
+                                    <span>{log.action}{log.entity ? ` — ${log.entity}` : ""}</span>
+                                    <small className="text-muted">{log.date}</small>
+                                </li>
+                            ))}
                         </ul>
                     </div>
                 </div>
