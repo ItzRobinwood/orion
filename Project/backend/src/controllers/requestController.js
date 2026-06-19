@@ -304,19 +304,6 @@ const request_close = async (req, res) => {
     }
 };
 
-module.exports = {
-    request_list,
-    request_detail,
-    request_create,
-    request_files_list,
-    request_file_download,
-    request_update,
-    request_update_status,
-    request_delete,
-    request_close,
-    assign_manager
-};
-
 // ==========================================
 // 10. UPDATE STATUS (usado pelo manager)
 // ==========================================
@@ -349,4 +336,17 @@ const request_update_status = async (req, res) => {
     } catch (error) {
         return res.status(500).json({ success: false, message: error.message });
     }
+};
+
+module.exports = {
+    request_list,
+    request_detail,
+    request_create,
+    request_files_list,
+    request_file_download,
+    request_update,
+    request_update_status,
+    request_delete,
+    request_close,
+    assign_manager
 };
