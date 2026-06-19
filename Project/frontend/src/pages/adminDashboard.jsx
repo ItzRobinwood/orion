@@ -1692,46 +1692,42 @@ function Settings() {
 }
 
 
-
 function Content() {
-    const [pages, setPages] = useState([
-        { id: 1, page: "Início", section: "Hero", content: "Segurança cibernética para empresas modernas.", updated: "10/05/2026" },
-        { id: 2, page: "Home", section: "Sobre nós", content: "A CyberBox protege empresas desde 2018...", updated: "08/05/2026" },
-        { id: 3, page: "Serviços", section: "Intro", content: "Oferecemos soluções completas de cibersegurança.", updated: "02/05/2026" },
-        { id: 4, page: "NIS2", section: "Descrição", content: "A diretiva NIS2 entra em vigor em 2024...", updated: "28/04/2026" },
-        { id: 5, page: "Contacto", section: "Texto", content: "Entre em contacto connosco para mais informações.", updated: "20/04/2026" },
-    ]);
+    const [pages, setPages] = useState([]);
     const [editing, setEditing] = useState(null);
     const [text, setText] = useState("");
 
-    // TODO: replace useState initial data with API call when endpoint is ready
-    // const reloadContent = async () => {
-    //     const res = await fetch("https://orion-dewp.onrender.com/api/content");
-    //     const data = await res.json();
-    //     setPages(data.content);
-    // };
-    // useEffect(() => { reloadContent(); }, []);
+    const reloadContent = async () => {
+        try {
+            const res = await fetch("https://orion-dewp.onrender.com/api/content");
+            const data = await res.json();
+            setPages(data);
+        } catch (err) {
+            console.error("Erro ao carregar conteúdos:", err);
+        }
+    };
+
+    useEffect(() => { reloadContent(); }, []);
 
     const handleEdit = (item) => { setEditing(item.id); setText(item.content); };
 
     const handleSave = async (id) => {
-        // TODO: uncomment when endpoint is ready
-        // try {
-        //     const res = await fetch(`https://orion-dewp.onrender.com/api/content/${id}`, {
-        //         method: "PUT",
-        //         headers: { "Content-Type": "application/json" },
-        //         body: JSON.stringify({ content: text })
-        //     });
-        //     const data = await res.json();
-        //     if (!data.success) { alert("Error: " + data.message); return; }
-        //     await reloadContent();
-        // } catch (err) {
-        //     alert("Connection error: " + err.message);
-        // }
-
-        // TODO: remove this local update once API is connected
-        setPages(pages.map(p => p.id === id ? { ...p, content: text, updated: new Date().toLocaleDateString("pt-PT") } : p));
-        setEditing(null);
+        try {
+            const res = await fetch(`https://orion-dewp.onrender.com/api/content/${id}`, {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ content: text })
+            });
+            const data = await res.json();
+            if (data.success) {
+                await reloadContent();
+                setEditing(null);
+            } else {
+                alert("Erro ao guardar: " + (data.message || "Erro desconhecido"));
+            }
+        } catch (err) {
+            alert("Erro de ligação: " + err.message);
+        }
     };
 
     return (
@@ -1768,6 +1764,9 @@ function Content() {
                             </td>
                         </tr>
                     ))}
+                    {pages.length === 0 && (
+                        <tr><td colSpan={5} className="text-center text-muted py-3">A carregar...</td></tr>
+                    )}
                 </tbody>
             </table>
         </div>
