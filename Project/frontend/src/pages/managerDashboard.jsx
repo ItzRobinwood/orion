@@ -535,7 +535,7 @@ function Requests() {
     const [filter, setFilter] = useState("Todos");
     const [loading, setLoading] = useState(true);
     const [expandedId, setExpandedId] = useState(null);
-
+    const [requestFiles, setRequestFiles] = useState({});
     const managerId = Number(localStorage.getItem("userId") || 1);
 
     const STATUS_LABELS = { in_progress: "Em Execução", closed: "Concluído" };
@@ -571,6 +571,19 @@ function Requests() {
             await reloadRequests();
         } catch (err) {
             alert("Erro ao alterar estado: " + (err.response?.data?.message || err.message));
+        }
+    };
+
+    const fetchFiles = async (requestId) => {
+        try {
+            const res = await axios.get(`${API}/requests/${requestId}/files`);
+
+            setRequestFiles(prev => ({
+                ...prev,
+                [requestId]: res.data || []
+            }));
+        } catch (err) {
+            console.error("Erro ao carregar ficheiros", err);
         }
     };
 
@@ -668,7 +681,30 @@ function Requests() {
                                 </div>
                                 {expandedId === r.id && r.description && (
                                     <div className="mt-2 p-2 bg-light rounded border small text-muted">
-                                        {r.description}
+
+                                        <div className="mb-2">
+                                            {r.description}
+                                        </div>
+
+                                        {(requestFiles[r.id] || []).length > 0 && (
+                                            <div className="border-top pt-2 mt-2">
+                                                <div className="fw-semibold mb-2">📎 Documentos recebidos</div>
+
+                                                {(requestFiles[r.id] || []).map(f => (
+                                                    <div key={f.id} className="d-flex justify-content-between align-items-center mb-1">
+                                                        <span>📄 {f.fileName}</span>
+
+                                                        <a
+                                                            href={`${API}/requests/files/download/${f.id}`}
+                                                            className="btn btn-sm btn-outline-dark"
+                                                        >
+                                                            Ver / Download
+                                                        </a>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        )}
+
                                     </div>
                                 )}
                             </div>
@@ -689,7 +725,14 @@ function Requests() {
                                 <button
                                     className="btn btn-sm btn-outline-secondary"
                                     style={{ fontSize: 12 }}
-                                    onClick={() => setExpandedId(expandedId === r.id ? null : r.id)}
+                                    onClick={() => {
+                                        const opening = expandedId !== r.id;
+                                        setExpandedId(opening ? r.id : null);
+
+                                        if (opening) {
+                                            fetchFiles(r.id);
+                                        }
+                                    }}
                                 >
                                     {expandedId === r.id ? "Fechar detalhe" : "Ver detalhe"}
                                 </button>

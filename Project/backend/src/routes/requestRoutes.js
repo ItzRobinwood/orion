@@ -11,8 +11,12 @@ router.get('/requests', requestController.request_list);
 router.get('/requests/files', requestController.request_files_list);
 router.get('/requests/files/download/:id', requestController.request_file_download);
 // 🟢 Opcional/Segurança: O :id geral fica por baixo das sub-rotas GET
+// Upload de ficheiro pelo gestor
+router.post('/requests/files/upload', upload.single('file'), requestController.request_file_upload);
+// Apagar ficheiro
+router.delete('/requests/files/:id', requestController.request_file_delete);
 router.get('/requests/:id', requestController.request_detail);
-
+router.get('/requests/:id/files', requestController.request_files_by_request);
 // ==========================================
 // 2. ROTAS DE CRIAÇÃO (POST)
 // ==========================================

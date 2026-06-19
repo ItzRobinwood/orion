@@ -59,6 +59,21 @@ const request_list = async (req, res) => {
     }
 };
 
+    const request_files_by_request = async (req, res) => {
+        try {
+            const { id } = req.params;
+
+            const files = await RequestFile.findAll({
+                where: { requestId: id },
+                order: [['uploadedAt', 'DESC']]
+            });
+
+            return res.json(files);
+        } catch (error) {
+            return res.status(500).json({ success: false, message: error.message });
+        }
+    };
+
 // ==========================================
 // 2. ATRIBUIR GESTOR
 // ==========================================
@@ -345,11 +360,51 @@ const request_update_status = async (req, res) => {
     }
 };
 
+// ==========================================
+// UPLOAD PELO GESTOR
+// ==========================================
+const request_file_upload = async (req, res) => {
+    try {
+        if (!req.file) return res.status(400).json({ success: false, message: "Ficheiro obrigatório." });
+        const { requestId } = req.body;
+        if (!requestId) return res.status(400).json({ success: false, message: "requestId obrigatório." });
+
+        const base64 = req.file.buffer.toString('base64');
+        const file = await RequestFile.create({
+            requestId: Number(requestId),
+            fileName: req.file.originalname,
+            filePath: base64,
+            uploadedAt: new Date()
+        });
+
+        return res.status(201).json({ success: true, file });
+    } catch (error) {
+        return res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+// ==========================================
+// APAGAR FICHEIRO
+// ==========================================
+const request_file_delete = async (req, res) => {
+    try {
+        const file = await RequestFile.findByPk(req.params.id);
+        if (!file) return res.status(404).json({ success: false, message: "Ficheiro não encontrado." });
+        await file.destroy();
+        return res.json({ success: true });
+    } catch (error) {
+        return res.status(500).json({ success: false, message: error.message });
+    }
+};
+
 module.exports = {
     request_list,
     request_detail,
     request_create,
     request_files_list,
+    request_files_by_request,
+    request_file_upload,   
+    request_file_delete,
     request_file_download,
     request_update,
     request_update_status,
