@@ -814,24 +814,31 @@ function Tickets() {
                                 {expandedId === t.id && (
                                     <div className="mt-3 border-top pt-3">
                                         <div className="d-flex flex-column gap-2 mb-3" style={{ maxHeight: 280, overflowY: "auto" }}>
-                                            {(messages[t.id] || []).length === 0 ? (
-                                                <p className="text-muted small">Sem mensagens ainda.</p>
-                                            ) : (
-                                                (messages[t.id] || []).map(m => (
+                                            {(messages[t.id] || []).map(m => {
+                                                const isManager = m.userId === Number(managerId);
+                                                return (
                                                     <div
                                                         key={m.id}
-                                                        className={`p-2 rounded small ${m.userId === Number(managerId) ? "bg-dark text-white ms-5" : "bg-light border me-5"}`}
+                                                        className={`d-flex flex-column ${isManager ? "align-items-end" : "align-items-start"}`}
                                                     >
-                                                        <div className="fw-semibold mb-1" style={{ fontSize: 11 }}>
-                                                            {m.sender?.name || "Utilizador"}
-                                                        </div>
-                                                        {m.message}
-                                                        <div className="mt-1 opacity-75" style={{ fontSize: 10 }}>
-                                                            {m.sentAt ? new Date(m.sentAt).toLocaleString("pt-PT") : ""}
+                                                        <div
+                                                            className={`p-2 rounded small ${isManager
+                                                                ? "bg-primary text-white"
+                                                                : "bg-light border text-dark"
+                                                                }`}
+                                                            style={{ maxWidth: "70%" }}
+                                                        >
+                                                            <div className="fw-semibold mb-1" style={{ fontSize: 11, opacity: 0.8 }}>
+                                                                {isManager ? "Eu (Gestor)" : m.sender?.name || "Cliente"}
+                                                            </div>
+                                                            {m.message}
+                                                            <div className={`mt-1 ${isManager ? "text-white opacity-75" : "text-muted"}`} style={{ fontSize: 10 }}>
+                                                                {m.sentAt ? new Date(m.sentAt).toLocaleString("pt-PT") : ""}
+                                                            </div>
                                                         </div>
                                                     </div>
-                                                ))
-                                            )}
+                                                );
+                                            })}
                                         </div>
 
                                         {t.status !== "Fechado" && (
