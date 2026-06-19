@@ -14,7 +14,7 @@ export default function ClientDashboard() {
         { id: "tickets", label: "Tickets" },
         { id: "requests", label: "Pedidos" },
         { id: "settings", label: "Configurações" },
-        
+
     ];
 
     const renderContent = () => {
@@ -188,14 +188,14 @@ function Report() {
 }
 
 /* ───────────────────────── DOCUMENTAÇÃO ───────────────────────── */
+/* ───────────────────────── DOCUMENTAÇÃO ───────────────────────── */
 // Lista de ficheiros partilhados pela CyberBox com o cliente.
-// O cliente só faz download — os ficheiros são carregados pelo admin/gestor.
 function Docs() {
     const [docs, setDocs] = useState([]);
     const [loading, setLoading] = useState(true);
     const [filter, setFilter] = useState("Todos");
 
-    const DOC_TYPES = ["Todos", "Relatório", "Pentest", "Política", "Procedimento", "Outro"];
+    const DOC_TYPES = ["Todos", "Relatório", "Pentest", "Política", "Procedimento", "Documentos Disponibilizados", "Outros"];
 
     useEffect(() => {
         fetchDocs();
@@ -235,9 +235,11 @@ function Docs() {
     };
 
     // Inferir o tipo de documento pelo nome do ficheiro
-    const inferType = (fileName) => {
-        if (!fileName) return "Outro";
-        const name = fileName.toLowerCase();
+    const inferType = (file) => {
+        if (file.isFixed) return "Documentos Disponibilizados"; // Garante o tipo para os 3 ficheiros fixos
+        if (!file.fileName) return "Outro";
+        
+        const name = file.fileName.toLowerCase();
         if (name.includes("relat")) return "Relatório";
         if (name.includes("pentest")) return "Pentest";
         if (name.includes("politic")) return "Política";
@@ -250,12 +252,44 @@ function Docs() {
         "Pentest": "danger",
         "Política": "warning",
         "Procedimento": "info",
+        "Documentos Disponibilizados": "dark",
         "Outro": "secondary",
     };
 
+    // 🟢 Lista com os 3 documentos fixos locais (devem estar na pasta public)
+    const fixedDocs = [
+        {
+            id: "fixed-diretivas",
+            fileName: "Diretivas_Europeias.pdf",
+            requestId: null,
+            uploadedAt: "2026-06-19",
+            isFixed: true,
+            localUrl: "/CELEX_32022L2555_EN_TXT.pdf"
+        },
+        {
+            id: "fixed-seguranca",
+            fileName: "Inventario_CNCS.xlsx",
+            requestId: null,
+            uploadedAt: "2026-06-19",
+            isFixed: true,
+            localUrl: "\public\Exemplo inventário p_ CNCS.xlsx"
+        },
+        {
+            id: "fixed-rgpd",
+            fileName: "Lista_Ativos.xlsx",
+            requestId: null,
+            uploadedAt: "2026-06-19",
+            isFixed: true,
+            localUrl: "\public\Exemplo Lista Activos _ incidentes.xlsx"
+        }
+    ];
+
+    // 🟢 Junta os da BD com os 3 locais de forma segura
+    const allDocs = Array.isArray(docs) ? [...docs, ...fixedDocs] : [...fixedDocs];
+
     const filtered = filter === "Todos"
-        ? docs
-        : docs.filter(f => inferType(f.fileName) === filter);
+        ? allDocs
+        : allDocs.filter(f => inferType(f) === filter);
 
     return (
         <div className="card p-3">
@@ -298,35 +332,47 @@ function Docs() {
                             </tr>
                         </thead>
                         <tbody>
-                            {filtered.map(f => (
-                                <tr key={f.id}>
-                                    <td className="fw-semibold">
-                                        📄 {f.fileName || "Sem nome"}
-                                    </td>
-                                    <td>
-                                        <span className={`badge bg-${typeColor[inferType(f.fileName)]}`}>
-                                            {inferType(f.fileName)}
-                                        </span>
-                                    </td>
-                                    <td>
-                                        <span className="badge bg-light text-dark border">
-                                            Pedido #{f.requestId || "—"}
-                                        </span>
-                                    </td>
-                                    <td style={{ fontSize: 13, color: "#6b7280" }}>
-                                        {f.uploadedAt
-                                            ? new Date(f.uploadedAt).toLocaleDateString("pt-PT")
-                                            : "—"}
-                                    </td>
-                                    <td>
-                                        <button
-                                            className="btn btn-sm btn-outline-dark"
-                                            onClick={() => handleDownload(f.id, f.fileName)}>
-                                            📥 Download
-                                        </button>
-                                    </td>
-                                </tr>
-                            ))}
+                            {filtered.map(f => {
+                                const docType = inferType(f);
+                                return (
+                                    <tr key={f.id}>
+                                        <td className="fw-semibold">
+                                            📄 {f.fileName || "Sem nome"}
+                                        </td>
+                                        <td>
+                                            <span className={`badge bg-${typeColor[docType] || "secondary"}`}>
+                                                {docType}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <span className="badge bg-light text-dark border">
+                                                {f.requestId ? `Pedido #${f.requestId}` : "Geral / Fixo"}
+                                            </span>
+                                        </td>
+                                        <td style={{ fontSize: 13, color: "#6b7280" }}>
+                                            {f.uploadedAt ? new Date(f.uploadedAt).toLocaleDateString("pt-PT") : "—"}
+                                        </td>
+                                        <td>
+                                            {/* 🟢 Verifica dinamicamente se o ficheiro atual mapeado é fixo */}
+                                            {f.isFixed ? (
+                                                <a
+                                                    href={f.localUrl}
+                                                    download={f.fileName}
+                                                    className="btn btn-sm btn-outline-dark"
+                                                >
+                                                    📥 Download
+                                                </a>
+                                            ) : (
+                                                <button
+                                                    className="btn btn-sm btn-outline-dark"
+                                                    onClick={() => handleDownload(f.id, f.fileName)}>
+                                                    📥 Download
+                                                </button>
+                                            )}
+                                        </td>
+                                    </tr>
+                                );
+                            })}
                         </tbody>
                     </table>
                 </div>
