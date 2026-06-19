@@ -1122,68 +1122,59 @@ function PersonForm({ form, setForm, title, submitLabel, generatePassword, onSub
 }
 
 function Tickets() {
-    const [questions, setQuestions] = useState([]);
-    const [filter, setFilter] = useState("Todos");
+    const [tickets, setTickets] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [replyingId, setReplyingId] = useState(null);
-    const [replyText, setReplyText] = useState("");
+    const [expanded, setExpanded] = useState(null);
+    const [messages, setMessages] = useState({});
+    const [filter, setFilter] = useState("Todos");
 
-    const reloadQuestions = async () => {
+    useEffect(() => {
+        fetchTickets();
+    }, []);
+
+    const fetchTickets = async () => {
+        setLoading(true);
         try {
-            setLoading(true);
             const res = await axios.get("https://orion-dewp.onrender.com/api/questions");
-            if (res.data.success) {
-                setQuestions(res.data.questions);
-            }
+            setTickets(res.data.questions || []);
         } catch (err) {
-            console.error("Erro ao carregar questões:", err);
+            console.error("Erro ao carregar tickets:", err);
         } finally {
             setLoading(false);
         }
     };
 
-    useEffect(() => {
-        reloadQuestions();
-    }, []);
-
-    const handleReply = async (id) => {
-        if (!replyText.trim()) return;
-        try {
-            await axios.post(`https://orion-dewp.onrender.com/api/questions/${id}/reply`, {
-                message: replyText,
-                userId: 1 // substituir pelo id do admin logado
-            });
-            setReplyText("");
-            setReplyingId(null);
-            await reloadQuestions();
-        } catch (err) {
-            alert("Erro ao enviar resposta.");
+    const handleExpand = async (ticketId) => {
+        if (expanded === ticketId) {
+            setExpanded(null);
+            return;
+        }
+        setExpanded(ticketId);
+        if (!messages[ticketId]) {
+            try {
+                const res = await axios.get(`https://orion-dewp.onrender.com/api/questions/${ticketId}/messages`);
+                setMessages(prev => ({ ...prev, [ticketId]: res.data.messages || [] }));
+            } catch (err) {
+                console.error("Erro ao carregar mensagens:", err);
+            }
         }
     };
 
-    const handleClose = async (id) => {
-        if (!window.confirm("Fechar este ticket?")) return;
-        try {
-            await axios.put(`https://orion-dewp.onrender.com/api/questions/${id}/close`);
-            await reloadQuestions();
-        } catch (err) {
-            alert("Erro ao fechar ticket.");
-        }
-    };
+    const statusColor = (s) => s === "Respondido" ? "success" : s === "Pendente" ? "warning" : "secondary";
 
     const filtered = filter === "Todos"
-        ? questions
-        : questions.filter(q => q.status === filter);
+        ? tickets
+        : tickets.filter(t => t.status === filter);
 
-    const statusColor = (s) => s === "Respondido" ? "bg-success" : s === "Pendente" ? "bg-warning text-dark" : "bg-secondary";
-
-    if (loading) return <div className="text-center my-5"><h5>A carregar tickets...</h5></div>;
+    if (loading) return <div className="card p-3"><p className="text-muted">A carregar tickets...</p></div>;
 
     return (
         <div className="d-flex flex-column gap-4 text-dark">
+
+            {/* Header */}
             <div>
-                <h3 className="fw-bold mb-1">Tickets</h3>
-                <p className="text-muted small">Questões submetidas pelos clientes</p>
+                <h3 className="fw-bold mb-1">Tickets de Suporte</h3>
+                <p className="text-muted small">Visão geral das conversas entre clientes e gestores.</p>
             </div>
 
             {/* Contadores */}
@@ -1191,19 +1182,23 @@ function Tickets() {
                 <div className="col">
                     <div className="card p-3 shadow-sm">
                         <div className="text-muted small">Total</div>
-                        <h4 className="fw-bold m-0">{questions.length}</h4>
+                        <h4 className="fw-bold m-0">{tickets.length}</h4>
                     </div>
                 </div>
                 <div className="col">
                     <div className="card p-3 shadow-sm">
                         <div className="text-muted small">Pendentes</div>
-                        <h4 className="fw-bold text-warning m-0">{questions.filter(q => q.status === "Pendente").length}</h4>
+                        <h4 className="fw-bold text-warning m-0">
+                            {tickets.filter(t => t.status === "Pendente").length}
+                        </h4>
                     </div>
                 </div>
                 <div className="col">
                     <div className="card p-3 shadow-sm">
                         <div className="text-muted small">Respondidos</div>
-                        <h4 className="fw-bold text-success m-0">{questions.filter(q => q.status === "Respondido").length}</h4>
+                        <h4 className="fw-bold text-success m-0">
+                            {tickets.filter(t => t.status === "Respondido").length}
+                        </h4>
                     </div>
                 </div>
             </div>
@@ -1215,79 +1210,91 @@ function Tickets() {
                         <button key={f} onClick={() => setFilter(f)}
                             className={`btn btn-sm px-3 ${filter === f ? "btn-primary" : "btn-light border text-secondary"}`}>
                             {f}
+                            {f !== "Todos" && tickets.filter(t => t.status === f).length > 0 &&
+                                ` (${tickets.filter(t => t.status === f).length})`}
                         </button>
                     ))}
                 </div>
             </div>
 
             {/* Lista de tickets */}
-            <div className="d-flex flex-column gap-2">
-                {filtered.map(q => (
-                    <div key={q.id} className="card p-3 shadow-sm border-start border-4 border-warning">
-                        <div className="d-flex justify-content-between align-items-start">
-                            <div className="flex-grow-1">
-                                <div className="d-flex align-items-center gap-2 mb-1">
-                                    <h6 className="fw-bold m-0">#{q.id} — {q.subject}</h6>
-                                    <span className={`badge ${statusColor(q.status)}`} style={{ fontSize: 10 }}>
-                                        {q.status}
-                                    </span>
-                                </div>
-                                <div className="text-muted small mb-2">
-                                    👤 {q.createdBy} · 📅 {q.date} · 💬 {q.messagesCount} mensagem(ns)
-                                </div>
-                                {q.lastReply !== "Sem resposta" && (
-                                    <div className="text-muted small fst-italic">
-                                        Última resposta: {q.lastReply}
-                                    </div>
-                                )}
+            {filtered.length === 0 ? (
+                <div className="text-center text-muted py-5 border rounded bg-white">
+                    <div style={{ fontSize: 32 }}>🎫</div>
+                    <p className="mt-2 mb-0">Nenhum ticket encontrado.</p>
+                </div>
+            ) : (
+                <div className="d-flex flex-column gap-2">
+                    {filtered.map(t => (
+                        <div key={t.id} className="card p-3 border-start border-4"
+                            style={{ borderLeftColor: t.status === "Respondido" ? "#198754" : "#ffc107" }}>
 
-                                {/* Caixa de resposta inline */}
-                                {replyingId === q.id && (
-                                    <div className="mt-3">
-                                        <textarea
-                                            className="form-control form-control-sm mb-2"
-                                            rows={3}
-                                            placeholder="Escreve a tua resposta..."
-                                            value={replyText}
-                                            onChange={(e) => setReplyText(e.target.value)}
-                                        />
-                                        <div className="d-flex gap-2">
-                                            <button className="btn btn-sm btn-success"
-                                                onClick={() => handleReply(q.id)}>
-                                                Enviar Resposta
-                                            </button>
-                                            <button className="btn btn-sm btn-outline-secondary"
-                                                onClick={() => { setReplyingId(null); setReplyText(""); }}>
-                                                Cancelar
-                                            </button>
-                                        </div>
+                            {/* Cabeçalho do ticket */}
+                            <div className="d-flex justify-content-between align-items-start">
+                                <div>
+                                    <div className="d-flex align-items-center gap-2 mb-1">
+                                        <span className="fw-semibold">#{t.id} — {t.subject}</span>
+                                        <span className={`badge bg-${statusColor(t.status)}`}>
+                                            {t.status}
+                                        </span>
                                     </div>
-                                )}
-                            </div>
-
-                            {/* Ações */}
-                            <div className="d-flex flex-column gap-1 ms-3">
-                                <button className="btn btn-sm btn-outline-primary"
-                                    onClick={() => { setReplyingId(replyingId === q.id ? null : q.id); setReplyText(""); }}>
-                                    {replyingId === q.id ? "Cancelar" : "Responder"}
+                                    <small className="text-muted">
+                                        👤 {t.createdBy} · 📅 {t.date} · 💬 {t.messagesCount} mensagem(ns)
+                                        {t.assignedTo !== "Sem atribuição" && (
+                                            <> · Gestor: <strong>{t.assignedTo}</strong></>
+                                        )}
+                                    </small>
+                                </div>
+                                <button className="btn btn-sm btn-outline-secondary"
+                                    onClick={() => handleExpand(t.id)}>
+                                    {expanded === t.id ? "Fechar" : "Ver conversa"}
                                 </button>
-                                {q.status !== "Fechado" && (
-                                    <button className="btn btn-sm btn-outline-danger"
-                                        onClick={() => handleClose(q.id)}>
-                                        Fechar
-                                    </button>
-                                )}
                             </div>
-                        </div>
-                    </div>
-                ))}
 
-                {filtered.length === 0 && (
-                    <div className="text-center text-muted p-4 bg-white border rounded">
-                        Nenhum ticket encontrado.
-                    </div>
-                )}
-            </div>
+                            {/* Preview da última resposta */}
+                            {t.lastReply !== "Sem resposta" && expanded !== t.id && (
+                                <div className="mt-2 p-2 bg-light rounded border small text-muted">
+                                    💬 {t.lastReply}
+                                </div>
+                            )}
+
+                            {/* Conversa expandida — só leitura */}
+                            {expanded === t.id && (
+                                <div className="mt-3 border-top pt-3">
+
+                                    {/* Badge de aviso */}
+                                    <div className="alert alert-info py-2 small mb-3">
+                                        👁️ Modo de observação — o administrador não pode participar nesta conversa.
+                                    </div>
+
+                                    {/* Mensagens */}
+                                    <div className="d-flex flex-column gap-2" style={{ maxHeight: 350, overflowY: "auto" }}>
+                                        {(messages[t.id] || []).length === 0 ? (
+                                            <p className="text-muted small text-center py-3">
+                                                Ainda sem mensagens neste ticket.
+                                            </p>
+                                        ) : (
+                                            (messages[t.id] || []).map(m => (
+                                                <div key={m.id}
+                                                    className={`p-2 rounded small ${m.isManager ? "bg-primary text-white ms-5" : "bg-light border me-5"}`}>
+                                                    <div className="fw-semibold mb-1" style={{ fontSize: 11 }}>
+                                                        {m.sender?.name || "Utilizador"}
+                                                        {m.isManager && <span className="ms-1 opacity-75">(Gestor)</span>}
+                                                    </div>
+                                                    {m.message}
+                                                    <div className="mt-1 opacity-75" style={{ fontSize: 10 }}>
+                                                        {m.sentAt ? new Date(m.sentAt).toLocaleString("pt-PT") : ""}
+                                                    </div>
+                                                </div>
+                                            ))
+                                        )}
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    ))}
+                </div>
+            )}
         </div>
     );
 }
