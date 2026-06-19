@@ -9,45 +9,45 @@ function Login() {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
 
-const handleLogin = async (e) => {
-    e.preventDefault();
+    const handleLogin = async (e) => {
+        e.preventDefault();
 
-    try {
-        // 🟢 CORREÇÃO 1: No Axios passamos o objeto direto, sem "body", "headers" ou "JSON.stringify"
-        const response = await axios.post('https://orion-dewp.onrender.com/api/users/login', {
-            email,
-            password
-        });
+        try {
+            // 🟢 CORREÇÃO 1: No Axios passamos o objeto direto, sem "body", "headers" ou "JSON.stringify"
+            const response = await axios.post('https://orion-dewp.onrender.com/api/users/login', {
+                email,
+                password
+            });
 
-        // 🟢 CORREÇÃO 2: No Axios os dados já vêm prontos dentro de .data
-        const data = response.data;
+            // 🟢 CORREÇÃO 2: No Axios os dados já vêm prontos dentro de .data
+            const data = response.data;
 
-        if (data.success) {
-            const userType = data.user.id_tipo;
+            if (data.success) {
+                const userType = data.user.id_tipo;
 
-            localStorage.setItem("userId", data.user.id_Utilizador);
-            localStorage.setItem("userName", data.user.name);
+                localStorage.setItem("userId", data.user.id);
+                localStorage.setItem("userName", data.user.name);
 
-            if (userType === 1) {
-                navigate('/adminDashboard');
-            } else if (userType === 2) {
-                navigate('/managerDashboard');
-            } else if (userType === 3) {
-                navigate('/clientDashboard');
+                if (userType === 1) {
+                    navigate('/adminDashboard');
+                } else if (userType === 2) {
+                    navigate('/managerDashboard');
+                } else if (userType === 3) {
+                    navigate('/clientDashboard');
+                } else {
+                    alert('Acesso não autorizado: Tipo de utilizador inválido.');
+                }
             } else {
-                alert('Acesso não autorizado: Tipo de utilizador inválido.');
+                alert(data.message || 'Credenciais inválidas.');
             }
-        } else {
-            alert(data.message || 'Credenciais inválidas.');
+        } catch (error) {
+            console.error("Login connection error:", error);
+
+            // 💡 Dica extra: Exibe a mensagem real que o seu backend enviou no erro
+            const mensagemErro = error.response?.data?.message || 'Erro de ligação ao servidor.';
+            alert(mensagemErro);
         }
-    } catch (error) {
-        console.error("Login connection error:", error);
-        
-        // 💡 Dica extra: Exibe a mensagem real que o seu backend enviou no erro
-        const mensagemErro = error.response?.data?.message || 'Erro de ligação ao servidor.';
-        alert(mensagemErro);
-    }
-};
+    };
 
 
     return (
