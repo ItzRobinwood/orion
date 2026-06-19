@@ -1135,11 +1135,14 @@ function Tickets() {
     const [managers, setManagers] = useState([]);
 
     const managerId = Number(localStorage.getItem("userId") || 1);
+    
+    // 🌐 Definido o URL base diretamente para evitar o "API is not defined"
+    const BACKEND_URL = "https://orion-dewp.onrender.com/api";
 
     const reloadTickets = async () => {
         setLoading(true);
         try {
-            const res = await axios.get(`${API}/questions`);
+            const res = await axios.get(`${BACKEND_URL}/questions`);
             setTickets(res.data.questions || []);
         } catch (err) {
             console.error("Erro ao carregar tickets:", err);
@@ -1150,11 +1153,10 @@ function Tickets() {
 
     useEffect(() => { reloadTickets(); }, []);
 
-    // Função para abrir o Modal e ir buscar a lista de gestores/managers (tipo 2)
     const openAssignModal = async (ticketId) => {
         setSelectedTicketId(ticketId);
         try {
-            const res = await axios.get("https://orion-dewp.onrender.com/api/users");
+            const res = await axios.get(`${BACKEND_URL}/users`);
             const onlyManagers = res.data.users.filter(u => u.id_tipo === 2);
             setManagers(onlyManagers);
         } catch (err) {
@@ -1163,17 +1165,15 @@ function Tickets() {
         setAssignModalOpen(true);
     };
 
-    // Função para guardar a atribuição no Backend
     const handleAssign = async (managerId, managerName) => {
         try {
-            // Rota PUT para associar o ticket ao manager escolhido
-            await axios.put(`${API}/questions/${selectedTicketId}/assign`, {
-                assignedToId: managerId
+            await axios.put(`${BACKEND_URL}/questions/${selectedTicketId}/assign`, { 
+                assignedToId: managerId 
             });
-
+            
             setAssignModalOpen(false);
             setSelectedTicketId(null);
-            await reloadTickets(); // Atualiza a lista com o novo manager visível
+            await reloadTickets();
         } catch (err) {
             console.error("Erro ao atribuir:", err);
             alert("Erro ao atribuir gestor ao ticket. Tenta novamente.");
@@ -1185,7 +1185,7 @@ function Tickets() {
         setExpandedId(id);
         if (!messages[id]) {
             try {
-                const res = await axios.get(`${API}/questions/${id}/messages`);
+                const res = await axios.get(`${BACKEND_URL}/questions/${id}/messages`);
                 setMessages(prev => ({ ...prev, [id]: res.data.messages || [] }));
             } catch (err) {
                 console.error("Erro ao carregar mensagens:", err);
@@ -1196,12 +1196,12 @@ function Tickets() {
     const handleReply = async (ticketId) => {
         if (!replyText.trim()) return;
         try {
-            await axios.post(`${API}/questions/${ticketId}/reply`, {
+            await axios.post(`${BACKEND_URL}/questions/${ticketId}/reply`, {
                 message: replyText,
                 userId: Number(managerId),
             });
             setReplyText("");
-            const res = await axios.get(`${API}/questions/${ticketId}/messages`);
+            const res = await axios.get(`${BACKEND_URL}/questions/${ticketId}/messages`);
             setMessages(prev => ({ ...prev, [ticketId]: res.data.messages || [] }));
             await reloadTickets();
         } catch (err) {
@@ -1212,7 +1212,7 @@ function Tickets() {
     const handleClose = async (id) => {
         if (!window.confirm("Fechar este ticket?")) return;
         try {
-            await axios.put(`${API}/questions/${id}/close`);
+            await axios.put(`${BACKEND_URL}/questions/${id}/close`);
             await reloadTickets();
         } catch (err) {
             alert("Erro ao fechar ticket.");
@@ -1343,8 +1343,7 @@ function Tickets() {
                                 >
                                     {expandedId === t.id ? "Fechar" : "Responder"}
                                 </button>
-
-                                {/* 1️⃣ BOTÃO ADICIONADO AQUI: Permite ao admin atribuir a um manager */}
+                                
                                 <button
                                     className="btn btn-sm btn-outline-secondary"
                                     onClick={() => openAssignModal(t.id)}
@@ -1363,7 +1362,7 @@ function Tickets() {
                 ))
             )}
 
-            {/* 2️⃣ MODAL DE ATRIBUIÇÃO NO FINAL DO RETURN */}
+            {/* MODAL DE ATRIBUIÇÃO */}
             {assignModalOpen && (
                 <div className="modal show d-block" style={{ backgroundColor: "rgba(0,0,0,0.4)" }}>
                     <div className="modal-dialog modal-dialog-centered">
