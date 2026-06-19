@@ -7,6 +7,12 @@ const API = "https://orion-dewp.onrender.com/api";
 export default function ClientDashboard() {
     const [active, setActive] = useState("dashboard");
 
+    const user = {
+        id: localStorage.getItem("userId"),
+        nome: localStorage.getItem("userName"),
+    };
+
+
     const nav = [
         { id: "dashboard", label: "Dashboard" },
         { id: "docs", label: "Documentação" },
@@ -14,11 +20,13 @@ export default function ClientDashboard() {
         { id: "requests", label: "Pedidos" },
         { id: "settings", label: "Configurações" },
 
+
+
     ];
 
     const renderContent = () => {
         switch (active) {
-            case "dashboard": return <Dashboard setActive={setActive} />;
+            case "dashboard": return <Dashboard setActive={setActive} user={user} />;
             case "docs": return <Docs />;
             case "tickets": return <Tickets />;
             case "requests": return <Requests />;
@@ -41,17 +49,20 @@ export default function ClientDashboard() {
                         {item.label}
                     </button>
                 ))}
-                <div className="mt-auto pt-4">
-                    <div className="d-flex align-items-center gap-2 mb-2">
-                        <img src="https://i.pravatar.cc/32" className="rounded-circle" alt="cliente" />
-                        <div>
-                            <div className="small text-white fw-semibold">João Pereira</div>
-                            <div className="small text-secondary">TechCorp</div>
-                        </div>
-                    </div>
+
+                <div>
+
+                    <button
+                        className="btn btn-danger w-100 mb-3"
+                        onClick={() => window.location.href = "/"}
+                    >
+                        Sair
+                    </button>
+
                     <small className="text-secondary">© 2026 CyberBox</small>
                 </div>
             </div>
+
 
             <div className="flex-grow-1 bg-light p-4 overflow-auto">
                 <div className="d-flex justify-content-between align-items-center mb-4">
@@ -68,9 +79,40 @@ export default function ClientDashboard() {
 }
 
 /* ───────────────────────── DASHBOARD ───────────────────────── */
-function Dashboard({ setActive }) {
+
+function Dashboard({ setActive, user }) {
+    const [logs, setLogs] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [erro, setErro] = useState(null);
+
+    useEffect(() => {
+        if (!user?.id) return;
+
+
+        async function fetchLogs() {
+            try {
+                setLoading(true);
+                const res = await axios.get(`${API}/logs/user/${user.id}`);
+                if (res.data.success) {
+                    setLogs(res.data.logs);
+                } else {
+                    setErro(res.data.message || "Falha ao carregar registos");
+                }
+            } catch (err) {
+                setErro(
+                    err.response?.data?.message || "Falha ao carregar registos"
+                );
+            } finally {
+                setLoading(false);
+            }
+        }
+
+        fetchLogs();
+    }, [user?.id]);
+
     return (
         <>
+            {/* Cartões de Estatísticas */}
             <div className="row g-3 mb-4">
                 <StatCard title="Documentos" value="12" color="primary" />
                 <StatCard title="Pedidos Ativos" value="3" color="info" />
@@ -78,23 +120,71 @@ function Dashboard({ setActive }) {
             </div>
 
             <div className="row g-3">
-                <div className="col-md-6">
-                    <div className="card p-3">
-                        <h6 className="mb-3">Registos</h6>
-                        <ul className="list-group list-group-flush">
-                            <li className="list-group-item d-flex justify-content-between">
-                                <span>Relatório Q1 disponível</span>
-                                <small className="text-muted">Hoje</small>
-                            </li>
-                            <li className="list-group-item d-flex justify-content-between">
-                                <span>Pedido #P002 em análise</span>
-                                <small className="text-muted">Ontem</small>
-                            </li>
-                            <li className="list-group-item d-flex justify-content-between">
-                                <span>Ticket #T001 respondido</span>
-                                <small className="text-muted">12/05/2026</small>
-                            </li>
-                        </ul>
+                <div className="col-12">
+                    <div className="card border-0 shadow-sm p-4 w-100">
+
+                        {/* Cabeçalho limpo */}
+                        <div className="mb-4">
+                            <h6 className="fw-bold text-dark m-0 fs-5">
+                                Registos de {user?.nome || "Utilizador"}
+                            </h6>
+                        </div>
+
+                        {/* Estados de Loading, Erro e Vazio */}
+                        {loading && (
+                            <div className="text-center py-5 text-muted">
+                                <div className="spinner-border spinner-border-sm me-2" role="status"></div>
+                                <span>A carregar atividade...</span>
+                            </div>
+                        )}
+
+                        {erro && (
+                            <div className="alert alert-danger-soft text-danger p-3 rounded text-center my-2 w-100" style={{ backgroundColor: '#fdf2f2', border: '1px solid #fde8e8' }}>
+                                {erro}
+                            </div>
+                        )}
+
+                        {!loading && !erro && logs.length === 0 && (
+                            <div className="text-center py-5 text-muted bg-light rounded-3 border border-dashed my-2 w-100">
+                                <p className="m-0 small fw-medium">Sem registos de atividade até ao momento.</p>
+                            </div>
+                        )}
+
+                        {/* Lista que preenche o espaço com Texto Limpo */}
+                        {!loading && !erro && logs.length > 0 && (
+                            <ul className="list-group list-group-flush w-100">
+                                {logs.map((log) => (
+                                    <li
+                                        key={log.id}
+                                        className="list-group-item d-flex justify-content-between align-items-center px-0 py-3"
+                                    >
+                                        {/* Conteúdo da Ação à esquerda */}
+                                        <div className="flex-grow-1 pe-3">
+                                            <span className="text-dark fw-medium">
+                                                {log.action}
+                                                {log.entity && (
+                                                    <span className="text-muted fw-normal"> — {log.entity}</span>
+                                                )}
+                                            </span>
+                                        </div>
+
+                                        {/* Data (por cima) e Hora (por baixo) à extrema direita */}
+                                        <div className="text-end flex-shrink-0 d-flex flex-column lh-sm" style={{ minWidth: '90px' }}>
+                                            {/* Data por cima */}
+                                            <span className="text-muted fw-medium" style={{ fontSize: '0.85rem' }}>
+                                                {log.date}
+                                            </span>
+                                            {/* Hora por baixo */}
+                                            {log.time && (
+                                                <span className="text-muted-light small" style={{ fontSize: '0.75rem', opacity: 0.8 }}>
+                                                    {log.time}
+                                                </span>
+                                            )}
+                                        </div>
+                                    </li>
+                                ))}
+                            </ul>
+                        )}
                     </div>
                 </div>
             </div>
@@ -103,7 +193,7 @@ function Dashboard({ setActive }) {
 }
 
 
-/* ───────────────────────── DOCUMENTAÇÃO ───────────────────────── */
+
 /* ───────────────────────── DOCUMENTAÇÃO ───────────────────────── */
 // Lista de ficheiros partilhados pela CyberBox com o cliente.
 function Docs() {
@@ -111,7 +201,8 @@ function Docs() {
     const [loading, setLoading] = useState(true);
     const [filter, setFilter] = useState("Todos");
 
-    const DOC_TYPES = ["Todos", "Relatório", "Pentest", "Política", "Procedimento", "Documentos Disponibilizados", "Outros"];
+    // 🟢 Tipos oficiais do teu sistema
+    const DOC_TYPES = ["Todos", "Relatório", "Pentest", "Política", "Procedimento", "Documentos Disponibilizados", "Geral / Outros"];
 
     useEffect(() => {
         fetchDocs();
@@ -150,29 +241,25 @@ function Docs() {
         }
     };
 
-    // Inferir o tipo de documento pelo nome do ficheiro
-    const inferType = (file) => {
-        if (file.isFixed) return "Documentos Disponibilizados"; // Garante o tipo para os 3 ficheiros fixos
-        if (!file.fileName) return "Outro";
-        
-        const name = file.fileName.toLowerCase();
-        if (name.includes("relat")) return "Relatório";
-        if (name.includes("pentest")) return "Pentest";
-        if (name.includes("politic")) return "Política";
-        if (name.includes("proced")) return "Procedimento";
-        return "Outro";
-    };
+    // 🟢 Corrigido: Agora valida o ID numérico ou string que vem no ficheiro
+   const getDocType = (file) => {
+    if (file.isFixed) return "Documentos Disponibilizados";
+    if (file.requestType && DOC_TYPES.includes(file.requestType)) {
+        return file.requestType;
+    }
+    return "Geral / Outros";
+};
 
+    // 🟢 Garantido que as chaves batem certo com o array DOC_TYPES
     const typeColor = {
         "Relatório": "primary",
         "Pentest": "danger",
         "Política": "warning",
         "Procedimento": "info",
         "Documentos Disponibilizados": "dark",
-        "Outro": "secondary",
+        "Geral / Outros": "secondary",
     };
 
-    // 🟢 Lista com os 3 documentos fixos locais (devem estar na pasta public)
     const fixedDocs = [
         {
             id: "fixed-diretivas",
@@ -188,7 +275,7 @@ function Docs() {
             requestId: null,
             uploadedAt: "2026-06-19",
             isFixed: true,
-            localUrl: "\public\Exemplo inventário p_ CNCS.xlsx"
+            localUrl: "/Exemplo inventário p_ CNCS.xlsx"
         },
         {
             id: "fixed-rgpd",
@@ -196,16 +283,15 @@ function Docs() {
             requestId: null,
             uploadedAt: "2026-06-19",
             isFixed: true,
-            localUrl: "\public\Exemplo Lista Activos _ incidentes.xlsx"
+            localUrl: "/Exemplo Lista Activos _ incidentes.xlsx"
         }
     ];
 
-    // 🟢 Junta os da BD com os 3 locais de forma segura
     const allDocs = Array.isArray(docs) ? [...docs, ...fixedDocs] : [...fixedDocs];
 
     const filtered = filter === "Todos"
         ? allDocs
-        : allDocs.filter(f => inferType(f) === filter);
+        : allDocs.filter(f => getDocType(f) === filter);
 
     return (
         <div className="card p-3">
@@ -215,7 +301,6 @@ function Docs() {
                     Ficheiros e relatórios disponibilizados pela CyberBox para a tua empresa.
                 </p>
 
-                {/* Filtros por tipo */}
                 <div className="d-flex gap-2 flex-wrap">
                     {DOC_TYPES.map(t => (
                         <button key={t}
@@ -249,7 +334,7 @@ function Docs() {
                         </thead>
                         <tbody>
                             {filtered.map(f => {
-                                const docType = inferType(f);
+                                const docType = getDocType(f);
                                 return (
                                     <tr key={f.id}>
                                         <td className="fw-semibold">
@@ -269,7 +354,6 @@ function Docs() {
                                             {f.uploadedAt ? new Date(f.uploadedAt).toLocaleDateString("pt-PT") : "—"}
                                         </td>
                                         <td>
-                                            {/* 🟢 Verifica dinamicamente se o ficheiro atual mapeado é fixo */}
                                             {f.isFixed ? (
                                                 <a
                                                     href={f.localUrl}
@@ -674,9 +758,9 @@ function Requests() {
         const missing = requiredFields.find(k => !formData[k] || formData[k].trim() === "");
         if (missing) { alert("Preenche todos os campos obrigatórios (*)."); return; }
         if (!formData.subject || formData.subject.trim() === "") {
-    alert("Indica o nome do pedido.");
-    return;
-}
+            alert("Indica o nome do pedido.");
+            return;
+        }
 
         setSubmitting(true);
         try {
@@ -696,6 +780,7 @@ function Requests() {
                 multiPartForm.append("subject", formData.subject?.trim());
                 multiPartForm.append("description", formattedDescription);
                 multiPartForm.append("creatorId", Number(activeUserId));
+                multiPartForm.append("userId", Number(activeUserId));
                 multiPartForm.append("file", file);
                 res = await axios.post(`${API}/requests`, multiPartForm, {
                     headers: { "Content-Type": "multipart/form-data" }
@@ -777,18 +862,18 @@ function Requests() {
                                 </button>
                             ))}
                         </div>
-                        
+
                         {currentConfig && (
 
-                                    
+
                             <>
 
-                                
+
 
                                 <div className="row g-3 mb-3">
 
 
-                                    
+
                                     <div className="col-12">
                                         <label className="form-label fw-semibold" style={{ fontSize: 12 }}>
                                             Nome do Pedido *
@@ -908,7 +993,30 @@ function Settings() {
     const [error, setError] = useState("");
     const [submitting, setSubmitting] = useState(false);
 
-    const activeUserId = parseInt(localStorage.getItem("userId")) || 1;
+    // Estado para guardar as informações dinâmicas do utilizador logado
+    const [profile, setProfile] = useState({ name: "", email: "" });
+
+    const activeUserId = localStorage.getItem("userId") || 1;
+
+    // Carrega os dados reais do cliente a partir da BD
+    useEffect(() => {
+        const loadProfile = async () => {
+            try {
+                const res = await axios.get(`${API}/users`);
+                const userId = Number(localStorage.getItem("userId"));
+                const me = res.data.users.find(u => (u.id_Utilizador || u.id) === userId);
+                if (me) {
+                    setProfile({
+                        name: me.name,
+                        email: me.email
+                    });
+                }
+            } catch (err) {
+                console.error("Erro ao carregar perfil:", err);
+            }
+        };
+        loadProfile();
+    }, []);
 
     const checkStrength = (pw) => {
         let score = 0;
@@ -962,17 +1070,20 @@ function Settings() {
     };
 
     return (
-        <div className="d-flex flex-column gap-3" style={{ maxWidth: 680 }}>
+        <div className="d-flex flex-column gap-3 text-start" style={{ maxWidth: 680 }}>
 
-            {/* Perfil */}
+            {/* Perfil Dinâmico */}
             <div className="card p-4">
                 <h6 className="fw-bold mb-1">Informação da Conta</h6>
                 <p className="text-muted small mb-3">Detalhes do teu perfil.</p>
                 <div className="d-flex align-items-center gap-3">
-                    <img src="https://i.pravatar.cc/56" className="rounded-circle" style={{ width: 56, height: 56 }} alt="avatar" />
+                    <div className="rounded-circle bg-dark text-white d-flex align-items-center justify-content-center fw-bold"
+                        style={{ width: 56, height: 56, fontSize: 18 }}>
+                        {(profile.name || "?").substring(0, 2).toUpperCase()}
+                    </div>
                     <div>
-                        <div className="fw-semibold">João Pereira</div>
-                        <div className="text-muted small">TechCorp · joao@techcorp.pt</div>
+                        <div className="fw-semibold">{profile.name || "A carregar..."}</div>
+                        <div className="text-muted small">{profile.email || "—"}</div>
                     </div>
                 </div>
             </div>

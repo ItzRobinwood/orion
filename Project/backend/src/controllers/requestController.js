@@ -156,7 +156,8 @@ const request_create = async (req, res) => {
             subject,
             description,
             assignedToId,
-            subtype
+            subtype,
+            userId
         } = req.body;
 
         if (!requestTypeId || !description) {
@@ -192,17 +193,21 @@ const request_create = async (req, res) => {
         });
 
         // 📌 ficheiro opcional
-        if (req.file) {
+       if (req.file) {
             const base64 = req.file.buffer.toString('base64');
+
+            // 🟢 Escolhe o ID do cliente logado vindo do userId ou creatorId
+            const idDoUtilizador = userId || creatorId;
 
             await RequestFile.create({
                 requestId: newRequest.id,
+                // 🟢 GRAVA O USERID CORRETO NO FICHEIRO INICIAL DO CLIENTE!
+                userId: idDoUtilizador ? Number(idDoUtilizador) : null,
                 fileName: req.file.originalname,
                 filePath: base64,
                 uploadedAt: new Date()
             });
         }
-
         await createLog({
             action: "CREATE",
             entity: "Request",
@@ -227,16 +232,46 @@ const request_create = async (req, res) => {
 };
 
 // ==========================================
-// 5. LISTAR FICHEIROS
+// 5. LISTAR FICHEIROS (GET /api/requests/files) - Ajustado
 // ==========================================
 const request_files_list = async (req, res) => {
     try {
         const files = await RequestFile.findAll({
+            include: [
+                {
+                    model: Request,
+                    include: [{ model: RequestType }] 
+                }
+            ],
             order: [['uploadedAt', 'DESC']]
         });
 
-        return res.json(files);
+        const mappedFiles = files.map(f => {
+            // Pega no nome real vindo da BD (ex: "Pentest", "Report de Incidente")
+            const rawTypeName = f.Request?.RequestType?.name || "Geral / Outros";
+            
+            let finalType = "Geral / Outros";
+            if (rawTypeName === "Pentest") finalType = "Pentest";
+            else if (rawTypeName === "ReportIncident") finalType = "Relatório";
+            else if (rawTypeName === "Documentation") finalType = "Política";
+            else if (rawTypeName === "Technological assets") finalType = "Geral / Outros";
+            else if (rawTypeName === "Others") finalType = "Geral / Outros";
+
+            return {
+                id: f.id,
+                fileName: f.fileName,
+                filePath: f.filePath,
+                uploadedAt: f.uploadedAt,
+                requestId: f.requestId,
+                userId: f.userId,
+                // 🟢 Agora vai super limpo e mastigado para o componente Docs
+                requestType: finalType 
+            };
+        });
+
+        return res.json(mappedFiles);
     } catch (error) {
+        console.error("Erro em request_files_list:", error.message);
         return res.status(500).json({ success: false, message: error.message });
     }
 };
@@ -366,12 +401,13 @@ const request_update_status = async (req, res) => {
 const request_file_upload = async (req, res) => {
     try {
         if (!req.file) return res.status(400).json({ success: false, message: "Ficheiro obrigatório." });
-        const { requestId } = req.body;
+        const { requestId, userId } = req.body;
         if (!requestId) return res.status(400).json({ success: false, message: "requestId obrigatório." });
 
         const base64 = req.file.buffer.toString('base64');
         const file = await RequestFile.create({
             requestId: Number(requestId),
+            userId: userId ? Number(userId) : null,
             fileName: req.file.originalname,
             filePath: base64,
             uploadedAt: new Date()

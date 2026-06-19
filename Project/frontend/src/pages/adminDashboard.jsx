@@ -39,7 +39,16 @@ export default function AdminDashboard() {
                         {item.label}
                     </button>
                 ))}
-                <div className="mt-auto pt-4 small text-secondary">© 2026 CyberBox</div>
+
+                <button
+                    className="btn btn-danger w-100 mb-3"
+                    onClick={() => window.location.href = "/login"}
+                >
+                    Sair
+                </button>
+                <div
+                    className="mt-auto pt-4 small text-secondary">© 2026 CyberBox</div>
+
             </div>
             <div className="flex-grow-1 bg-light p-4 overflow-auto">
                 <div className="d-flex justify-content-between align-items-center mb-4">
@@ -1127,7 +1136,6 @@ function Tickets() {
     const [loading, setLoading] = useState(true);
     const [expandedId, setExpandedId] = useState(null);
     const [messages, setMessages] = useState({});
-    const [replyText, setReplyText] = useState("");
 
     // Estados para o Modal de Atribuição do Admin
     const [assignModalOpen, setAssignModalOpen] = useState(false);
@@ -1135,8 +1143,8 @@ function Tickets() {
     const [managers, setManagers] = useState([]);
 
     const managerId = Number(localStorage.getItem("userId") || 1);
-    
-    // 🌐 Definido o URL base diretamente para evitar o "API is not defined"
+
+    // 🌐 URL do teu Backend
     const BACKEND_URL = "https://orion-dewp.onrender.com/api";
 
     const reloadTickets = async () => {
@@ -1167,10 +1175,10 @@ function Tickets() {
 
     const handleAssign = async (managerId, managerName) => {
         try {
-            await axios.put(`${BACKEND_URL}/questions/${selectedTicketId}/assign`, { 
-                assignedToId: managerId 
+            await axios.put(`${BACKEND_URL}/questions/${selectedTicketId}/assign`, {
+                assignedToId: managerId
             });
-            
+
             setAssignModalOpen(false);
             setSelectedTicketId(null);
             await reloadTickets();
@@ -1190,32 +1198,6 @@ function Tickets() {
             } catch (err) {
                 console.error("Erro ao carregar mensagens:", err);
             }
-        }
-    };
-
-    const handleReply = async (ticketId) => {
-        if (!replyText.trim()) return;
-        try {
-            await axios.post(`${BACKEND_URL}/questions/${ticketId}/reply`, {
-                message: replyText,
-                userId: Number(managerId),
-            });
-            setReplyText("");
-            const res = await axios.get(`${BACKEND_URL}/questions/${ticketId}/messages`);
-            setMessages(prev => ({ ...prev, [ticketId]: res.data.messages || [] }));
-            await reloadTickets();
-        } catch (err) {
-            alert("Erro ao enviar resposta.");
-        }
-    };
-
-    const handleClose = async (id) => {
-        if (!window.confirm("Fechar este ticket?")) return;
-        try {
-            await axios.put(`${BACKEND_URL}/questions/${id}/close`);
-            await reloadTickets();
-        } catch (err) {
-            alert("Erro ao fechar ticket.");
         }
     };
 
@@ -1289,7 +1271,7 @@ function Tickets() {
                                 {/* Conversa expandida */}
                                 {expandedId === t.id && (
                                     <div className="mt-3 border-top pt-3">
-                                        <div className="d-flex flex-column gap-2 mb-3" style={{ maxHeight: 280, overflowY: "auto" }}>
+                                        <div className="d-flex flex-column gap-2 mb-1" style={{ maxHeight: 280, overflowY: "auto" }}>
                                             {(messages[t.id] || []).map(m => {
                                                 const isManager = m.userId === Number(managerId);
                                                 return (
@@ -1302,7 +1284,7 @@ function Tickets() {
                                                             style={{ maxWidth: "70%" }}
                                                         >
                                                             <div className="fw-semibold mb-1" style={{ fontSize: 11, opacity: 0.8 }}>
-                                                                {isManager ? "Eu" : m.sender?.name || "Cliente"}
+                                                                {isManager ? "Gestor" : m.sender?.name || "Cliente"}
                                                             </div>
                                                             {m.message}
                                                             <div className={`mt-1 ${isManager ? "text-white opacity-75" : "text-muted"}`} style={{ fontSize: 10 }}>
@@ -1314,48 +1296,28 @@ function Tickets() {
                                             })}
                                         </div>
 
-                                        {t.status !== "Fechado" && (
-                                            <div className="d-flex gap-2">
-                                                <input
-                                                    className="form-control form-control-sm"
-                                                    placeholder="Escreve uma resposta..."
-                                                    value={replyText}
-                                                    onChange={e => setReplyText(e.target.value)}
-                                                    onKeyDown={e => e.key === "Enter" && handleReply(t.id)}
-                                                />
-                                                <button className="btn btn-sm btn-dark" onClick={() => handleReply(t.id)}>
-                                                    Enviar
-                                                </button>
-                                            </div>
-                                        )}
                                         {t.status === "Fechado" && (
-                                            <div className="alert alert-secondary py-2 small mb-0">🔒 Ticket fechado.</div>
+                                            <div className="alert alert-secondary py-2 small mb-0 mt-2">🔒 Ticket fechado.</div>
                                         )}
                                     </div>
                                 )}
                             </div>
 
-                            {/* Ações */}
+                            {/* Ações do Admin */}
                             <div className="d-flex flex-column gap-1 ms-3">
                                 <button
                                     className="btn btn-sm btn-outline-primary"
                                     onClick={() => handleExpand(t.id)}
                                 >
-                                    {expandedId === t.id ? "Fechar" : "Responder"}
+                                    {expandedId === t.id ? "Fechar" : "Ver Conversa"}
                                 </button>
-                                
+
                                 <button
                                     className="btn btn-sm btn-outline-secondary"
                                     onClick={() => openAssignModal(t.id)}
                                 >
                                     + Atribuir
                                 </button>
-
-                                {t.status !== "Fechado" && (
-                                    <button className="btn btn-sm btn-outline-danger" onClick={() => handleClose(t.id)}>
-                                        Fechar ticket
-                                    </button>
-                                )}
                             </div>
                         </div>
                     </div>
@@ -1666,10 +1628,176 @@ function Requests() {
 }
 
 function Docs() {
+    const [docs, setDocs] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [requests, setRequests] = useState([]);
+    const [filter, setFilter] = useState("Todos");
+
+    // 🌐 URL do teu Backend no Render (igual ao componente Tickets)
+    const BACKEND_URL = "https://orion-dewp.onrender.com/api";
+
+    const DOC_TYPES = ["Todos", "Relatório", "Pentest", "Política", "Procedimento", "Outro"];
+
+    useEffect(() => {
+        fetchDocs();
+        fetchRequests();
+    }, []);
+
+    const fetchDocs = async () => {
+        setLoading(true);
+        try {
+            // Alterado para usar ${BACKEND_URL}
+            const res = await axios.get(`${BACKEND_URL}/requests/files`);
+            const data = res.data?.files || res.data;
+            if (Array.isArray(data)) setDocs(data); 
+        } catch (err) {
+            console.error("Erro ao carregar documentos:", err);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const fetchRequests = async () => {
+        try {
+            // Alterado para usar ${BACKEND_URL}
+            const res = await axios.get(`${BACKEND_URL}/requests`);
+            setRequests(res.data.requests || []); 
+        } catch (err) {
+            console.error("Erro ao carregar pedidos:", err);
+        }
+    };
+
+    const handleDownload = async (fileId, fileName) => {
+        try {
+            const response = await axios({
+                // Alterado para usar ${BACKEND_URL}
+                url: `${BACKEND_URL}/requests/files/download/${fileId}`,
+                method: "GET",
+                responseType: "blob",
+            });
+            const url = window.URL.createObjectURL(new Blob([response.data]));
+            const link = document.createElement("a");
+            link.href = url;
+            link.setAttribute("download", fileName || "documento");
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+        } catch (err) {
+            alert("Não foi possível descarregar o ficheiro.");
+        }
+    };
+
+    const handleDelete = async (fileId) => {
+        if (!window.confirm("Remover este ficheiro do sistema definitivamente?")) return;
+        try {
+            // Alterado para usar ${BACKEND_URL}
+            await axios.delete(`${BACKEND_URL}/requests/files/${fileId}`);
+            await fetchDocs(); 
+        } catch (err) {
+            alert("Erro ao remover ficheiro.");
+        }
+    };
+
+    const inferType = (fileName) => {
+        if (!fileName) return "Outro";
+        const name = fileName.toLowerCase();
+        if (name.includes("relat")) return "Relatório";
+        if (name.includes("pentest")) return "Pentest";
+        if (name.includes("politic")) return "Política";
+        if (name.includes("proced")) return "Procedimento";
+        return "Outro";
+    };
+
+    const typeColor = {
+        "Relatório": "primary", "Pentest": "danger",
+        "Política": "warning", "Procedimento": "info", "Outro": "secondary",
+    };
+
+    const filteredDocs = filter === "Todos" 
+        ? docs 
+        : docs.filter(f => inferType(f.fileName) === filter);
+
     return (
-        <div className="card p-3">
-            <h5>Documentos</h5>
-            <p>Repositório de ficheiros</p>
+        <div className="card p-3 text-start">
+            <div className="mb-3">
+                <h6 className="fw-bold mb-0">Repositório Global de Documentos (Admin)</h6>
+                <p className="text-muted small mb-0">Controlo e auditoria de todos os ficheiros partilhados no sistema.</p>
+            </div>
+
+            {/* Abas de Filtros */}
+            <div className="d-flex gap-2 flex-wrap mb-3">
+                {DOC_TYPES.map(t => (
+                    <button
+                        key={t}
+                        onClick={() => setFilter(t)}
+                        className={`btn btn-sm ${filter === t ? "btn-dark" : "btn-outline-secondary"}`}
+                    >
+                        {t}
+                    </button>
+                ))}
+            </div>
+
+            {loading ? (
+                <p className="text-muted small">A carregar repositório...</p>
+            ) : filteredDocs.length === 0 ? (
+                <div className="text-center text-muted py-5 border rounded bg-white">
+                    <div style={{ fontSize: 32 }}>📂</div>
+                    <p className="mt-2 mb-0">Nenhum documento encontrado no sistema.</p>
+                </div>
+            ) : (
+                <div className="table-responsive">
+                    <table className="table table-hover align-middle mb-0">
+                        <thead className="table-dark">
+                            <tr>
+                                <th>Documento</th>
+                                <th>Tipo</th>
+                                <th>Pedido Associado</th>
+                                <th>Data de Upload</th>
+                                <th>Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {filteredDocs.map(f => {
+                                const matchedRequest = requests.find(r => r.id === f.requestId);
+                                return (
+                                    <tr key={f.id}>
+                                        <td className="fw-semibold">📄 {f.fileName || "Sem nome"}</td>
+                                        <td>
+                                            <span className={`badge bg-${typeColor[inferType(f.fileName)] || "secondary"}`}>
+                                                {inferType(f.fileName)}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <span className="badge bg-light text-dark border">
+                                                #{f.requestId || "—"} {matchedRequest?.company ? `[${matchedRequest.company}]` : ""} {matchedRequest?.subject || ""}
+                                            </span>
+                                        </td>
+                                        <td style={{ fontSize: 13, color: "#6b7280" }}>
+                                            {f.uploadedAt ? new Date(f.uploadedAt).toLocaleDateString("pt-PT") : "—"}
+                                        </td>
+                                        <td>
+                                            <div className="d-flex gap-1">
+                                                <button
+                                                    className="btn btn-sm btn-outline-dark"
+                                                    onClick={() => handleDownload(f.id, f.fileName)}
+                                                >
+                                                    📥 Download
+                                                </button>
+                                                <button
+                                                    className="btn btn-sm btn-outline-danger"
+                                                    onClick={() => handleDelete(f.id)}
+                                                >
+                                                    Remover
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                );
+                            })}
+                        </tbody>
+                    </table>
+                </div>
+            )}
         </div>
     );
 }
