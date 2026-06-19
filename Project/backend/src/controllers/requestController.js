@@ -251,11 +251,11 @@ const request_files_list = async (req, res) => {
             const rawTypeName = f.Request?.RequestType?.name || "Geral / Outros";
             
             let finalType = "Geral / Outros";
-            if (rawTypeName.toLowerCase().includes("pentest")) finalType = "Pentest";
-            else if (rawTypeName.toLowerCase().includes("relatório") || rawTypeName.toLowerCase().includes("report")) finalType = "Relatório";
-            else if (rawTypeName.toLowerCase().includes("document") || rawTypeName.toLowerCase().includes("política")) finalType = "Política";  // 🆕
-            else if (rawTypeName.toLowerCase().includes("procedimento") || rawTypeName.toLowerCase().includes("nis2")) finalType = "Procedimento";
-            else if (rawTypeName.toLowerCase().includes("ativo")) finalType = "Geral / Outros";
+            if (rawTypeName === "Pentest") finalType = "Pentest";
+            else if (rawTypeName === "ReportIncident") finalType = "Relatório";
+            else if (rawTypeName === "Documentation") finalType = "Política";
+            else if (rawTypeName === "Technological assets") finalType = "Geral / Outros";
+            else if (rawTypeName === "Others") finalType = "Geral / Outros";
 
             return {
                 id: f.id,
