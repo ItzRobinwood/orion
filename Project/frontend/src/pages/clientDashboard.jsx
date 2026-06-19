@@ -9,7 +9,6 @@ export default function ClientDashboard() {
 
     const nav = [
         { id: "dashboard", label: "Dashboard" },
-        { id: "report", label: "Avaliação de Risco" },
         { id: "docs", label: "Documentação" },
         { id: "tickets", label: "Tickets" },
         { id: "requests", label: "Pedidos" },
@@ -20,7 +19,6 @@ export default function ClientDashboard() {
     const renderContent = () => {
         switch (active) {
             case "dashboard": return <Dashboard setActive={setActive} />;
-            case "report": return <Report />;
             case "docs": return <Docs />;
             case "tickets": return <Tickets />;
             case "requests": return <Requests />;
@@ -74,7 +72,6 @@ function Dashboard({ setActive }) {
     return (
         <>
             <div className="row g-3 mb-4">
-                <StatCard title="Nível de Risco" value="Médio" color="warning" />
                 <StatCard title="Documentos" value="12" color="primary" />
                 <StatCard title="Pedidos Ativos" value="3" color="info" />
                 <StatCard title="Tickets Abertos" value="1" color="danger" />
@@ -83,7 +80,7 @@ function Dashboard({ setActive }) {
             <div className="row g-3">
                 <div className="col-md-6">
                     <div className="card p-3">
-                        <h6 className="mb-3">Atividade Recente</h6>
+                        <h6 className="mb-3">Registos</h6>
                         <ul className="list-group list-group-flush">
                             <li className="list-group-item d-flex justify-content-between">
                                 <span>Relatório Q1 disponível</span>
@@ -100,92 +97,11 @@ function Dashboard({ setActive }) {
                         </ul>
                     </div>
                 </div>
-                <div className="col-md-6">
-                    <div className="card p-3">
-                        <h6 className="mb-3">Acesso Rápido</h6>
-                        <div className="d-flex flex-column gap-2">
-                            {[
-                                { label: "Ver Avaliação de Risco", tab: "report" },
-                                { label: "Ver Documentos Partilhados", tab: "docs" },
-                                { label: "Abrir Ticket de Suporte", tab: "tickets" },
-                                { label: "Submeter Novo Pedido", tab: "requests" },
-                            ].map(({ label, tab }) => (
-                                <button key={tab} className="btn btn-outline-dark btn-sm text-start"
-                                    onClick={() => setActive(tab)}>
-                                    {label}
-                                </button>
-                            ))}
-                        </div>
-                    </div>
-                </div>
             </div>
         </>
     );
 }
 
-/* ───────────────────────── REPORT ───────────────────────── */
-function Report() {
-    const reports = [
-        { id: 1, title: "Relatório de Risco Q1 2026", date: "01/04/2026", risk: "Médio", score: 62 },
-        { id: 2, title: "Relatório de Risco Q4 2025", date: "01/01/2026", risk: "Alto", score: 78 },
-        { id: 3, title: "Relatório de Risco Q3 2025", date: "01/10/2025", risk: "Baixo", score: 35 },
-    ];
-
-    const riskColor = { Alto: "danger", Médio: "warning", Baixo: "success" };
-
-    return (
-        <>
-            <div className="card p-4 mb-4">
-                <div className="row align-items-center">
-                    <div className="col-md-4 text-center">
-                        <div style={{ fontSize: 64, fontWeight: 700, color: "#ffc107" }}>62</div>
-                        <div className="text-muted" style={{ fontSize: 13 }}>Score de Risco Atual</div>
-                        <span className="badge bg-warning text-dark mt-1">Risco Médio</span>
-                    </div>
-                    <div className="col-md-8">
-                        <h6 className="mb-3">Áreas de Risco</h6>
-                        {[
-                            { label: "Segurança de Rede", value: 70 },
-                            { label: "Gestão de Acessos", value: 55 },
-                            { label: "Proteção de Dados", value: 80 },
-                            { label: "Continuidade de Negócio", value: 45 },
-                        ].map(({ label, value }) => (
-                            <div className="mb-2" key={label}>
-                                <div className="d-flex justify-content-between mb-1" style={{ fontSize: 13 }}>
-                                    <span>{label}</span><span>{value}%</span>
-                                </div>
-                                <div className="progress" style={{ height: 6 }}>
-                                    <div className="progress-bar"
-                                        style={{ width: `${value}%`, background: value > 65 ? "#dc3545" : value > 45 ? "#ffc107" : "#198754" }} />
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                </div>
-            </div>
-
-            <div className="card p-3">
-                <h6 className="mb-3">Histórico de Relatórios</h6>
-                <table className="table">
-                    <thead>
-                        <tr><th>Relatório</th><th>Data</th><th>Risco</th><th>Score</th><th>Ação</th></tr>
-                    </thead>
-                    <tbody>
-                        {reports.map(r => (
-                            <tr key={r.id}>
-                                <td style={{ fontWeight: 600 }}>{r.title}</td>
-                                <td style={{ fontSize: 13, color: "#6b7280" }}>{r.date}</td>
-                                <td><span className={`badge bg-${riskColor[r.risk]}`}>{r.risk}</span></td>
-                                <td>{r.score}</td>
-                                <td><button className="btn btn-sm btn-outline-dark">Download</button></td>
-                            </tr>
-                        ))}
-                    </tbody>
-                </table>
-            </div>
-        </>
-    );
-}
 
 /* ───────────────────────── DOCUMENTAÇÃO ───────────────────────── */
 /* ───────────────────────── DOCUMENTAÇÃO ───────────────────────── */
