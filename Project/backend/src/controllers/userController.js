@@ -1,5 +1,6 @@
 const User = require("../models/User");
 const bcrypt = require("bcryptjs");
+const { createLog } = require('./logsController');
 
 // CRIAR UTILIZADOR
 exports.createUser = async (req, res) => {
@@ -34,15 +35,23 @@ exports.createUser = async (req, res) => {
             password: hashedPassword, // <--- Aqui ele já vai encontrar a variável!
             id_tipo,
             id_empresa: id_empresa || null,
-            telephone, 
+            telephone,
             active: isWithActiveStatus,
+        });
+
+        await createLog({
+            action: "CREATE",
+            entity: "User",
+            details: `Novo utilizador criado: ${newUser.email}`,
+            ip: req.ip,
+            userId: newUser.id_Utilizador
         });
 
         return res.status(201).json({
             success: true,
             message: "Utilizador criado com sucesso.",
             user: {
-                id: newUser.id_Utilizador || newUser.id, 
+                id: newUser.id_Utilizador || newUser.id,
                 id_Utilizador: newUser.id_Utilizador || newUser.id,
                 name: newUser.name,
                 email: newUser.email,
@@ -62,29 +71,29 @@ exports.loginUser = async (req, res) => {
     try {
         const { email, password } = req.body;
 
-        console.log("📧 Email recebido:", email);
-        console.log("🔑 Password recebida:", password);
-
         if (!email || !password) {
             return res.status(400).json({ success: false, message: "Email e palavra-passe são obrigatórios." });
         }
 
         const user = await User.findOne({ where: { email } });
-        console.log("👤 Utilizador encontrado:", user ? "SIM" : "NÃO");
 
         if (!user) {
             return res.status(401).json({ success: false, message: "Credenciais inválidas." });
         }
 
-        console.log("🔐 Active:", user.active);
-        console.log("🔐 Password na BD:", user.password);
-
         const isMatch = await bcrypt.compare(password, user.password);
-        console.log("✅ Password correta:", isMatch);
 
         if (!isMatch) {
             return res.status(401).json({ success: false, message: "Credenciais inválidas." });
         }
+
+        await createLog({
+            action: "LOGIN",
+            entity: "User",
+            details: `Login efetuado por ${user.email}`,
+            ip: req.ip,
+            userId: user.id_Utilizador
+        });
 
         return res.json({
             success: true,
@@ -99,7 +108,6 @@ exports.loginUser = async (req, res) => {
         });
 
     } catch (error) {
-        console.log("❌ ERRO:", error.message);
         return res.status(500).json({ success: false, message: error.message });
     }
 };
@@ -107,10 +115,9 @@ exports.loginUser = async (req, res) => {
 // ATUALIZAR UTILIZADOR
 exports.updateUser = async (req, res) => {
     try {
-        const { id } = req.params; 
-        // 🔴 1. Adicionamos o id_empresa na desestruturação do req.body
+        const { id } = req.params;
         const { name, email, telephone, status, password, newPassword, id_empresa } = req.body;
-        
+
         const user = await User.findOne({ where: { id_Utilizador: id } });
         if (!user) {
             return res.status(404).json({
@@ -181,10 +188,10 @@ exports.getUsers = async (req, res) => {
 //DELETE USER
 exports.deleteUser = async (req, res) => {
     try {
-        const { id } = req.params; 
-        
+        const { id } = req.params;
+
         const user = await User.findOne({ where: { id_Utilizador: id } });
-        
+
         if (!user) {
             return res.status(404).json({ success: false, message: "Utilizador não encontrado." });
         }

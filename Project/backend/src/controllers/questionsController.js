@@ -1,6 +1,7 @@
 const Question = require('../models/questions');
 const MessageQuestion = require('../models/messagesQuestions');
 const User = require('../models/User');
+const { createLog } = require('./logsController');
 
 exports.getQuestions = async (req, res) => {
     try {
@@ -60,6 +61,14 @@ exports.createQuestion = async (req, res) => {
             openedAt: new Date()
         });
 
+        await createLog({
+            action: "CREATE",
+            entity: "Ticket",
+            details: `Novo ticket criado: ${subject}`,
+            ip: req.ip,
+            userId: creatorId || null
+        });
+
         return res.status(201).json({
             success: true,
             message: "Questão criada com sucesso!",
@@ -90,6 +99,14 @@ exports.replyQuestion = async (req, res) => {
             message,
             sentAt: new Date(),
             read: false
+        });
+
+        await createLog({
+            action: "REPLY",
+            entity: "Ticket",
+            details: `Resposta ao ticket #${id}`,
+            ip: req.ip,
+            userId: userId || null
         });
 
         return res.status(201).json({
