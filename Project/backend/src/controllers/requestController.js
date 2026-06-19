@@ -156,7 +156,8 @@ const request_create = async (req, res) => {
             subject,
             description,
             assignedToId,
-            subtype
+            subtype,
+            userId
         } = req.body;
 
         if (!requestTypeId || !description) {
@@ -192,17 +193,21 @@ const request_create = async (req, res) => {
         });
 
         // 📌 ficheiro opcional
-        if (req.file) {
+       if (req.file) {
             const base64 = req.file.buffer.toString('base64');
+
+            // 🟢 Escolhe o ID do cliente logado vindo do userId ou creatorId
+            const idDoUtilizador = userId || creatorId;
 
             await RequestFile.create({
                 requestId: newRequest.id,
+                // 🟢 GRAVA O USERID CORRETO NO FICHEIRO INICIAL DO CLIENTE!
+                userId: idDoUtilizador ? Number(idDoUtilizador) : null,
                 fileName: req.file.originalname,
                 filePath: base64,
                 uploadedAt: new Date()
             });
         }
-
         await createLog({
             action: "CREATE",
             entity: "Request",
@@ -366,7 +371,7 @@ const request_update_status = async (req, res) => {
 const request_file_upload = async (req, res) => {
     try {
         if (!req.file) return res.status(400).json({ success: false, message: "Ficheiro obrigatório." });
-        const { requestId } = req.body;
+        const { requestId, userId } = req.body;
         if (!requestId) return res.status(400).json({ success: false, message: "requestId obrigatório." });
 
         const base64 = req.file.buffer.toString('base64');
