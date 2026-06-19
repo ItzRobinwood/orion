@@ -14,7 +14,7 @@ exports.getQuestions = async (req, res) => {
                     order: [['sentAt', 'ASC']] 
                 },
                 { model: User, as: 'creator', attributes: ['name', 'email'] },
-                { model: User, as: 'assignedTo', attributes: ['id', 'name'] } // ✅ Adicionado 'id' aqui para garantir que o Sequelize o traz da BD
+                { model: User, as: 'assignedTo', attributes: ['id_Utilizador', 'name'] }
             ],
             order: [['openedAt', 'DESC']]
         });
@@ -33,7 +33,9 @@ exports.getQuestions = async (req, res) => {
                 status: q.messages?.length > 0 ? "Respondido" : "Pendente",
                 createdBy: q.creator?.name || "Cliente",
                 assignedTo: q.assignedTo?.name || "Sem atribuição",
-                assignedToId: q.assignedTo?.id || null, // ✅ RETORNA O ID AQUI (vai como número se o ID for numérico)
+                
+                assignedToId: q.assignedTo ? (q.assignedTo.id_Utilizador || q.assignedTo.id) : q.assignedToId, 
+
                 messagesCount: q.messages?.length || 0,
                 lastReply: lastReply
                     ? `${lastReply.sender?.name || "?"}: ${lastReply.message}`
@@ -43,10 +45,11 @@ exports.getQuestions = async (req, res) => {
 
         return res.json({ success: true, questions: mappedQuestions });
     } catch (error) {
-        console.error("Erro em getQuestions:", error.message);
+        console.error("Erro detalhado em getQuestions:", error.message);
         return res.status(500).json({ success: false, message: error.message });
     }
 };
+
 exports.createQuestion = async (req, res) => {
     try {
         const { subject, creatorId } = req.body;
