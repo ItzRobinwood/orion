@@ -665,9 +665,18 @@ function Requests() {
     const handleSubmit = async () => {
         if (!typeId) { alert("Seleciona o tipo de pedido."); return; }
 
-        const requiredFields = currentConfig.fields.filter(f => f.label.includes("*")).map(f => f.key);
+        const requiredFields = [
+            "subject",
+            ...currentConfig.fields
+                .filter(f => f.label.includes("*"))
+                .map(f => f.key)
+        ];
         const missing = requiredFields.find(k => !formData[k] || formData[k].trim() === "");
         if (missing) { alert("Preenche todos os campos obrigatórios (*)."); return; }
+        if (!formData.subject || formData.subject.trim() === "") {
+    alert("Indica o nome do pedido.");
+    return;
+}
 
         setSubmitting(true);
         try {
@@ -684,7 +693,7 @@ function Requests() {
             if (file) {
                 const multiPartForm = new FormData();
                 multiPartForm.append("requestTypeId", Number(typeId));
-                multiPartForm.append("subject", currentConfig.label.substring(0, 200));
+                multiPartForm.append("subject", formData.subject?.trim());
                 multiPartForm.append("description", formattedDescription);
                 multiPartForm.append("creatorId", Number(activeUserId));
                 multiPartForm.append("file", file);
@@ -694,7 +703,7 @@ function Requests() {
             } else {
                 res = await axios.post(`${API}/requests`, {
                     requestTypeId: Number(typeId),
-                    subject: currentConfig.label.substring(0, 200),
+                    subject: formData.subject,
                     description: formattedDescription,
                     creatorId: Number(activeUserId),
                 });
@@ -768,10 +777,33 @@ function Requests() {
                                 </button>
                             ))}
                         </div>
-
+                        
                         {currentConfig && (
+
+                                    
                             <>
+
+                                
+
                                 <div className="row g-3 mb-3">
+
+
+                                    
+                                    <div className="col-12">
+                                        <label className="form-label fw-semibold" style={{ fontSize: 12 }}>
+                                            Nome do Pedido *
+                                        </label>
+
+                                        <input
+                                            type="text"
+                                            className="form-control form-control-sm"
+                                            placeholder="Ex: Pentest Aplicação Web"
+                                            value={formData.subject || ""}
+                                            onChange={e => handleField("subject", e.target.value)}
+                                        />
+                                    </div>
+
+
                                     {currentConfig.fields.map(field => (
                                         <div key={field.key} className={field.type === "textarea" ? "col-12" : "col-md-6"}>
                                             <label className="form-label fw-semibold" style={{ fontSize: 12 }}>{field.label}</label>
