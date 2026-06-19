@@ -19,7 +19,7 @@ const Logs = sequelize.define("Logs", {
   },
 
   details: {
-    type: DataTypes.STRING,
+    type: DataTypes.TEXT,
     allowNull: true,
   },
 
@@ -29,7 +29,7 @@ const Logs = sequelize.define("Logs", {
   },
 
   ip : {
-    type: DataTypes.STRING,
+    type: DataTypes.STRING(45),
     allowNull: false,
   },
 }, {
