@@ -20,6 +20,8 @@ export default function ClientDashboard() {
         { id: "requests", label: "Pedidos" },
         { id: "settings", label: "Configurações" },
 
+
+
     ];
 
     const renderContent = () => {
@@ -47,17 +49,20 @@ export default function ClientDashboard() {
                         {item.label}
                     </button>
                 ))}
-                <div className="mt-auto pt-4">
-                    <div className="d-flex align-items-center gap-2 mb-2">
-                        <img src="https://i.pravatar.cc/32" className="rounded-circle" alt="cliente" />
-                        <div>
-                            <div className="small text-white fw-semibold">João Pereira</div>
-                            <div className="small text-secondary">TechCorp</div>
-                        </div>
-                    </div>
+                
+                    <div>
+
+                    <button
+                        className="btn btn-danger w-100 mb-3"
+                        onClick={() => window.location.href = "/"}
+                    >
+                        Sair
+                    </button>
+
                     <small className="text-secondary">© 2026 CyberBox</small>
                 </div>
             </div>
+
 
             <div className="flex-grow-1 bg-light p-4 overflow-auto">
                 <div className="d-flex justify-content-between align-items-center mb-4">
@@ -83,7 +88,7 @@ function Dashboard({ setActive, user }) {
     useEffect(() => {
         if (!user?.id) return;
 
-        
+
         async function fetchLogs() {
             try {
                 setLoading(true);
@@ -730,9 +735,9 @@ function Requests() {
         const missing = requiredFields.find(k => !formData[k] || formData[k].trim() === "");
         if (missing) { alert("Preenche todos os campos obrigatórios (*)."); return; }
         if (!formData.subject || formData.subject.trim() === "") {
-    alert("Indica o nome do pedido.");
-    return;
-}
+            alert("Indica o nome do pedido.");
+            return;
+        }
 
         setSubmitting(true);
         try {
@@ -834,18 +839,18 @@ function Requests() {
                                 </button>
                             ))}
                         </div>
-                        
+
                         {currentConfig && (
 
-                                    
+
                             <>
 
-                                
+
 
                                 <div className="row g-3 mb-3">
 
 
-                                    
+
                                     <div className="col-12">
                                         <label className="form-label fw-semibold" style={{ fontSize: 12 }}>
                                             Nome do Pedido *
@@ -1049,8 +1054,8 @@ function Settings() {
                 <h6 className="fw-bold mb-1">Informação da Conta</h6>
                 <p className="text-muted small mb-3">Detalhes do teu perfil.</p>
                 <div className="d-flex align-items-center gap-3">
-                    <div className="rounded-circle bg-dark text-white d-flex align-items-center justify-content-center fw-bold" 
-                         style={{ width: 56, height: 56, fontSize: 18 }}>
+                    <div className="rounded-circle bg-dark text-white d-flex align-items-center justify-content-center fw-bold"
+                        style={{ width: 56, height: 56, fontSize: 18 }}>
                         {(profile.name || "?").substring(0, 2).toUpperCase()}
                     </div>
                     <div>
