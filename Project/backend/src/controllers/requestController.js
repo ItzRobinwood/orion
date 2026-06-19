@@ -126,9 +126,6 @@ const request_detail = async (req, res) => {
 // ==========================================
 // 4. CRIAR PEDIDO
 // ==========================================
-console.log("subject length:", (subject || "Pedido").length);
-console.log("description length:", description?.length);
-
 const request_create = async (req, res) => {
     try {
         if (!req.body || Object.keys(req.body).length === 0) {
@@ -161,6 +158,9 @@ const request_create = async (req, res) => {
                 message: 'Tipo inválido.'
             });
         }
+
+        console.log("subject length:", (subject || "Pedido").length);
+        console.log("description length:", description?.length);
 
         const newRequest = await Request.create({
             requestTypeId: Number(requestTypeId),
