@@ -951,7 +951,30 @@ function Settings() {
     const [error, setError] = useState("");
     const [submitting, setSubmitting] = useState(false);
 
-    const activeUserId = parseInt(localStorage.getItem("userId")) || 1;
+    // Estado para guardar as informações dinâmicas do utilizador logado
+    const [profile, setProfile] = useState({ name: "", email: "" });
+
+    const activeUserId = localStorage.getItem("userId") || 1;
+
+    // Carrega os dados reais do cliente a partir da BD
+    useEffect(() => {
+        const loadProfile = async () => {
+            try {
+                const res = await axios.get(`${API}/users`);
+                const userId = Number(localStorage.getItem("userId"));
+                const me = res.data.users.find(u => (u.id_Utilizador || u.id) === userId);
+                if (me) {
+                    setProfile({
+                        name: me.name,
+                        email: me.email
+                    });
+                }
+            } catch (err) {
+                console.error("Erro ao carregar perfil:", err);
+            }
+        };
+        loadProfile();
+    }, []);
 
     const checkStrength = (pw) => {
         let score = 0;
@@ -1005,17 +1028,20 @@ function Settings() {
     };
 
     return (
-        <div className="d-flex flex-column gap-3" style={{ maxWidth: 680 }}>
+        <div className="d-flex flex-column gap-3 text-start" style={{ maxWidth: 680 }}>
 
-            {/* Perfil */}
+            {/* Perfil Dinâmico */}
             <div className="card p-4">
                 <h6 className="fw-bold mb-1">Informação da Conta</h6>
                 <p className="text-muted small mb-3">Detalhes do teu perfil.</p>
                 <div className="d-flex align-items-center gap-3">
-                    <img src="https://i.pravatar.cc/56" className="rounded-circle" style={{ width: 56, height: 56 }} alt="avatar" />
+                    <div className="rounded-circle bg-dark text-white d-flex align-items-center justify-content-center fw-bold" 
+                         style={{ width: 56, height: 56, fontSize: 18 }}>
+                        {(profile.name || "?").substring(0, 2).toUpperCase()}
+                    </div>
                     <div>
-                        <div className="fw-semibold">João Pereira</div>
-                        <div className="text-muted small">TechCorp · joao@techcorp.pt</div>
+                        <div className="fw-semibold">{profile.name || "A carregar..."}</div>
+                        <div className="text-muted small">{profile.email || "—"}</div>
                     </div>
                 </div>
             </div>
