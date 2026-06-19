@@ -1127,7 +1127,6 @@ function Tickets() {
     const [loading, setLoading] = useState(true);
     const [expandedId, setExpandedId] = useState(null);
     const [messages, setMessages] = useState({});
-    const [replyText, setReplyText] = useState("");
 
     // Estados para o Modal de Atribuição do Admin
     const [assignModalOpen, setAssignModalOpen] = useState(false);
@@ -1136,7 +1135,7 @@ function Tickets() {
 
     const managerId = Number(localStorage.getItem("userId") || 1);
     
-    // 🌐 Definido o URL base diretamente para evitar o "API is not defined"
+    // 🌐 URL do teu Backend
     const BACKEND_URL = "https://orion-dewp.onrender.com/api";
 
     const reloadTickets = async () => {
@@ -1190,32 +1189,6 @@ function Tickets() {
             } catch (err) {
                 console.error("Erro ao carregar mensagens:", err);
             }
-        }
-    };
-
-    const handleReply = async (ticketId) => {
-        if (!replyText.trim()) return;
-        try {
-            await axios.post(`${BACKEND_URL}/questions/${ticketId}/reply`, {
-                message: replyText,
-                userId: Number(managerId),
-            });
-            setReplyText("");
-            const res = await axios.get(`${BACKEND_URL}/questions/${ticketId}/messages`);
-            setMessages(prev => ({ ...prev, [ticketId]: res.data.messages || [] }));
-            await reloadTickets();
-        } catch (err) {
-            alert("Erro ao enviar resposta.");
-        }
-    };
-
-    const handleClose = async (id) => {
-        if (!window.confirm("Fechar este ticket?")) return;
-        try {
-            await axios.put(`${BACKEND_URL}/questions/${id}/close`);
-            await reloadTickets();
-        } catch (err) {
-            alert("Erro ao fechar ticket.");
         }
     };
 
@@ -1289,7 +1262,7 @@ function Tickets() {
                                 {/* Conversa expandida */}
                                 {expandedId === t.id && (
                                     <div className="mt-3 border-top pt-3">
-                                        <div className="d-flex flex-column gap-2 mb-3" style={{ maxHeight: 280, overflowY: "auto" }}>
+                                        <div className="d-flex flex-column gap-2 mb-1" style={{ maxHeight: 280, overflowY: "auto" }}>
                                             {(messages[t.id] || []).map(m => {
                                                 const isManager = m.userId === Number(managerId);
                                                 return (
@@ -1302,7 +1275,7 @@ function Tickets() {
                                                             style={{ maxWidth: "70%" }}
                                                         >
                                                             <div className="fw-semibold mb-1" style={{ fontSize: 11, opacity: 0.8 }}>
-                                                                {isManager ? "Eu" : m.sender?.name || "Cliente"}
+                                                                {isManager ? "Gestor" : m.sender?.name || "Cliente"}
                                                             </div>
                                                             {m.message}
                                                             <div className={`mt-1 ${isManager ? "text-white opacity-75" : "text-muted"}`} style={{ fontSize: 10 }}>
@@ -1313,35 +1286,21 @@ function Tickets() {
                                                 );
                                             })}
                                         </div>
-
-                                        {t.status !== "Fechado" && (
-                                            <div className="d-flex gap-2">
-                                                <input
-                                                    className="form-control form-control-sm"
-                                                    placeholder="Escreve uma resposta..."
-                                                    value={replyText}
-                                                    onChange={e => setReplyText(e.target.value)}
-                                                    onKeyDown={e => e.key === "Enter" && handleReply(t.id)}
-                                                />
-                                                <button className="btn btn-sm btn-dark" onClick={() => handleReply(t.id)}>
-                                                    Enviar
-                                                </button>
-                                            </div>
-                                        )}
+                                        
                                         {t.status === "Fechado" && (
-                                            <div className="alert alert-secondary py-2 small mb-0">🔒 Ticket fechado.</div>
+                                            <div className="alert alert-secondary py-2 small mb-0 mt-2">🔒 Ticket fechado.</div>
                                         )}
                                     </div>
                                 )}
                             </div>
 
-                            {/* Ações */}
+                            {/* Ações do Admin */}
                             <div className="d-flex flex-column gap-1 ms-3">
                                 <button
                                     className="btn btn-sm btn-outline-primary"
                                     onClick={() => handleExpand(t.id)}
                                 >
-                                    {expandedId === t.id ? "Fechar" : "Responder"}
+                                    {expandedId === t.id ? "Fechar" : "Ver Conversa"}
                                 </button>
                                 
                                 <button
@@ -1350,12 +1309,6 @@ function Tickets() {
                                 >
                                     + Atribuir
                                 </button>
-
-                                {t.status !== "Fechado" && (
-                                    <button className="btn btn-sm btn-outline-danger" onClick={() => handleClose(t.id)}>
-                                        Fechar ticket
-                                    </button>
-                                )}
                             </div>
                         </div>
                     </div>
