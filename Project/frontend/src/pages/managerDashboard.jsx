@@ -535,7 +535,7 @@ function Requests() {
     const [filter, setFilter] = useState("Todos");
     const [loading, setLoading] = useState(true);
     const [expandedId, setExpandedId] = useState(null);
-
+    const [requestFiles, setRequestFiles] = useState({});
     const managerId = Number(localStorage.getItem("userId") || 1);
 
     const STATUS_LABELS = { in_progress: "Em Execução", closed: "Concluído" };
@@ -571,6 +571,19 @@ function Requests() {
             await reloadRequests();
         } catch (err) {
             alert("Erro ao alterar estado: " + (err.response?.data?.message || err.message));
+        }
+    };
+
+    const fetchFiles = async (requestId) => {
+        try {
+            const res = await axios.get(`${API}/requests/${requestId}/files`);
+
+            setRequestFiles(prev => ({
+                ...prev,
+                [requestId]: res.data || []
+            }));
+        } catch (err) {
+            console.error("Erro ao carregar ficheiros", err);
         }
     };
 
@@ -668,7 +681,30 @@ function Requests() {
                                 </div>
                                 {expandedId === r.id && r.description && (
                                     <div className="mt-2 p-2 bg-light rounded border small text-muted">
-                                        {r.description}
+
+                                        <div className="mb-2">
+                                            {r.description}
+                                        </div>
+
+                                        {(requestFiles[r.id] || []).length > 0 && (
+                                            <div className="border-top pt-2 mt-2">
+                                                <div className="fw-semibold mb-2">📎 Documentos recebidos</div>
+
+                                                {(requestFiles[r.id] || []).map(f => (
+                                                    <div key={f.id} className="d-flex justify-content-between align-items-center mb-1">
+                                                        <span>📄 {f.fileName}</span>
+
+                                                        <a
+                                                            href={`${API}/requests/files/download/${f.id}`}
+                                                            className="btn btn-sm btn-outline-dark"
+                                                        >
+                                                            Ver / Download
+                                                        </a>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        )}
+
                                     </div>
                                 )}
                             </div>
@@ -689,7 +725,14 @@ function Requests() {
                                 <button
                                     className="btn btn-sm btn-outline-secondary"
                                     style={{ fontSize: 12 }}
-                                    onClick={() => setExpandedId(expandedId === r.id ? null : r.id)}
+                                    onClick={() => {
+                                        const opening = expandedId !== r.id;
+                                        setExpandedId(opening ? r.id : null);
+
+                                        if (opening) {
+                                            fetchFiles(r.id);
+                                        }
+                                    }}
                                 >
                                     {expandedId === r.id ? "Fechar detalhe" : "Ver detalhe"}
                                 </button>
@@ -711,7 +754,8 @@ function Tickets() {
     const [messages, setMessages] = useState({});
     const [replyText, setReplyText] = useState("");
 
-    const managerId = localStorage.getItem("userId") || 1;
+    // Alterado para garantir que é tratado como Number em toda a parte
+    const managerId = Number(localStorage.getItem("userId") || 1);
 
     const reloadTickets = async () => {
         setLoading(true);
@@ -745,7 +789,7 @@ function Tickets() {
         try {
             await axios.post(`${API}/questions/${ticketId}/reply`, {
                 message: replyText,
-                userId: Number(managerId),
+                userId: managerId, // já está tipado como Number acima
             });
             setReplyText("");
             const res = await axios.get(`${API}/questions/${ticketId}/messages`);
@@ -768,18 +812,22 @@ function Tickets() {
 
     const STATUS_COLOR = { "Pendente": "warning", "Respondido": "success", "Fechado": "secondary" };
 
-    const filtered = filter === "Todos" ? tickets : tickets.filter(t => t.status === filter);
+    // 1️⃣ Primeiro: Filtra apenas os tickets atribuídos a este manager
+    const visibleTickets = tickets.filter(t => t.assignedToId === managerId);
+
+    // 2️⃣ Segundo: Aplica o filtro da Tab ("Todos", "Pendente", etc.) sobre os tickets visíveis
+    const filtered = filter === "Todos" ? visibleTickets : visibleTickets.filter(t => t.status === filter);
 
     if (loading) return <div className="text-center my-5"><p className="text-muted">A carregar tickets...</p></div>;
 
     return (
         <div className="d-flex flex-column gap-3">
-            {/* Contadores */}
+            {/* Contadores (atualizados para refletir apenas os tickets do manager logado) */}
             <div className="row g-3 mb-1">
                 {[
-                    { label: "Total", value: tickets.length, color: "dark" },
-                    { label: "Pendentes", value: tickets.filter(t => t.status === "Pendente").length, color: "warning" },
-                    { label: "Respondidos", value: tickets.filter(t => t.status === "Respondido").length, color: "success" },
+                    { label: "Total", value: visibleTickets.length, color: "dark" },
+                    { label: "Pendentes", value: visibleTickets.filter(t => t.status === "Pendente").length, color: "warning" },
+                    { label: "Respondidos", value: visibleTickets.filter(t => t.status === "Respondido").length, color: "success" },
                 ].map(s => (
                     <div className="col" key={s.label}>
                         <div className="card p-3 text-center">
@@ -838,7 +886,7 @@ function Tickets() {
                                     <div className="mt-3 border-top pt-3">
                                         <div className="d-flex flex-column gap-2 mb-3" style={{ maxHeight: 280, overflowY: "auto" }}>
                                             {(messages[t.id] || []).map(m => {
-                                                const isManager = m.userId === Number(managerId);
+                                                const isManager = m.userId === managerId;
                                                 return (
                                                     <div
                                                         key={m.id}
@@ -917,6 +965,9 @@ function Docs() {
     const [showForm, setShowForm] = useState(false);
     const [filter, setFilter] = useState("Todos");
 
+    // 🔑 Captura o ID do gestor logado que guardou no componente Login
+    const loggedInUserId = localStorage.getItem("userId") ? Number(localStorage.getItem("userId")) : null;
+
     const DOC_TYPES = ["Todos", "Relatório", "Pentest", "Política", "Procedimento", "Outro"];
 
     useEffect(() => {
@@ -929,6 +980,8 @@ function Docs() {
         try {
             const res = await axios.get(`${API}/requests/files`);
             const data = res.data?.files || res.data;
+
+            console.log("Ficheiros vindos do Backend:", data);
             if (Array.isArray(data)) setDocs(data);
         } catch (err) {
             console.error("Erro ao carregar documentos:", err);
@@ -956,6 +1009,12 @@ function Docs() {
             const fd = new FormData();
             fd.append("file", form.file);
             fd.append("requestId", form.requestId);
+            
+            // 🟢 GARANTIA: Envia também o userId do gestor para ficar registado na Base de Dados
+            if (loggedInUserId) {
+                fd.append("userId", loggedInUserId);
+            }
+
             await axios.post(`${API}/requests/files/upload`, fd, {
                 headers: { "Content-Type": "multipart/form-data" },
             });
@@ -1013,7 +1072,15 @@ function Docs() {
         "Política": "warning", "Procedimento": "info", "Outro": "secondary",
     };
 
-    const filteredDocs = filter === "Todos" ? docs : docs.filter(f => inferType(f.fileName) === filter);
+    // 🟢 FILTRAGEM DUPLA: Primeiro apenas os docs do utilizador atual, depois pelo tipo selecionado
+    const filteredDocs = docs.filter(f => {
+    // Se o ficheiro não tem userId, ignora
+    if (!f.userId) return false;
+    
+    // Compara ambos convertidos para String para evitar erros de tipo (ex: 11 vs "11")
+    return String(f.userId) === String(loggedInUserId);
+});
+
 
     return (
         <div className="card p-3">
@@ -1055,7 +1122,8 @@ function Docs() {
                                 type="file"
                                 className="form-control form-control-sm"
                                 onChange={e => setForm(prev => ({ ...prev, file: e.target.files[0] }))}
-                            />
+                            >
+                            </input>
                             {form.file && <small className="text-success mt-1 d-block">📎 {form.file.name}</small>}
                         </div>
                         <div className="col-md-2 d-flex align-items-end">
@@ -1089,7 +1157,7 @@ function Docs() {
             ) : filteredDocs.length === 0 ? (
                 <div className="text-center text-muted py-5 border rounded">
                     <div style={{ fontSize: 32 }}>📂</div>
-                    <p className="mt-2 mb-0">Nenhum documento disponível.</p>
+                    <p className="mt-2 mb-0">Nenhum documento disponível para a sua conta.</p>
                 </div>
             ) : (
                 <div className="table-responsive">
