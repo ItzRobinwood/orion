@@ -140,12 +140,23 @@ exports.closeQuestion = async (req, res) => {
 exports.getMessages = async (req, res) => {
     try {
         const { id } = req.params;
+
         const messages = await MessageQuestion.findAll({
             where: { questionId: id },
-            include: [{ model: User, as: 'sender', attributes: ['name'] }],
+            include: [{ model: User, as: 'sender', attributes: ['name', 'id_tipo'] }],
             order: [['sentAt', 'ASC']]
         });
-        return res.json({ success: true, messages });
+
+        const mapped = messages.map(m => ({
+            id: m.id,
+            message: m.message,
+            sentAt: m.sentAt,
+            read: m.read,
+            isManager: m.sender?.id_tipo === 2,
+            sender: { name: m.sender?.name || "?" }
+        }));
+
+        return res.json({ success: true, messages: mapped });
     } catch (error) {
         return res.status(500).json({ success: false, message: error.message });
     }
