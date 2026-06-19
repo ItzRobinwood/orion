@@ -232,16 +232,46 @@ const request_create = async (req, res) => {
 };
 
 // ==========================================
-// 5. LISTAR FICHEIROS
+// 5. LISTAR FICHEIROS (GET /api/requests/files) - Ajustado
 // ==========================================
 const request_files_list = async (req, res) => {
     try {
         const files = await RequestFile.findAll({
+            include: [
+                {
+                    model: Request,
+                    include: [{ model: RequestType }] 
+                }
+            ],
             order: [['uploadedAt', 'DESC']]
         });
 
-        return res.json(files);
+        const mappedFiles = files.map(f => {
+            // Pega no nome real vindo da BD (ex: "Pentest", "Report de Incidente")
+            const rawTypeName = f.Request?.RequestType?.name || "Geral / Outros";
+            
+            // 🟢 Normaliza os nomes aqui para garantir que o Frontend os entende perfeitamente
+            let finalType = "Geral / Outros";
+            if (rawTypeName.toLowerCase().includes("pentest")) finalType = "Pentest";
+            else if (rawTypeName.toLowerCase().includes("relatório") || rawTypeName.toLowerCase().includes("report")) finalType = "Relatório";
+            else if (rawTypeName.toLowerCase().includes("política")) finalType = "Política";
+            else if (rawTypeName.toLowerCase().includes("procedimento") || rawTypeName.toLowerCase().includes("nis2")) finalType = "Procedimento";
+
+            return {
+                id: f.id,
+                fileName: f.fileName,
+                filePath: f.filePath,
+                uploadedAt: f.uploadedAt,
+                requestId: f.requestId,
+                userId: f.userId,
+                // 🟢 Agora vai super limpo e mastigado para o componente Docs
+                requestType: finalType 
+            };
+        });
+
+        return res.json(mappedFiles);
     } catch (error) {
+        console.error("Erro em request_files_list:", error.message);
         return res.status(500).json({ success: false, message: error.message });
     }
 };
