@@ -118,11 +118,6 @@ function Login() {
                                 />
                             </div>
 
-                            <div className="text-end mb-3">
-                                <a href="#" className="text-decoration-none forgot-password">
-                                    Esqueceu a palavra-passe?
-                                </a>
-                            </div>
 
                             <button
                                 type="submit"
@@ -134,12 +129,18 @@ function Login() {
                         </form>
 
                         <p className="text-center mt-3 text-muted register-text">
-                            Não tem conta?
-                            <a href="#" className="text-decoration-none">
-                                {' '}Fale connosco
+                            Não tem conta?{' '}
+                            <a
+                                href="#"
+                                className="text-decoration-none"
+                                onClick={(e) => {
+                                    e.preventDefault(); // Previne o comportamento padrão do '#'
+                                    navigate('/contacts'); // 🟢 Substitui pelo caminho da tua página
+                                }}
+                            >
+                                Fale connosco
                             </a>
                         </p>
-
                     </div>
                 </div>
 
