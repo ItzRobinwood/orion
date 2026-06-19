@@ -14,9 +14,10 @@ router.put("/users/:id", controller.updateUser);
 // Listar utilizadores
 router.get("/users", controller.getUsers);
 
-// Rotas a implementar futuramente:
-// router.get("/users/:id", controller.getUserById);
 //Deletar utilizador
 router.delete("/users/:id", controller.deleteUser);
+
+//Alterar password
+router.put("/users/:id/password", controller.changePassword);
  
 module.exports = router;

@@ -1155,7 +1155,26 @@ function Settings() {
     const [error, setError] = useState("");
     const [submitting, setSubmitting] = useState(false);
 
+    const [profile, setProfile] = useState({ name: "", email: "" });
+
     const activeUserId = localStorage.getItem("userId") || 1;
+
+    useEffect(() => {
+        const loadProfile = async () => {
+            try {
+                const res = await axios.get(`${API}/users`);
+                const userId = Number(localStorage.getItem("userId"));
+                const me = res.data.users.find(u => u.id_Utilizador === userId);
+                if (me) setProfile({
+                    name: me.name,
+                    email: me.email
+                });
+            } catch (err) {
+                console.error("Erro ao carregar perfil:", err);
+            }
+        };
+        loadProfile();
+    }, []);
 
     const checkStrength = (pw) => {
         let score = 0;
@@ -1218,8 +1237,8 @@ function Settings() {
                 <div className="d-flex align-items-center gap-3">
                     <img src="https://i.pravatar.cc/56" className="rounded-circle" style={{ width: 56, height: 56 }} alt="avatar" />
                     <div>
-                        <div className="fw-semibold">João Pereira</div>
-                        <div className="text-muted small">TechCorp · joao@techcorp.pt</div>
+                        <div className="fw-semibold">{profile.name || "—"}</div>
+                        <div className="text-muted small">{profile.email || "—"}</div>
                     </div>
                 </div>
             </div>

@@ -204,3 +204,29 @@ exports.deleteUser = async (req, res) => {
         return res.status(500).json({ success: false, message: error.message });
     }
 };
+
+// CHANGE PASSWORD
+exports.changePassword = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { currentPassword, newPassword } = req.body;
+
+        const user = await User.findOne({ where: { id_Utilizador: id } });
+        if (!user) {
+            return res.status(404).json({ success: false, message: "Utilizador não encontrado." });
+        }
+
+        const isMatch = await bcrypt.compare(currentPassword, user.password);
+        if (!isMatch) {
+            return res.status(401).json({ success: false, message: "A palavra-passe atual está incorreta." });
+        }
+
+        const hashedPassword = await bcrypt.hash(newPassword, 10);
+        await User.update({ password: hashedPassword }, { where: { id_Utilizador: id } });
+
+        return res.json({ success: true, message: "Palavra-passe alterada com sucesso." });
+
+    } catch (error) {
+        return res.status(500).json({ success: false, message: error.message });
+    }
+};
