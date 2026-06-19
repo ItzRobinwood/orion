@@ -1624,6 +1624,9 @@ function Docs() {
     const [requests, setRequests] = useState([]);
     const [filter, setFilter] = useState("Todos");
 
+    // 🌐 URL do teu Backend no Render (igual ao componente Tickets)
+    const BACKEND_URL = "https://orion-dewp.onrender.com/api";
+
     const DOC_TYPES = ["Todos", "Relatório", "Pentest", "Política", "Procedimento", "Outro"];
 
     useEffect(() => {
@@ -1634,9 +1637,10 @@ function Docs() {
     const fetchDocs = async () => {
         setLoading(true);
         try {
-            const res = await axios.get(`${API}/requests/files`);
+            // Alterado para usar ${BACKEND_URL}
+            const res = await axios.get(`${BACKEND_URL}/requests/files`);
             const data = res.data?.files || res.data;
-            if (Array.isArray(data)) setDocs(data); // 👑 ADMIN VÊ TUDO: Lista todos os ficheiros globais do sistema
+            if (Array.isArray(data)) setDocs(data); 
         } catch (err) {
             console.error("Erro ao carregar documentos:", err);
         } finally {
@@ -1646,8 +1650,9 @@ function Docs() {
 
     const fetchRequests = async () => {
         try {
-            const res = await axios.get(`${API}/requests`);
-            setRequests(res.data.requests || []); // Carrega os dados dos pedidos apenas para mapear os nomes das empresas/assuntos
+            // Alterado para usar ${BACKEND_URL}
+            const res = await axios.get(`${BACKEND_URL}/requests`);
+            setRequests(res.data.requests || []); 
         } catch (err) {
             console.error("Erro ao carregar pedidos:", err);
         }
@@ -1656,7 +1661,8 @@ function Docs() {
     const handleDownload = async (fileId, fileName) => {
         try {
             const response = await axios({
-                url: `${API}/requests/files/download/${fileId}`,
+                // Alterado para usar ${BACKEND_URL}
+                url: `${BACKEND_URL}/requests/files/download/${fileId}`,
                 method: "GET",
                 responseType: "blob",
             });
@@ -1675,8 +1681,9 @@ function Docs() {
     const handleDelete = async (fileId) => {
         if (!window.confirm("Remover este ficheiro do sistema definitivamente?")) return;
         try {
-            await axios.delete(`${API}/requests/files/${fileId}`);
-            await fetchDocs(); // Atualiza a lista após remover
+            // Alterado para usar ${BACKEND_URL}
+            await axios.delete(`${BACKEND_URL}/requests/files/${fileId}`);
+            await fetchDocs(); 
         } catch (err) {
             alert("Erro ao remover ficheiro.");
         }
@@ -1697,9 +1704,8 @@ function Docs() {
         "Política": "warning", "Procedimento": "info", "Outro": "secondary",
     };
 
-    // Filtro por Abas
-    const filteredDocs = filter === "Todos"
-        ? docs
+    const filteredDocs = filter === "Todos" 
+        ? docs 
         : docs.filter(f => inferType(f.fileName) === filter);
 
     return (
@@ -1709,7 +1715,7 @@ function Docs() {
                 <p className="text-muted small mb-0">Controlo e auditoria de todos os ficheiros partilhados no sistema.</p>
             </div>
 
-            {/* Abas de Filtros por Categoria */}
+            {/* Abas de Filtros */}
             <div className="d-flex gap-2 flex-wrap mb-3">
                 {DOC_TYPES.map(t => (
                     <button
