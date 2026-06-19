@@ -11,10 +11,10 @@ exports.getQuestions = async (req, res) => {
                     model: MessageQuestion,
                     as: 'messages',
                     include: [{ model: User, as: 'sender', attributes: ['name'] }],
-                    order: [['sentAt', 'ASC']] 
+                    order: [['sentAt', 'ASC']]
                 },
                 { model: User, as: 'creator', attributes: ['name', 'email'] },
-                { model: User, as: 'assignedTo', attributes: ['name'] }
+                { model: User, as: 'assignedTo', attributes: ['name'] } // Removido o atributo id daqui para evitar conflitos internos do Sequelize caso a PK seja id_Utilizador
             ],
             order: [['openedAt', 'DESC']]
         });
@@ -33,6 +33,10 @@ exports.getQuestions = async (req, res) => {
                 status: q.messages?.length > 0 ? "Respondido" : "Pendente",
                 createdBy: q.creator?.name || "Cliente",
                 assignedTo: q.assignedTo?.name || "Sem atribuição",
+
+                // 🔐 GARANTIA TOTAL: Usa o campo direto do modelo Question que mostraste na tabela
+                assignedToId: q.assignedToId ? Number(q.assignedToId) : null,
+
                 messagesCount: q.messages?.length || 0,
                 lastReply: lastReply
                     ? `${lastReply.sender?.name || "?"}: ${lastReply.message}`
@@ -42,7 +46,7 @@ exports.getQuestions = async (req, res) => {
 
         return res.json({ success: true, questions: mappedQuestions });
     } catch (error) {
-        console.error("Erro em getQuestions:", error.message);
+        console.error("Erro detalhado em getQuestions:", error.message);
         return res.status(500).json({ success: false, message: error.message });
     }
 };
@@ -157,6 +161,25 @@ exports.getMessages = async (req, res) => {
         }));
 
         return res.json({ success: true, messages: mapped });
+    } catch (error) {
+        return res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+exports.assignQuestion = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { assignedToId } = req.body;
+
+        const question = await Question.findByPk(id);
+        if (!question) {
+            return res.status(404).json({ success: false, message: "Ticket não encontrado." });
+        }
+
+        await question.update({ assignedToId: assignedToId || null });
+
+        return res.json({ success: true, message: "Gestor atribuído com sucesso!" });
+
     } catch (error) {
         return res.status(500).json({ success: false, message: error.message });
     }
