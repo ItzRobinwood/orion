@@ -722,7 +722,7 @@ function Requests() {
             if (file) {
                 const multiPartForm = new FormData();
                 multiPartForm.append("requestTypeId", Number(typeId));
-                multiPartForm.append("subject", currentConfig.label);
+                multiPartForm.append("subject", currentConfig.label.substring(0, 200));
                 multiPartForm.append("description", formattedDescription);
                 multiPartForm.append("creatorId", Number(activeUserId));
                 multiPartForm.append("file", file);
@@ -732,7 +732,7 @@ function Requests() {
             } else {
                 res = await axios.post(`${API}/requests`, {
                     requestTypeId: Number(typeId),
-                    subject: currentConfig.label,
+                    subject: currentConfig.label.substring(0, 200),
                     description: formattedDescription,
                     creatorId: Number(activeUserId),
                 });
