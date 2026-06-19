@@ -151,7 +151,7 @@ const request_create = async (req, res) => {
             });
         }
 
-        const requestType = await RequestType.findByPk(requestTypeId);
+        const requestType = await RequestType.findByPk(Number(requestTypeId));
         if (!requestType) {
             return res.status(404).json({
                 success: false,
