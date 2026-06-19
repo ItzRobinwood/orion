@@ -42,14 +42,14 @@ export default function ManagerDashboard() {
                         {item.label}
                     </button>
                 ))}
-                <div className="mt-auto pt-4">
-                    <div className="d-flex align-items-center gap-2 mb-2">
-                        <img src="https://i.pravatar.cc/32?img=12" className="rounded-circle" alt="gestor" />
-                        <div>
-                            <div className="small text-white fw-semibold">Ana Martins</div>
-                            <div className="small text-secondary">Gestora</div>
-                        </div>
-                    </div>
+                
+                    <div>
+                    <button
+                        className="btn btn-danger w-100 mb-3"
+                        onClick={() => window.location.href = "/"}
+                    >
+                        Sair
+                    </button>
                     <small className="text-secondary">© 2026 CyberBox</small>
                 </div>
             </div>

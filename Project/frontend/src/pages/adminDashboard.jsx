@@ -39,7 +39,16 @@ export default function AdminDashboard() {
                         {item.label}
                     </button>
                 ))}
-                <div className="mt-auto pt-4 small text-secondary">© 2026 CyberBox</div>
+
+                <button
+                    className="btn btn-danger w-100 mb-3"
+                    onClick={() => window.location.href = "/login"}
+                >
+                    Sair
+                </button>
+                <div
+                    className="mt-auto pt-4 small text-secondary">© 2026 CyberBox</div>
+
             </div>
             <div className="flex-grow-1 bg-light p-4 overflow-auto">
                 <div className="d-flex justify-content-between align-items-center mb-4">
@@ -1134,7 +1143,7 @@ function Tickets() {
     const [managers, setManagers] = useState([]);
 
     const managerId = Number(localStorage.getItem("userId") || 1);
-    
+
     // 🌐 URL do teu Backend
     const BACKEND_URL = "https://orion-dewp.onrender.com/api";
 
@@ -1166,10 +1175,10 @@ function Tickets() {
 
     const handleAssign = async (managerId, managerName) => {
         try {
-            await axios.put(`${BACKEND_URL}/questions/${selectedTicketId}/assign`, { 
-                assignedToId: managerId 
+            await axios.put(`${BACKEND_URL}/questions/${selectedTicketId}/assign`, {
+                assignedToId: managerId
             });
-            
+
             setAssignModalOpen(false);
             setSelectedTicketId(null);
             await reloadTickets();
@@ -1286,7 +1295,7 @@ function Tickets() {
                                                 );
                                             })}
                                         </div>
-                                        
+
                                         {t.status === "Fechado" && (
                                             <div className="alert alert-secondary py-2 small mb-0 mt-2">🔒 Ticket fechado.</div>
                                         )}
@@ -1302,7 +1311,7 @@ function Tickets() {
                                 >
                                     {expandedId === t.id ? "Fechar" : "Ver Conversa"}
                                 </button>
-                                
+
                                 <button
                                     className="btn btn-sm btn-outline-secondary"
                                     onClick={() => openAssignModal(t.id)}
