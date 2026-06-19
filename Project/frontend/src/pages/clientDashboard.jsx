@@ -350,7 +350,7 @@ function Tickets() {
     const [submitting, setSubmitting] = useState(false);
     const [messages, setMessages] = useState({});
 
-    const activeUserId = localStorage.getItem("userId") || 1;
+    const activeUserId = parseInt(localStorage.getItem("userId")) || 1;
 
     const statusColor = { Respondido: "success", Pendente: "warning" };
 
@@ -716,7 +716,7 @@ function Requests() {
                 })
                 .join("\n");
 
-            const activeUserId = localStorage.getItem("userId") || 1;
+            const activeUserId = parseInt(localStorage.getItem("userId")) || 1;
 
             let res;
             if (file) {
@@ -914,7 +914,7 @@ function Settings() {
     const [error, setError] = useState("");
     const [submitting, setSubmitting] = useState(false);
 
-    const activeUserId = localStorage.getItem("userId") || 1;
+    const activeUserId = parseInt(localStorage.getItem("userId")) || 1;
 
     const checkStrength = (pw) => {
         let score = 0;
