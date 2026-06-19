@@ -64,7 +64,7 @@ applyAssociations();
 
 const PORT = process.env.PORT || 3000;
 
-sequelize.sync({ alter: true }).then(async () => {
+sequelize.sync({ alter: false }).then(async () => {
   console.log("Banco sincronizado com sucesso 🚀");
 
   await seedUserTypes();
