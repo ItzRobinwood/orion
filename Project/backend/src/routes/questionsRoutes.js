@@ -6,5 +6,6 @@ router.get('/questions', controller.getQuestions);
 router.post('/questions', controller.createQuestion);
 router.post('/questions/:id/reply', controller.replyQuestion);
 router.put('/questions/:id/close', controller.closeQuestion);
+router.get('/questions/:id/messages', controller.getMessages);
 
 module.exports = router;
