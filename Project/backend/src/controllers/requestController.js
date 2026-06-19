@@ -250,12 +250,12 @@ const request_files_list = async (req, res) => {
             // Pega no nome real vindo da BD (ex: "Pentest", "Report de Incidente")
             const rawTypeName = f.Request?.RequestType?.name || "Geral / Outros";
             
-            // 🟢 Normaliza os nomes aqui para garantir que o Frontend os entende perfeitamente
             let finalType = "Geral / Outros";
             if (rawTypeName.toLowerCase().includes("pentest")) finalType = "Pentest";
             else if (rawTypeName.toLowerCase().includes("relatório") || rawTypeName.toLowerCase().includes("report")) finalType = "Relatório";
-            else if (rawTypeName.toLowerCase().includes("política")) finalType = "Política";
+            else if (rawTypeName.toLowerCase().includes("document") || rawTypeName.toLowerCase().includes("política")) finalType = "Política";  // 🆕
             else if (rawTypeName.toLowerCase().includes("procedimento") || rawTypeName.toLowerCase().includes("nis2")) finalType = "Procedimento";
+            else if (rawTypeName.toLowerCase().includes("ativo")) finalType = "Geral / Outros";
 
             return {
                 id: f.id,

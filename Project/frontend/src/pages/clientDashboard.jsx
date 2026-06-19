@@ -162,16 +162,6 @@ function Docs() {
     // 🟢 Tipos oficiais do teu sistema
     const DOC_TYPES = ["Todos", "Relatório", "Pentest", "Política", "Procedimento", "Documentos Disponibilizados", "Geral / Outros"];
 
-    // 🟢 Mapeamento de IDs ou tipos vindos do RequestType para as categorias do Docs
-    const REQUEST_TYPE_MAP = {
-        1: "Relatório",     // Report de Incidente vira Relatório
-        2: "Pentest",       // Pentest mantém Pentest
-        3: "Política",      // Documentação vira Política/Procedimento (ajusta se preferires)
-        4: "Geral / Outros",
-        5: "Geral / Outros",
-        6: "Procedimento",  // NIS2 mapeia para Procedimento
-    };
-
     useEffect(() => {
         fetchDocs();
     }, []);
@@ -210,22 +200,13 @@ function Docs() {
     };
 
     // 🟢 Corrigido: Agora valida o ID numérico ou string que vem no ficheiro
-    const getDocType = (file) => {
-        if (file.isFixed) return "Documentos Disponibilizados";
-        
-        // Se a BD devolver um ID de tipo (ex: requestTypeId ou requestType sendo um ID)
-        const typeId = file.requestTypeId || file.requestType;
-        if (typeId && REQUEST_TYPE_MAP[typeId]) {
-            return REQUEST_TYPE_MAP[typeId];
-        }
-
-        // Caso já venha em string e exista no teu array DOC_TYPES
-        if (typeof typeId === "string" && DOC_TYPES.includes(typeId)) {
-            return typeId;
-        }
-
-        return "Geral / Outros";
-    };
+   const getDocType = (file) => {
+    if (file.isFixed) return "Documentos Disponibilizados";
+    if (file.requestType && DOC_TYPES.includes(file.requestType)) {
+        return file.requestType;
+    }
+    return "Geral / Outros";
+};
 
     // 🟢 Garantido que as chaves batem certo com o array DOC_TYPES
     const typeColor = {
