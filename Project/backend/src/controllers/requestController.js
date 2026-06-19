@@ -59,6 +59,21 @@ const request_list = async (req, res) => {
     }
 };
 
+    const request_files_by_request = async (req, res) => {
+        try {
+            const { id } = req.params;
+
+            const files = await RequestFile.findAll({
+                where: { requestId: id },
+                order: [['uploadedAt', 'DESC']]
+            });
+
+            return res.json(files);
+        } catch (error) {
+            return res.status(500).json({ success: false, message: error.message });
+        }
+    };
+
 // ==========================================
 // 2. ATRIBUIR GESTOR
 // ==========================================
@@ -350,6 +365,7 @@ module.exports = {
     request_detail,
     request_create,
     request_files_list,
+    request_files_by_request,
     request_file_download,
     request_update,
     request_update_status,

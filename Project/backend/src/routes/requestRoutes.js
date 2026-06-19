@@ -12,7 +12,7 @@ router.get('/requests/files', requestController.request_files_list);
 router.get('/requests/files/download/:id', requestController.request_file_download);
 // 🟢 Opcional/Segurança: O :id geral fica por baixo das sub-rotas GET
 router.get('/requests/:id', requestController.request_detail);
-
+router.get('/requests/:id/files', requestController.request_files_by_request);
 // ==========================================
 // 2. ROTAS DE CRIAÇÃO (POST)
 // ==========================================
