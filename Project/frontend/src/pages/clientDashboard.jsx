@@ -8,21 +8,24 @@ export default function ClientDashboard() {
     const [active, setActive] = useState("dashboard");
 
     const nav = [
-        { id: "dashboard", label: "Dashboard"          },
-        { id: "report",    label: "Avaliação de Risco" },
-        { id: "docs",      label: "Documentação"       },
-        { id: "tickets",   label: "Tickets"            },
-        { id: "requests",  label: "Pedidos"            },
+        { id: "dashboard", label: "Dashboard" },
+        { id: "report", label: "Avaliação de Risco" },
+        { id: "docs", label: "Documentação" },
+        { id: "tickets", label: "Tickets" },
+        { id: "requests", label: "Pedidos" },
+        { id: "settings", label: "Configurações" },
+        
     ];
 
     const renderContent = () => {
         switch (active) {
             case "dashboard": return <Dashboard setActive={setActive} />;
-            case "report":    return <Report />;
-            case "docs":      return <Docs />;
-            case "tickets":   return <Tickets />;
-            case "requests":  return <Requests />;
-            default:          return null;
+            case "report": return <Report />;
+            case "docs": return <Docs />;
+            case "tickets": return <Tickets />;
+            case "requests": return <Requests />;
+            case "settings": return <Settings />;
+            default: return null;
         }
     };
 
@@ -71,10 +74,10 @@ function Dashboard({ setActive }) {
     return (
         <>
             <div className="row g-3 mb-4">
-                <StatCard title="Nível de Risco"     value="Médio" color="warning" />
-                <StatCard title="Documentos"         value="12"    color="primary" />
-                <StatCard title="Pedidos Ativos"     value="3"     color="info"    />
-                <StatCard title="Tickets Abertos"    value="1"     color="danger"  />
+                <StatCard title="Nível de Risco" value="Médio" color="warning" />
+                <StatCard title="Documentos" value="12" color="primary" />
+                <StatCard title="Pedidos Ativos" value="3" color="info" />
+                <StatCard title="Tickets Abertos" value="1" color="danger" />
             </div>
 
             <div className="row g-3">
@@ -102,10 +105,10 @@ function Dashboard({ setActive }) {
                         <h6 className="mb-3">Acesso Rápido</h6>
                         <div className="d-flex flex-column gap-2">
                             {[
-                                { label: "Ver Avaliação de Risco",     tab: "report"   },
-                                { label: "Ver Documentos Partilhados", tab: "docs"     },
-                                { label: "Abrir Ticket de Suporte",    tab: "tickets"  },
-                                { label: "Submeter Novo Pedido",       tab: "requests" },
+                                { label: "Ver Avaliação de Risco", tab: "report" },
+                                { label: "Ver Documentos Partilhados", tab: "docs" },
+                                { label: "Abrir Ticket de Suporte", tab: "tickets" },
+                                { label: "Submeter Novo Pedido", tab: "requests" },
                             ].map(({ label, tab }) => (
                                 <button key={tab} className="btn btn-outline-dark btn-sm text-start"
                                     onClick={() => setActive(tab)}>
@@ -124,7 +127,7 @@ function Dashboard({ setActive }) {
 function Report() {
     const reports = [
         { id: 1, title: "Relatório de Risco Q1 2026", date: "01/04/2026", risk: "Médio", score: 62 },
-        { id: 2, title: "Relatório de Risco Q4 2025", date: "01/01/2026", risk: "Alto",  score: 78 },
+        { id: 2, title: "Relatório de Risco Q4 2025", date: "01/01/2026", risk: "Alto", score: 78 },
         { id: 3, title: "Relatório de Risco Q3 2025", date: "01/10/2025", risk: "Baixo", score: 35 },
     ];
 
@@ -142,9 +145,9 @@ function Report() {
                     <div className="col-md-8">
                         <h6 className="mb-3">Áreas de Risco</h6>
                         {[
-                            { label: "Segurança de Rede",       value: 70 },
-                            { label: "Gestão de Acessos",       value: 55 },
-                            { label: "Proteção de Dados",       value: 80 },
+                            { label: "Segurança de Rede", value: 70 },
+                            { label: "Gestão de Acessos", value: 55 },
+                            { label: "Proteção de Dados", value: 80 },
                             { label: "Continuidade de Negócio", value: 45 },
                         ].map(({ label, value }) => (
                             <div className="mb-2" key={label}>
@@ -188,9 +191,9 @@ function Report() {
 // Lista de ficheiros partilhados pela CyberBox com o cliente.
 // O cliente só faz download — os ficheiros são carregados pelo admin/gestor.
 function Docs() {
-    const [docs, setDocs]           = useState([]);
-    const [loading, setLoading]     = useState(true);
-    const [filter, setFilter]       = useState("Todos");
+    const [docs, setDocs] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [filter, setFilter] = useState("Todos");
 
     const DOC_TYPES = ["Todos", "Relatório", "Pentest", "Política", "Procedimento", "Outro"];
 
@@ -243,11 +246,11 @@ function Docs() {
     };
 
     const typeColor = {
-        "Relatório":    "primary",
-        "Pentest":      "danger",
-        "Política":     "warning",
+        "Relatório": "primary",
+        "Pentest": "danger",
+        "Política": "warning",
         "Procedimento": "info",
-        "Outro":        "secondary",
+        "Outro": "secondary",
     };
 
     const filtered = filter === "Todos"
@@ -338,11 +341,11 @@ function Docs() {
 // Substitui a função Tickets() no clientDashboard.jsx por esta
 
 function Tickets() {
-    const [tickets, setTickets]     = useState([]);
-    const [loading, setLoading]     = useState(true);
-    const [showForm, setShowForm]   = useState(false);
-    const [expanded, setExpanded]   = useState(null);
-    const [form, setForm]           = useState({ subject: "" });
+    const [tickets, setTickets] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [showForm, setShowForm] = useState(false);
+    const [expanded, setExpanded] = useState(null);
+    const [form, setForm] = useState({ subject: "" });
     const [replyText, setReplyText] = useState("");
     const [submitting, setSubmitting] = useState(false);
     const [messages, setMessages] = useState({});
@@ -467,93 +470,93 @@ function Tickets() {
                 </div>
             ) : (
                 tickets.map(t => (
-                <div key={t.id} className="card p-3 border-start border-4"
-                    style={{ borderLeftColor: t.status === "Respondido" ? "#198754" : "#ffc107" }}>
+                    <div key={t.id} className="card p-3 border-start border-4"
+                        style={{ borderLeftColor: t.status === "Respondido" ? "#198754" : "#ffc107" }}>
 
-                    {/* Cabeçalho do ticket */}
-                    <div className="d-flex justify-content-between align-items-start">
-                        <div>
-                            <div className="d-flex align-items-center gap-2 mb-1">
-                                <span className="fw-semibold">#{t.id} — {t.subject}</span>
-                                <span className={`badge bg-${statusColor[t.status] || "secondary"}`}>
-                                    {t.status}
-                                </span>
+                        {/* Cabeçalho do ticket */}
+                        <div className="d-flex justify-content-between align-items-start">
+                            <div>
+                                <div className="d-flex align-items-center gap-2 mb-1">
+                                    <span className="fw-semibold">#{t.id} — {t.subject}</span>
+                                    <span className={`badge bg-${statusColor[t.status] || "secondary"}`}>
+                                        {t.status}
+                                    </span>
+                                </div>
+                                <small className="text-muted">
+                                    Submetido em {t.date}
+                                    {t.assignedTo !== "Sem atribuição" && (
+                                        <> · Atribuído a <strong>{t.assignedTo}</strong></>
+                                    )}
+                                </small>
                             </div>
-                            <small className="text-muted">
-                                Submetido em {t.date}
-                                {t.assignedTo !== "Sem atribuição" && (
-                                    <> · Atribuído a <strong>{t.assignedTo}</strong></>
-                                )}
-                            </small>
+                            <button
+                                className="btn btn-sm btn-outline-secondary"
+                                onClick={() => handleExpand(t.id)}>
+                                {expanded === t.id ? "Fechar" : "Ver conversa"}
+                            </button>
                         </div>
-                        <button
-                            className="btn btn-sm btn-outline-secondary"
-                            onClick={() => handleExpand(t.id)}>
-                            {expanded === t.id ? "Fechar" : "Ver conversa"}
-                        </button>
+
+                        {/* Preview da última resposta */}
+                        {t.status === "Respondido" && expanded !== t.id && (
+                            <div className="mt-2 p-2 bg-light rounded border small text-muted">
+                                💬 {t.lastReply}
+                            </div>
+                        )}
+
+                        {/* Conversa expandida */}
+                        {expanded === t.id && (
+                            <div className="mt-3 border-top pt-3">
+
+                                {/* Mensagens */}
+                                <div className="d-flex flex-column gap-2 mb-3" style={{ maxHeight: 300, overflowY: "auto" }}>
+                                    {(messages[t.id] || []).length === 0 ? (
+                                        <p className="text-muted small">Ainda sem mensagens. Aguarda resposta da CyberBox.</p>
+                                    ) : (
+                                        (messages[t.id] || []).map(m => (
+                                            <div key={m.id}
+                                                className={`p-2 rounded small ${m.userId === Number(activeUserId) ? "bg-primary text-white ms-5" : "bg-light border me-5"}`}>
+                                                <div className="fw-semibold mb-1" style={{ fontSize: 11 }}>
+                                                    {m.sender?.name || "Utilizador"}
+                                                </div>
+                                                {m.message}
+                                                <div className="mt-1 opacity-75" style={{ fontSize: 10 }}>
+                                                    {m.sentAt ? new Date(m.sentAt).toLocaleString("pt-PT") : ""}
+                                                </div>
+                                            </div>
+                                        ))
+                                    )}
+                                </div>
+
+                                {/* Campo de resposta */}
+                                {t.status !== "closed" && (
+                                    <div className="d-flex gap-2">
+                                        <input
+                                            className="form-control form-control-sm"
+                                            placeholder="Escreve uma mensagem..."
+                                            value={replyText}
+                                            onChange={e => setReplyText(e.target.value)}
+                                            onKeyDown={e => e.key === "Enter" && handleReply(t.id)}
+                                        />
+                                        <button className="btn btn-sm btn-primary"
+                                            onClick={async () => {
+                                                await handleReply(t.id);
+                                                const res = await axios.get(`${API}/questions/${t.id}/messages`);
+                                                setMessages(prev => ({ ...prev, [t.id]: res.data.messages || [] }));
+                                            }}>
+                                            Enviar
+                                        </button>
+                                    </div>
+                                )}
+
+                                {t.status === "closed" && (
+                                    <div className="alert alert-secondary py-2 small">
+                                        🔒 Este ticket está fechado.
+                                    </div>
+                                )}
+                            </div>
+                        )}
                     </div>
-
-                    {/* Preview da última resposta */}
-                    {t.status === "Respondido" && expanded !== t.id && (
-                        <div className="mt-2 p-2 bg-light rounded border small text-muted">
-                            💬 {t.lastReply}
-                        </div>
-                    )}
-
-                    {/* Conversa expandida */}
-                    {expanded === t.id && (
-                        <div className="mt-3 border-top pt-3">
-
-                            {/* Mensagens */}
-                            <div className="d-flex flex-column gap-2 mb-3" style={{ maxHeight: 300, overflowY: "auto" }}>
-                                {(messages[t.id] || []).length === 0 ? (
-                                    <p className="text-muted small">Ainda sem mensagens. Aguarda resposta da CyberBox.</p>
-                                ) : (
-                                    (messages[t.id] || []).map(m => (
-                                        <div key={m.id}
-                                            className={`p-2 rounded small ${m.userId === Number(activeUserId) ? "bg-primary text-white ms-5" : "bg-light border me-5"}`}>
-                                            <div className="fw-semibold mb-1" style={{ fontSize: 11 }}>
-                                                {m.sender?.name || "Utilizador"}
-                                            </div>
-                                            {m.message}
-                                            <div className="mt-1 opacity-75" style={{ fontSize: 10 }}>
-                                                {m.sentAt ? new Date(m.sentAt).toLocaleString("pt-PT") : ""}
-                                            </div>
-                                        </div>
-                                    ))
-                                )}
-                            </div>
-
-                            {/* Campo de resposta */}
-                            {t.status !== "closed" && (
-                                <div className="d-flex gap-2">
-                                    <input
-                                        className="form-control form-control-sm"
-                                        placeholder="Escreve uma mensagem..."
-                                        value={replyText}
-                                        onChange={e => setReplyText(e.target.value)}
-                                        onKeyDown={e => e.key === "Enter" && handleReply(t.id)}
-                                    />
-                                    <button className="btn btn-sm btn-primary"
-                                        onClick={async () => {
-                                            await handleReply(t.id);
-                                            const res = await axios.get(`${API}/questions/${t.id}/messages`);
-                                            setMessages(prev => ({ ...prev, [t.id]: res.data.messages || [] }));
-                                        }}>
-                                        Enviar
-                                    </button>
-                                </div>
-                            )}
-
-                            {t.status === "closed" && (
-                                <div className="alert alert-secondary py-2 small">
-                                    🔒 Este ticket está fechado.
-                                </div>
-                            )}
-                        </div>
-                    )}
-                </div>
-            ))
+                ))
             )}
         </div>
     );
@@ -569,30 +572,38 @@ function Requests() {
             label: "Report de Incidente",
             fields: [
                 { key: "incidentDate", label: "Data do Incidente *", type: "date" },
-                { key: "incidentType", label: "Tipo de Incidente *", type: "select",
-                  options: ["Acesso não autorizado", "Malware / Ransomware", "Phishing", "DoS/DDoS", "Fuga de informação", "Outro"] },
-                { key: "details",      label: "Descrição detalhada *", type: "textarea" },
-                { key: "impact",       label: "Impacto estimado", type: "select",
-                  options: ["Baixo", "Médio", "Alto", "Crítico"] },
-                { key: "systems",      label: "Sistemas Afetados", type: "text", placeholder: "Ex: Servidor Web, Email..." },
-                { key: "actions",      label: "Ações Imediatas Tomadas", type: "textarea" },
+                {
+                    key: "incidentType", label: "Tipo de Incidente *", type: "select",
+                    options: ["Acesso não autorizado", "Malware / Ransomware", "Phishing", "DoS/DDoS", "Fuga de informação", "Outro"]
+                },
+                { key: "details", label: "Descrição detalhada *", type: "textarea" },
+                {
+                    key: "impact", label: "Impacto estimado", type: "select",
+                    options: ["Baixo", "Médio", "Alto", "Crítico"]
+                },
+                { key: "systems", label: "Sistemas Afetados", type: "text", placeholder: "Ex: Servidor Web, Email..." },
+                { key: "actions", label: "Ações Imediatas Tomadas", type: "textarea" },
             ]
         },
         2: {
             label: "Pentest",
             fields: [
-                { key: "scope",      label: "Âmbito do Teste *", type: "select",
-                  options: ["Rede interna", "Aplicação Web", "Engenharia social", "Físico", "Outro"] },
-                { key: "targets",    label: "Sistemas Alvo (IPs/URLs) *", type: "text", placeholder: "Ex: 192.168.1.0/24" },
+                {
+                    key: "scope", label: "Âmbito do Teste *", type: "select",
+                    options: ["Rede interna", "Aplicação Web", "Engenharia social", "Físico", "Outro"]
+                },
+                { key: "targets", label: "Sistemas Alvo (IPs/URLs) *", type: "text", placeholder: "Ex: 192.168.1.0/24" },
                 { key: "objectives", label: "Objetivos Principais *", type: "textarea" },
-                { key: "startDate",  label: "Data Pretendida", type: "date" },
+                { key: "startDate", label: "Data Pretendida", type: "date" },
             ]
         },
         3: {
             label: "Documentação",
             fields: [
-                { key: "docType", label: "Tipo de Documento *", type: "select",
-                  options: ["Política de Segurança", "Plano de Continuidade", "Procedimento", "Manual", "Outro"] },
+                {
+                    key: "docType", label: "Tipo de Documento *", type: "select",
+                    options: ["Política de Segurança", "Plano de Continuidade", "Procedimento", "Manual", "Outro"]
+                },
                 { key: "context", label: "Contexto / Requisitos *", type: "textarea" },
             ]
         },
@@ -600,11 +611,13 @@ function Requests() {
             label: "Ativos Tecnológicos",
             fields: [
                 { key: "assetName", label: "Nome do Ativo *", type: "text", placeholder: "Ex: Servidor Web Principal" },
-                { key: "assetType", label: "Tipo de Ativo *", type: "select",
-                  options: ["Servidor", "Workstation", "Rede", "Aplicação", "Cloud", "Outro"] },
-                { key: "ip",        label: "Endereço IP / Subrede", type: "text", placeholder: "Ex: 192.168.1.10" },
-                { key: "location",  label: "Localização", type: "text", placeholder: "Ex: Datacenter A, AWS" },
-                { key: "notes",     label: "Notas Adicionais", type: "textarea" },
+                {
+                    key: "assetType", label: "Tipo de Ativo *", type: "select",
+                    options: ["Servidor", "Workstation", "Rede", "Aplicação", "Cloud", "Outro"]
+                },
+                { key: "ip", label: "Endereço IP / Subrede", type: "text", placeholder: "Ex: 192.168.1.10" },
+                { key: "location", label: "Localização", type: "text", placeholder: "Ex: Datacenter A, AWS" },
+                { key: "notes", label: "Notas Adicionais", type: "textarea" },
             ]
         },
         5: {
@@ -617,43 +630,47 @@ function Requests() {
         6: {
             label: "NIS2",
             fields: [
-                { key: "nis2Area",   label: "Área NIS2 Relacionada *", type: "select",
-                  options: ["Gestão de Risco", "Resposta a Incidentes", "Segurança da Cadeia de Fornecimento", "Criptografia", "Continuidade de Negócio", "Outro"] },
-                { key: "deadline",   label: "Prazo Limite de Conformidade", type: "date" },
-                { key: "context",    label: "Descrição / Contexto Atual *", type: "textarea" },
-                { key: "compliance", label: "Estado Atual de Conformidade", type: "select",
-                  options: ["Conforme", "Parcialmente conforme", "Não conforme", "Em avaliação"] },
+                {
+                    key: "nis2Area", label: "Área NIS2 Relacionada *", type: "select",
+                    options: ["Gestão de Risco", "Resposta a Incidentes", "Segurança da Cadeia de Fornecimento", "Criptografia", "Continuidade de Negócio", "Outro"]
+                },
+                { key: "deadline", label: "Prazo Limite de Conformidade", type: "date" },
+                { key: "context", label: "Descrição / Contexto Atual *", type: "textarea" },
+                {
+                    key: "compliance", label: "Estado Atual de Conformidade", type: "select",
+                    options: ["Conforme", "Parcialmente conforme", "Não conforme", "Em avaliação"]
+                },
             ]
         },
     };
 
     const REQUEST_TYPES = [
         { id: 1, name: "Report de Incidente" },
-        { id: 2, name: "Pentest"             },
-        { id: 3, name: "Documentação"        },
+        { id: 2, name: "Pentest" },
+        { id: 3, name: "Documentação" },
         { id: 4, name: "Ativos Tecnológicos" },
-        { id: 5, name: "Outros"              },
-        { id: 6, name: "NIS2"                },
+        { id: 5, name: "Outros" },
+        { id: 6, name: "NIS2" },
     ];
 
-    const [requests, setRequests]     = useState([]);
-    const [loading, setLoading]       = useState(true);
-    const [showForm, setShowForm]     = useState(false);
-    const [typeId, setTypeId]         = useState("");
-    const [formData, setFormData]     = useState({});
-    const [file, setFile]             = useState(null);
+    const [requests, setRequests] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [showForm, setShowForm] = useState(false);
+    const [typeId, setTypeId] = useState("");
+    const [formData, setFormData] = useState({});
+    const [file, setFile] = useState(null);
     const [submitting, setSubmitting] = useState(false);
-    const [submitted, setSubmitted]   = useState(false);
+    const [submitted, setSubmitted] = useState(false);
     const [search, setSearch] = useState("");
-    
+
     const filtered = requests.filter(r =>
-    !search || (r.subject || "").toLowerCase().includes(search.toLowerCase())
+        !search || (r.subject || "").toLowerCase().includes(search.toLowerCase())
     );
 
     const statusColor = {
-        "Pendente":    "warning",
+        "Pendente": "warning",
         "Em Execução": "info",
-        "Concluído":   "success",
+        "Concluído": "success",
     };
 
     useEffect(() => {
@@ -883,6 +900,163 @@ function Requests() {
                         </table>
                     </div>
                 )}
+            </div>
+        </div>
+    );
+}
+
+//CONFIGURAÇÕES DE CONTA
+
+function Settings() {
+    const [form, setForm] = useState({ current: "", newPw: "", confirm: "" });
+    const [strength, setStrength] = useState(0);
+    const [success, setSuccess] = useState(false);
+    const [error, setError] = useState("");
+    const [submitting, setSubmitting] = useState(false);
+
+    const activeUserId = localStorage.getItem("userId") || 1;
+
+    const checkStrength = (pw) => {
+        let score = 0;
+        if (pw.length >= 8) score++;
+        if (/[A-Z]/.test(pw)) score++;
+        if (/[0-9]/.test(pw)) score++;
+        if (/[^A-Za-z0-9]/.test(pw)) score++;
+        return score;
+    };
+
+    const handleChange = (key, value) => {
+        setForm(prev => ({ ...prev, [key]: value }));
+        if (key === "newPw") setStrength(checkStrength(value));
+        setSuccess(false);
+        setError("");
+    };
+
+    const strengthLabel = ["", "Fraca", "Fraca", "Média", "Forte"][strength];
+    const strengthColor = strength >= 3 ? "#198754" : strength >= 2 ? "#856404" : "#842029";
+    const barColor = strength <= 1 ? "#dc3545" : strength <= 2 ? "#ffc107" : "#198754";
+
+    const handleSubmit = async () => {
+        setError("");
+        setSuccess(false);
+        if (!form.current || !form.newPw || !form.confirm) {
+            setError("Preenche todos os campos obrigatórios.");
+            return;
+        }
+        if (form.newPw !== form.confirm) {
+            setError("As novas palavras-passe não coincidem.");
+            return;
+        }
+        if (form.newPw.length < 8) {
+            setError("A nova palavra-passe deve ter pelo menos 8 caracteres.");
+            return;
+        }
+        setSubmitting(true);
+        try {
+            await axios.put(`${API}/users/${activeUserId}/password`, {
+                currentPassword: form.current,
+                newPassword: form.newPw,
+            });
+            setSuccess(true);
+            setForm({ current: "", newPw: "", confirm: "" });
+            setStrength(0);
+        } catch (err) {
+            setError(err.response?.data?.message || "Erro ao alterar a palavra-passe.");
+        } finally {
+            setSubmitting(false);
+        }
+    };
+
+    return (
+        <div className="d-flex flex-column gap-3" style={{ maxWidth: 680 }}>
+
+            {/* Perfil */}
+            <div className="card p-4">
+                <h6 className="fw-bold mb-1">Informação da Conta</h6>
+                <p className="text-muted small mb-3">Detalhes do teu perfil.</p>
+                <div className="d-flex align-items-center gap-3">
+                    <img src="https://i.pravatar.cc/56" className="rounded-circle" style={{ width: 56, height: 56 }} alt="avatar" />
+                    <div>
+                        <div className="fw-semibold">João Pereira</div>
+                        <div className="text-muted small">TechCorp · joao@techcorp.pt</div>
+                    </div>
+                </div>
+            </div>
+
+            {/* Alterar palavra-passe */}
+            <div className="card p-4">
+                <h6 className="fw-bold mb-1">Alterar palavra-passe</h6>
+                <p className="text-muted small mb-3">Escolhe uma nova palavra-passe segura para a tua conta.</p>
+
+                {success && (
+                    <div className="alert alert-success py-2 small mb-3">
+                        ✅ Palavra-passe alterada com sucesso.
+                    </div>
+                )}
+                {error && (
+                    <div className="alert alert-danger py-2 small mb-3">
+                        ⚠️ {error}
+                    </div>
+                )}
+
+                <label className="form-label fw-semibold" style={{ fontSize: 12 }}>Palavra-passe atual *</label>
+                <input
+                    type="password"
+                    className="form-control form-control-sm mb-3"
+                    placeholder="••••••••"
+                    value={form.current}
+                    onChange={e => handleChange("current", e.target.value)}
+                />
+
+                <div className="row g-3 mb-3">
+                    <div className="col-md-6">
+                        <label className="form-label fw-semibold" style={{ fontSize: 12 }}>Nova palavra-passe *</label>
+                        <input
+                            type="password"
+                            className="form-control form-control-sm"
+                            placeholder="••••••••"
+                            value={form.newPw}
+                            onChange={e => handleChange("newPw", e.target.value)}
+                        />
+                        {/* Barra de força */}
+                        <div className="d-flex gap-1 mt-2 mb-1">
+                            {[1, 2, 3, 4].map(i => (
+                                <div key={i} style={{
+                                    flex: 1, height: 4, borderRadius: 2,
+                                    background: i <= strength ? barColor : "#e9ecef",
+                                    transition: "background 0.2s"
+                                }} />
+                            ))}
+                        </div>
+                        {form.newPw && (
+                            <small style={{ color: strengthColor, fontSize: 11 }}>{strengthLabel}</small>
+                        )}
+                        {!form.newPw && (
+                            <small className="text-muted" style={{ fontSize: 11 }}>Mínimo 8 caracteres</small>
+                        )}
+                    </div>
+                    <div className="col-md-6">
+                        <label className="form-label fw-semibold" style={{ fontSize: 12 }}>Confirmar nova palavra-passe *</label>
+                        <input
+                            type="password"
+                            className="form-control form-control-sm"
+                            placeholder="••••••••"
+                            value={form.confirm}
+                            onChange={e => handleChange("confirm", e.target.value)}
+                        />
+                    </div>
+                </div>
+
+                <div className="d-flex gap-2">
+                    <button
+                        className="btn btn-sm btn-outline-secondary"
+                        onClick={() => { setForm({ current: "", newPw: "", confirm: "" }); setStrength(0); setError(""); setSuccess(false); }}>
+                        Cancelar
+                    </button>
+                    <button className="btn btn-sm btn-dark" onClick={handleSubmit} disabled={submitting}>
+                        {submitting ? "A guardar..." : "Guardar alterações"}
+                    </button>
+                </div>
             </div>
         </div>
     );
