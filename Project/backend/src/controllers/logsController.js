@@ -44,6 +44,39 @@ const getLogs = async (req, res) => {
     }
 };
 
+const getLogsByUser = async (req, res) => {
+    try {
+        const { userID } = req.params;
+
+        if (!userID) {
+            return res.status(400).json({ success: false, message: "userID é obrigatório" });
+        }
+
+        const logs = await Logs.findAll({
+            where: { userId: userID },
+            include: [{ model: User, as: 'user', attributes: ['name', 'email'] }],
+            order: [['date_time', 'DESC']],
+            limit: 50
+        });
+
+        const mapped = logs.map(l => ({
+            id: l.id_log,
+            action: l.action,
+            entity: l.entity,
+            details: l.details,
+            date: new Date(l.date_time).toLocaleDateString("pt-PT"),
+            time: new Date(l.date_time).toLocaleTimeString("pt-PT"),
+            ip: l.ip,
+            user: l.user?.name || "Sistema"
+        }));
+
+        return res.json({ success: true, logs: mapped });
+    } catch (error) {
+        console.error("Erro em getLogsByUser:", error.message);
+        return res.status(500).json({ success: false, message: error.message });
+    }
+};
+
 // GET /api/stats — contadores para os cards do dashboard
 const getStats = async (req, res) => {
     try {
@@ -63,4 +96,4 @@ const getStats = async (req, res) => {
     }
 };
 
-module.exports = { createLog, getLogs, getStats };
+module.exports = { createLog, getLogs, getStats, getLogsByUser };
