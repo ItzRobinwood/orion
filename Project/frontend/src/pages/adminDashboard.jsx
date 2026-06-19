@@ -1123,22 +1123,23 @@ function PersonForm({ form, setForm, title, submitLabel, generatePassword, onSub
 
 function Tickets() {
     const [tickets, setTickets] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [expanded, setExpanded] = useState(null);
-    const [messages, setMessages] = useState({});
     const [filter, setFilter] = useState("Todos");
+    const [loading, setLoading] = useState(true);
+    const [expandedId, setExpandedId] = useState(null);
+    const [messages, setMessages] = useState({});
+    const [replyText, setReplyText] = useState("");
+
+    // Estados para o Modal de Atribuição do Admin
     const [assignModalOpen, setAssignModalOpen] = useState(false);
     const [selectedTicketId, setSelectedTicketId] = useState(null);
     const [managers, setManagers] = useState([]);
 
-    useEffect(() => {
-        fetchTickets();
-    }, []);
+    const managerId = Number(localStorage.getItem("userId") || 1);
 
-    const fetchTickets = async () => {
+    const reloadTickets = async () => {
         setLoading(true);
         try {
-            const res = await axios.get("https://orion-dewp.onrender.com/api/questions");
+            const res = await axios.get(`${API}/questions`);
             setTickets(res.data.questions || []);
         } catch (err) {
             console.error("Erro ao carregar tickets:", err);
@@ -1147,22 +1148,9 @@ function Tickets() {
         }
     };
 
-    const handleExpand = async (ticketId) => {
-        if (expanded === ticketId) {
-            setExpanded(null);
-            return;
-        }
-        setExpanded(ticketId);
-        if (!messages[ticketId]) {
-            try {
-                const res = await axios.get(`https://orion-dewp.onrender.com/api/questions/${ticketId}/messages`);
-                setMessages(prev => ({ ...prev, [ticketId]: res.data.messages || [] }));
-            } catch (err) {
-                console.error("Erro ao carregar mensagens:", err);
-            }
-        }
-    };
+    useEffect(() => { reloadTickets(); }, []);
 
+    // Função para abrir o Modal e ir buscar a lista de gestores/managers (tipo 2)
     const openAssignModal = async (ticketId) => {
         setSelectedTicketId(ticketId);
         try {
@@ -1175,153 +1163,244 @@ function Tickets() {
         setAssignModalOpen(true);
     };
 
+    // Função para guardar a atribuição no Backend
     const handleAssign = async (managerId, managerName) => {
         try {
-            await axios.put(
-                `https://orion-dewp.onrender.com/api/questions/${selectedTicketId}/assign`,
-                { assignedToId: managerId }
-            );
+            // Rota PUT para associar o ticket ao manager escolhido
+            await axios.put(`${API}/questions/${selectedTicketId}/assign`, {
+                assignedToId: managerId
+            });
+
             setAssignModalOpen(false);
             setSelectedTicketId(null);
-            await reloadQuestions();
+            await reloadTickets(); // Atualiza a lista com o novo manager visível
         } catch (err) {
-            alert("Erro ao atribuir gestor.");
+            console.error("Erro ao atribuir:", err);
+            alert("Erro ao atribuir gestor ao ticket. Tenta novamente.");
         }
     };
 
-    const statusColor = (s) => s === "Respondido" ? "success" : s === "Pendente" ? "warning" : "secondary";
+    const handleExpand = async (id) => {
+        if (expandedId === id) { setExpandedId(null); return; }
+        setExpandedId(id);
+        if (!messages[id]) {
+            try {
+                const res = await axios.get(`${API}/questions/${id}/messages`);
+                setMessages(prev => ({ ...prev, [id]: res.data.messages || [] }));
+            } catch (err) {
+                console.error("Erro ao carregar mensagens:", err);
+            }
+        }
+    };
 
-    const filtered = filter === "Todos"
-        ? tickets
-        : tickets.filter(t => t.status === filter);
+    const handleReply = async (ticketId) => {
+        if (!replyText.trim()) return;
+        try {
+            await axios.post(`${API}/questions/${ticketId}/reply`, {
+                message: replyText,
+                userId: Number(managerId),
+            });
+            setReplyText("");
+            const res = await axios.get(`${API}/questions/${ticketId}/messages`);
+            setMessages(prev => ({ ...prev, [ticketId]: res.data.messages || [] }));
+            await reloadTickets();
+        } catch (err) {
+            alert("Erro ao enviar resposta.");
+        }
+    };
 
-    if (loading) return <div className="card p-3"><p className="text-muted">A carregar tickets...</p></div>;
+    const handleClose = async (id) => {
+        if (!window.confirm("Fechar este ticket?")) return;
+        try {
+            await axios.put(`${API}/questions/${id}/close`);
+            await reloadTickets();
+        } catch (err) {
+            alert("Erro ao fechar ticket.");
+        }
+    };
+
+    const STATUS_COLOR = { "Pendente": "warning", "Respondido": "success", "Fechado": "secondary" };
+
+    const filtered = filter === "Todos" ? tickets : tickets.filter(t => t.status === filter);
+
+    if (loading) return <div className="text-center my-5"><p className="text-muted">A carregar tickets...</p></div>;
 
     return (
-        <div className="d-flex flex-column gap-4 text-dark">
-
-            {/* Header */}
-            <div>
-                <h3 className="fw-bold mb-1">Tickets de Suporte</h3>
-                <p className="text-muted small">Visão geral das conversas entre clientes e gestores.</p>
-            </div>
-
+        <div className="d-flex flex-column gap-3 text-start">
             {/* Contadores */}
-            <div className="row g-3">
-                <div className="col">
-                    <div className="card p-3 shadow-sm">
-                        <div className="text-muted small">Total</div>
-                        <h4 className="fw-bold m-0">{tickets.length}</h4>
+            <div className="row g-3 mb-1">
+                {[
+                    { label: "Total", value: tickets.length, color: "dark" },
+                    { label: "Pendentes", value: tickets.filter(t => t.status === "Pendente").length, color: "warning" },
+                    { label: "Respondidos", value: tickets.filter(t => t.status === "Respondido").length, color: "success" },
+                ].map(s => (
+                    <div className="col" key={s.label}>
+                        <div className="card p-3 text-center">
+                            <div className="text-muted small">{s.label}</div>
+                            <h4 className={`fw-bold mb-0 text-${s.color}`}>{s.value}</h4>
+                        </div>
                     </div>
-                </div>
-                <div className="col">
-                    <div className="card p-3 shadow-sm">
-                        <div className="text-muted small">Pendentes</div>
-                        <h4 className="fw-bold text-warning m-0">
-                            {tickets.filter(t => t.status === "Pendente").length}
-                        </h4>
-                    </div>
-                </div>
-                <div className="col">
-                    <div className="card p-3 shadow-sm">
-                        <div className="text-muted small">Respondidos</div>
-                        <h4 className="fw-bold text-success m-0">
-                            {tickets.filter(t => t.status === "Respondido").length}
-                        </h4>
-                    </div>
-                </div>
+                ))}
             </div>
 
             {/* Filtros */}
-            <div className="card p-3 shadow-sm">
+            <div className="card p-3">
                 <div className="d-flex gap-2">
                     {["Todos", "Pendente", "Respondido"].map(f => (
-                        <button key={f} onClick={() => setFilter(f)}
-                            className={`btn btn-sm px-3 ${filter === f ? "btn-primary" : "btn-light border text-secondary"}`}>
+                        <button
+                            key={f}
+                            onClick={() => setFilter(f)}
+                            className={`btn btn-sm ${filter === f ? "btn-dark" : "btn-outline-secondary"}`}
+                        >
                             {f}
-                            {f !== "Todos" && tickets.filter(t => t.status === f).length > 0 &&
-                                ` (${tickets.filter(t => t.status === f).length})`}
                         </button>
                     ))}
                 </div>
             </div>
 
-            {/* Lista de tickets */}
+            {/* Lista */}
             {filtered.length === 0 ? (
                 <div className="text-center text-muted py-5 border rounded bg-white">
                     <div style={{ fontSize: 32 }}>🎫</div>
                     <p className="mt-2 mb-0">Nenhum ticket encontrado.</p>
                 </div>
             ) : (
-                <div className="d-flex flex-column gap-2">
-                    {filtered.map(t => (
-                        <div key={t.id} className="card p-3 border-start border-4"
-                            style={{ borderLeftColor: t.status === "Respondido" ? "#198754" : "#ffc107" }}>
-
-                            {/* Cabeçalho do ticket */}
-                            <div className="d-flex justify-content-between align-items-start">
-                                <div>
-                                    <div className="d-flex align-items-center gap-2 mb-1">
-                                        <span className="fw-semibold">#{t.id} — {t.subject}</span>
-                                        <span className={`badge bg-${statusColor(t.status)}`}>
-                                            {t.status}
-                                        </span>
-                                    </div>
-                                    <small className="text-muted">
-                                        👤 {t.createdBy} · 📅 {t.date} · 💬 {t.messagesCount} mensagem(ns)
-                                        {t.assignedTo !== "Sem atribuição" && (
-                                            <> · Gestor: <strong>{t.assignedTo}</strong></>
-                                        )}
-                                    </small>
+                filtered.map(t => (
+                    <div
+                        key={t.id}
+                        className="card p-3 border-start border-4"
+                        style={{ borderLeftColor: t.status === "Respondido" ? "#198754" : t.status === "Fechado" ? "#6c757d" : "#ffc107" }}
+                    >
+                        <div className="d-flex justify-content-between align-items-start">
+                            <div className="flex-grow-1">
+                                <div className="d-flex align-items-center gap-2 mb-1 flex-wrap">
+                                    <span className="fw-bold">#{t.id} — {t.subject}</span>
+                                    <span className={`badge bg-${STATUS_COLOR[t.status] || "secondary"}`} style={{ fontSize: 10 }}>
+                                        {t.status}
+                                    </span>
                                 </div>
-                                <button className="btn btn-sm btn-outline-secondary"
-                                    onClick={() => handleExpand(t.id)}>
-                                    {expanded === t.id ? "Fechar" : "Ver conversa"}
-                                </button>
+                                <div className="text-muted small">
+                                    👤 {t.createdBy || "—"} · 📅 {t.date}
+                                    {t.assignedTo && t.assignedTo !== "Sem atribuição" && (
+                                        <> · Atribuído a <strong>{t.assignedTo}</strong></>
+                                    )}
+                                </div>
+
+                                {/* Conversa expandida */}
+                                {expandedId === t.id && (
+                                    <div className="mt-3 border-top pt-3">
+                                        <div className="d-flex flex-column gap-2 mb-3" style={{ maxHeight: 280, overflowY: "auto" }}>
+                                            {(messages[t.id] || []).map(m => {
+                                                const isManager = m.userId === Number(managerId);
+                                                return (
+                                                    <div
+                                                        key={m.id}
+                                                        className={`d-flex flex-column ${isManager ? "align-items-end" : "align-items-start"}`}
+                                                    >
+                                                        <div
+                                                            className={`p-2 rounded small ${isManager ? "bg-primary text-white" : "bg-light border text-dark"}`}
+                                                            style={{ maxWidth: "70%" }}
+                                                        >
+                                                            <div className="fw-semibold mb-1" style={{ fontSize: 11, opacity: 0.8 }}>
+                                                                {isManager ? "Eu" : m.sender?.name || "Cliente"}
+                                                            </div>
+                                                            {m.message}
+                                                            <div className={`mt-1 ${isManager ? "text-white opacity-75" : "text-muted"}`} style={{ fontSize: 10 }}>
+                                                                {m.sentAt ? new Date(m.sentAt).toLocaleString("pt-PT") : ""}
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+
+                                        {t.status !== "Fechado" && (
+                                            <div className="d-flex gap-2">
+                                                <input
+                                                    className="form-control form-control-sm"
+                                                    placeholder="Escreve uma resposta..."
+                                                    value={replyText}
+                                                    onChange={e => setReplyText(e.target.value)}
+                                                    onKeyDown={e => e.key === "Enter" && handleReply(t.id)}
+                                                />
+                                                <button className="btn btn-sm btn-dark" onClick={() => handleReply(t.id)}>
+                                                    Enviar
+                                                </button>
+                                            </div>
+                                        )}
+                                        {t.status === "Fechado" && (
+                                            <div className="alert alert-secondary py-2 small mb-0">🔒 Ticket fechado.</div>
+                                        )}
+                                    </div>
+                                )}
                             </div>
 
-                            {/* Preview da última resposta */}
-                            {t.lastReply !== "Sem resposta" && expanded !== t.id && (
-                                <div className="mt-2 p-2 bg-light rounded border small text-muted">
-                                    💬 {t.lastReply}
-                                </div>
-                            )}
+                            {/* Ações */}
+                            <div className="d-flex flex-column gap-1 ms-3">
+                                <button
+                                    className="btn btn-sm btn-outline-primary"
+                                    onClick={() => handleExpand(t.id)}
+                                >
+                                    {expandedId === t.id ? "Fechar" : "Responder"}
+                                </button>
 
-                            {/* Conversa expandida — só leitura */}
-                            {expanded === t.id && (
-                                <div className="mt-3 border-top pt-3">
+                                {/* 1️⃣ BOTÃO ADICIONADO AQUI: Permite ao admin atribuir a um manager */}
+                                <button
+                                    className="btn btn-sm btn-outline-secondary"
+                                    onClick={() => openAssignModal(t.id)}
+                                >
+                                    + Atribuir
+                                </button>
 
-                                    {/* Badge de aviso */}
-                                    <div className="alert alert-info py-2 small mb-3">
-                                        👁️ Modo de observação — o administrador não pode participar nesta conversa.
-                                    </div>
-
-                                    {/* Mensagens */}
-                                    <div className="d-flex flex-column gap-2" style={{ maxHeight: 350, overflowY: "auto" }}>
-                                        {(messages[t.id] || []).length === 0 ? (
-                                            <p className="text-muted small text-center py-3">
-                                                Ainda sem mensagens neste ticket.
-                                            </p>
-                                        ) : (
-                                            (messages[t.id] || []).map(m => (
-                                                <div key={m.id}
-                                                    className={`p-2 rounded small ${m.isManager ? "bg-primary text-white ms-5" : "bg-light border me-5"}`}>
-                                                    <div className="fw-semibold mb-1" style={{ fontSize: 11 }}>
-                                                        {m.sender?.name || "Utilizador"}
-                                                        {m.isManager && <span className="ms-1 opacity-75">(Gestor)</span>}
-                                                    </div>
-                                                    {m.message}
-                                                    <div className="mt-1 opacity-75" style={{ fontSize: 10 }}>
-                                                        {m.sentAt ? new Date(m.sentAt).toLocaleString("pt-PT") : ""}
-                                                    </div>
-                                                </div>
-                                            ))
-                                        )}
-                                    </div>
-                                </div>
-                            )}
+                                {t.status !== "Fechado" && (
+                                    <button className="btn btn-sm btn-outline-danger" onClick={() => handleClose(t.id)}>
+                                        Fechar ticket
+                                    </button>
+                                )}
+                            </div>
                         </div>
-                    ))}
+                    </div>
+                ))
+            )}
+
+            {/* 2️⃣ MODAL DE ATRIBUIÇÃO NO FINAL DO RETURN */}
+            {assignModalOpen && (
+                <div className="modal show d-block" style={{ backgroundColor: "rgba(0,0,0,0.4)" }}>
+                    <div className="modal-dialog modal-dialog-centered">
+                        <div className="modal-content">
+                            <div className="modal-header">
+                                <h5 className="modal-title text-dark">Atribuir gestor ao ticket</h5>
+                                <button className="btn-close" onClick={() => setAssignModalOpen(false)} />
+                            </div>
+                            <div className="modal-body text-dark">
+                                <p className="text-muted small mb-3">Seleciona um gestor:</p>
+                                <div className="d-flex flex-column gap-2">
+                                    {managers.map(m => (
+                                        <div
+                                            key={m.id_Utilizador || m.id}
+                                            className="d-flex align-items-center gap-3 p-2 border rounded"
+                                            style={{ cursor: "pointer" }}
+                                            onClick={() => handleAssign(m.id_Utilizador || m.id, m.name)}
+                                        >
+                                            <div className="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center"
+                                                style={{ width: 36, height: 36, fontSize: 13 }}>
+                                                {(m.name || "?").substring(0, 2).toUpperCase()}
+                                            </div>
+                                            <div>
+                                                <div className="fw-medium" style={{ fontSize: 14 }}>{m.name}</div>
+                                                <div className="text-muted" style={{ fontSize: 12 }}>Gestor</div>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                            <div className="modal-footer">
+                                <button className="btn btn-sm btn-secondary" onClick={() => setAssignModalOpen(false)}>
+                                    Cancelar
+                                </button>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             )}
         </div>

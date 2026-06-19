@@ -11,10 +11,10 @@ exports.getQuestions = async (req, res) => {
                     model: MessageQuestion,
                     as: 'messages',
                     include: [{ model: User, as: 'sender', attributes: ['name'] }],
-                    order: [['sentAt', 'ASC']] 
+                    order: [['sentAt', 'ASC']]
                 },
                 { model: User, as: 'creator', attributes: ['name', 'email'] },
-                { model: User, as: 'assignedTo', attributes: ['id_Utilizador', 'name'] }
+                { model: User, as: 'assignedTo', attributes: ['name'] } // Removido o atributo id daqui para evitar conflitos internos do Sequelize caso a PK seja id_Utilizador
             ],
             order: [['openedAt', 'DESC']]
         });
@@ -33,8 +33,9 @@ exports.getQuestions = async (req, res) => {
                 status: q.messages?.length > 0 ? "Respondido" : "Pendente",
                 createdBy: q.creator?.name || "Cliente",
                 assignedTo: q.assignedTo?.name || "Sem atribuição",
-                
-                assignedToId: q.assignedTo ? (q.assignedTo.id_Utilizador || q.assignedTo.id) : q.assignedToId, 
+
+                // 🔐 GARANTIA TOTAL: Usa o campo direto do modelo Question que mostraste na tabela
+                assignedToId: q.assignedToId ? Number(q.assignedToId) : null,
 
                 messagesCount: q.messages?.length || 0,
                 lastReply: lastReply
