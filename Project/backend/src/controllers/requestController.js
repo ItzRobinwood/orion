@@ -161,6 +161,10 @@ const request_create = async (req, res) => {
 
         console.log("subject length:", (subject || "Pedido").length);
         console.log("description length:", description?.length);
+        console.log("subtype:", subtype);
+        console.log("requestTypeId:", requestTypeId);
+        console.log("creatorId:", creatorId);
+        console.log("full body:", JSON.stringify(req.body));
 
         const newRequest = await Request.create({
             requestTypeId: Number(requestTypeId),
