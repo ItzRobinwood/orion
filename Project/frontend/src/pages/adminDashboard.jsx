@@ -39,7 +39,16 @@ export default function AdminDashboard() {
                         {item.label}
                     </button>
                 ))}
-                <div className="mt-auto pt-4 small text-secondary">© 2026 CyberBox</div>
+
+                <button
+                    className="btn btn-danger w-100 mb-3"
+                    onClick={() => window.location.href = "/login"}
+                >
+                    Sair
+                </button>
+                <div
+                    className="mt-auto pt-4 small text-secondary">© 2026 CyberBox</div>
+
             </div>
             <div className="flex-grow-1 bg-light p-4 overflow-auto">
                 <div className="d-flex justify-content-between align-items-center mb-4">

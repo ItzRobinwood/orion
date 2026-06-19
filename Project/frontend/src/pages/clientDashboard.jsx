@@ -20,6 +20,8 @@ export default function ClientDashboard() {
         { id: "requests", label: "Pedidos" },
         { id: "settings", label: "Configurações" },
 
+
+
     ];
 
     const renderContent = () => {
@@ -47,17 +49,20 @@ export default function ClientDashboard() {
                         {item.label}
                     </button>
                 ))}
-                <div className="mt-auto pt-4">
-                    <div className="d-flex align-items-center gap-2 mb-2">
-                        <img src="https://i.pravatar.cc/32" className="rounded-circle" alt="cliente" />
-                        <div>
-                            <div className="small text-white fw-semibold">João Pereira</div>
-                            <div className="small text-secondary">TechCorp</div>
-                        </div>
-                    </div>
+                
+                    <div>
+
+                    <button
+                        className="btn btn-danger w-100 mb-3"
+                        onClick={() => window.location.href = "/"}
+                    >
+                        Sair
+                    </button>
+
                     <small className="text-secondary">© 2026 CyberBox</small>
                 </div>
             </div>
+
 
             <div className="flex-grow-1 bg-light p-4 overflow-auto">
                 <div className="d-flex justify-content-between align-items-center mb-4">
@@ -83,7 +88,7 @@ function Dashboard({ setActive, user }) {
     useEffect(() => {
         if (!user?.id) return;
 
-        
+
         async function fetchLogs() {
             try {
                 setLoading(true);
@@ -146,7 +151,7 @@ function Dashboard({ setActive, user }) {
 }
 
 
-/* ───────────────────────── DOCUMENTAÇÃO ───────────────────────── */
+
 /* ───────────────────────── DOCUMENTAÇÃO ───────────────────────── */
 // Lista de ficheiros partilhados pela CyberBox com o cliente.
 function Docs() {
@@ -154,7 +159,18 @@ function Docs() {
     const [loading, setLoading] = useState(true);
     const [filter, setFilter] = useState("Todos");
 
-    const DOC_TYPES = ["Todos", "Relatório", "Pentest", "Política", "Procedimento", "Documentos Disponibilizados", "Outros"];
+    // 🟢 Tipos oficiais do teu sistema
+    const DOC_TYPES = ["Todos", "Relatório", "Pentest", "Política", "Procedimento", "Documentos Disponibilizados", "Geral / Outros"];
+
+    // 🟢 Mapeamento de IDs ou tipos vindos do RequestType para as categorias do Docs
+    const REQUEST_TYPE_MAP = {
+        1: "Relatório",     // Report de Incidente vira Relatório
+        2: "Pentest",       // Pentest mantém Pentest
+        3: "Política",      // Documentação vira Política/Procedimento (ajusta se preferires)
+        4: "Geral / Outros",
+        5: "Geral / Outros",
+        6: "Procedimento",  // NIS2 mapeia para Procedimento
+    };
 
     useEffect(() => {
         fetchDocs();
@@ -193,29 +209,34 @@ function Docs() {
         }
     };
 
-    // Inferir o tipo de documento pelo nome do ficheiro
-    const inferType = (file) => {
-        if (file.isFixed) return "Documentos Disponibilizados"; // Garante o tipo para os 3 ficheiros fixos
-        if (!file.fileName) return "Outro";
+    // 🟢 Corrigido: Agora valida o ID numérico ou string que vem no ficheiro
+    const getDocType = (file) => {
+        if (file.isFixed) return "Documentos Disponibilizados";
         
-        const name = file.fileName.toLowerCase();
-        if (name.includes("relat")) return "Relatório";
-        if (name.includes("pentest")) return "Pentest";
-        if (name.includes("politic")) return "Política";
-        if (name.includes("proced")) return "Procedimento";
-        return "Outro";
+        // Se a BD devolver um ID de tipo (ex: requestTypeId ou requestType sendo um ID)
+        const typeId = file.requestTypeId || file.requestType;
+        if (typeId && REQUEST_TYPE_MAP[typeId]) {
+            return REQUEST_TYPE_MAP[typeId];
+        }
+
+        // Caso já venha em string e exista no teu array DOC_TYPES
+        if (typeof typeId === "string" && DOC_TYPES.includes(typeId)) {
+            return typeId;
+        }
+
+        return "Geral / Outros";
     };
 
+    // 🟢 Garantido que as chaves batem certo com o array DOC_TYPES
     const typeColor = {
         "Relatório": "primary",
         "Pentest": "danger",
         "Política": "warning",
         "Procedimento": "info",
         "Documentos Disponibilizados": "dark",
-        "Outro": "secondary",
+        "Geral / Outros": "secondary",
     };
 
-    // 🟢 Lista com os 3 documentos fixos locais (devem estar na pasta public)
     const fixedDocs = [
         {
             id: "fixed-diretivas",
@@ -231,7 +252,7 @@ function Docs() {
             requestId: null,
             uploadedAt: "2026-06-19",
             isFixed: true,
-            localUrl: "\public\Exemplo inventário p_ CNCS.xlsx"
+            localUrl: "/Exemplo inventário p_ CNCS.xlsx"
         },
         {
             id: "fixed-rgpd",
@@ -239,16 +260,15 @@ function Docs() {
             requestId: null,
             uploadedAt: "2026-06-19",
             isFixed: true,
-            localUrl: "\public\Exemplo Lista Activos _ incidentes.xlsx"
+            localUrl: "/Exemplo Lista Activos _ incidentes.xlsx"
         }
     ];
 
-    // 🟢 Junta os da BD com os 3 locais de forma segura
     const allDocs = Array.isArray(docs) ? [...docs, ...fixedDocs] : [...fixedDocs];
 
     const filtered = filter === "Todos"
         ? allDocs
-        : allDocs.filter(f => inferType(f) === filter);
+        : allDocs.filter(f => getDocType(f) === filter);
 
     return (
         <div className="card p-3">
@@ -258,7 +278,6 @@ function Docs() {
                     Ficheiros e relatórios disponibilizados pela CyberBox para a tua empresa.
                 </p>
 
-                {/* Filtros por tipo */}
                 <div className="d-flex gap-2 flex-wrap">
                     {DOC_TYPES.map(t => (
                         <button key={t}
@@ -292,7 +311,7 @@ function Docs() {
                         </thead>
                         <tbody>
                             {filtered.map(f => {
-                                const docType = inferType(f);
+                                const docType = getDocType(f);
                                 return (
                                     <tr key={f.id}>
                                         <td className="fw-semibold">
@@ -312,7 +331,6 @@ function Docs() {
                                             {f.uploadedAt ? new Date(f.uploadedAt).toLocaleDateString("pt-PT") : "—"}
                                         </td>
                                         <td>
-                                            {/* 🟢 Verifica dinamicamente se o ficheiro atual mapeado é fixo */}
                                             {f.isFixed ? (
                                                 <a
                                                     href={f.localUrl}
@@ -717,9 +735,9 @@ function Requests() {
         const missing = requiredFields.find(k => !formData[k] || formData[k].trim() === "");
         if (missing) { alert("Preenche todos os campos obrigatórios (*)."); return; }
         if (!formData.subject || formData.subject.trim() === "") {
-    alert("Indica o nome do pedido.");
-    return;
-}
+            alert("Indica o nome do pedido.");
+            return;
+        }
 
         setSubmitting(true);
         try {
@@ -821,18 +839,18 @@ function Requests() {
                                 </button>
                             ))}
                         </div>
-                        
+
                         {currentConfig && (
 
-                                    
+
                             <>
 
-                                
+
 
                                 <div className="row g-3 mb-3">
 
 
-                                    
+
                                     <div className="col-12">
                                         <label className="form-label fw-semibold" style={{ fontSize: 12 }}>
                                             Nome do Pedido *
@@ -1036,8 +1054,8 @@ function Settings() {
                 <h6 className="fw-bold mb-1">Informação da Conta</h6>
                 <p className="text-muted small mb-3">Detalhes do teu perfil.</p>
                 <div className="d-flex align-items-center gap-3">
-                    <div className="rounded-circle bg-dark text-white d-flex align-items-center justify-content-center fw-bold" 
-                         style={{ width: 56, height: 56, fontSize: 18 }}>
+                    <div className="rounded-circle bg-dark text-white d-flex align-items-center justify-content-center fw-bold"
+                        style={{ width: 56, height: 56, fontSize: 18 }}>
                         {(profile.name || "?").substring(0, 2).toUpperCase()}
                     </div>
                     <div>
