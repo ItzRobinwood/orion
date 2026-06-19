@@ -1392,10 +1392,9 @@ function Requests() {
 
     const getStatusBadgeClass = (status) => {
         switch (status) {
-            case "Pendente": return "bg-warning text-dark";
-            case "Aprovados": return "bg-success";
-            case "Em Execução": return "bg-info text-dark";
-            case "Concluídos": return "bg-secondary";
+            case "open": return "bg-warning text-dark";
+            case "in_progress": return "bg-info text-dark";
+            case "closed": return "bg-secondary";
             default: return "bg-primary";
         }
     };
@@ -1473,8 +1472,8 @@ function Requests() {
                         <div>
                             <div className="d-flex align-items-center gap-2 mb-1">
                                 <h6 className="fw-bold m-0">{request.title}</h6>
-                                <span className={`badge ${getStatusBadgeClass(request.status)}`} style={{ fontSize: "10px" }}>
-                                    {request.status}
+                                <span className={`badge ${getStatusBadgeClass(request.status)}`}>
+                                    {request.statusLabel}
                                 </span>
                             </div>
                             <p className="text-muted small m-0 mb-2">{request.description}</p>

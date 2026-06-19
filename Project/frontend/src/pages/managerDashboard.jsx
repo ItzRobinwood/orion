@@ -536,9 +536,10 @@ function Requests() {
     const [loading, setLoading] = useState(true);
     const [expandedId, setExpandedId] = useState(null);
 
-    const STATUS_OPTIONS = ["open", "in_progress", "closed"];
-    const STATUS_LABELS = { open: "Pendente", in_progress: "Em Execução", closed: "Concluído" };
-    const STATUS_COLOR = { open: "warning", in_progress: "info", closed: "success" };
+    const managerId = Number(localStorage.getItem("userId") || 1);
+
+    const STATUS_LABELS = { in_progress: "Em Execução", closed: "Concluído" };
+    const STATUS_COLOR = { in_progress: "info", closed: "success" };
 
     const reloadRequests = async () => {
         setLoading(true);
@@ -565,43 +566,55 @@ function Requests() {
 
     const FILTER_MAP = {
         "Todos": null,
-        "Pendente": "open",
         "Em Execução": "in_progress",
         "Concluído": "closed",
     };
 
+    // ✅ Só mostra requests atribuídos a este gestor E que não estejam pendentes
+    const visibleRequests = requests.filter(r =>
+        r.assignedToId === managerId &&
+        (r.status === "in_progress" || r.status === "closed")
+    );
+
     const filtered = filter === "Todos"
-        ? requests
-        : requests.filter(r => r.status === FILTER_MAP[filter]);
+        ? visibleRequests
+        : visibleRequests.filter(r => r.status === FILTER_MAP[filter]);
 
     if (loading) return <div className="text-center my-5"><p className="text-muted">A carregar pedidos...</p></div>;
 
     return (
         <div className="d-flex flex-column gap-3">
+
             {/* Contadores */}
             <div className="row g-3 mb-1">
                 <div className="col">
                     <div className="card p-3 text-center">
-                        <div className="text-muted small">Total</div>
-                        <h4 className="fw-bold mb-0">{requests.length}</h4>
+                        <div className="text-muted small">Total atribuídos</div>
+                        <h4 className="fw-bold mb-0">{visibleRequests.length}</h4>
                     </div>
                 </div>
-                {Object.entries(STATUS_LABELS).map(([key, label]) => (
-                    <div className="col" key={key}>
-                        <div className="card p-3 text-center">
-                            <div className="text-muted small">{label}</div>
-                            <h4 className={`fw-bold mb-0 text-${STATUS_COLOR[key]}`}>
-                                {requests.filter(r => r.status === key).length}
-                            </h4>
-                        </div>
+                <div className="col">
+                    <div className="card p-3 text-center">
+                        <div className="text-muted small">Em Execução</div>
+                        <h4 className="fw-bold mb-0 text-info">
+                            {visibleRequests.filter(r => r.status === "in_progress").length}
+                        </h4>
                     </div>
-                ))}
+                </div>
+                <div className="col">
+                    <div className="card p-3 text-center">
+                        <div className="text-muted small">Concluídos</div>
+                        <h4 className="fw-bold mb-0 text-success">
+                            {visibleRequests.filter(r => r.status === "closed").length}
+                        </h4>
+                    </div>
+                </div>
             </div>
 
             {/* Filtros */}
             <div className="card p-3">
                 <div className="d-flex gap-2 flex-wrap">
-                    {["Todos", "Pendente", "Em Execução", "Concluído"].map(f => (
+                    {["Todos", "Em Execução", "Concluído"].map(f => (
                         <button
                             key={f}
                             onClick={() => setFilter(f)}
@@ -617,14 +630,15 @@ function Requests() {
             {filtered.length === 0 ? (
                 <div className="text-center text-muted py-5 border rounded bg-white">
                     <div style={{ fontSize: 32 }}>📋</div>
-                    <p className="mt-2 mb-0">Nenhum pedido encontrado.</p>
+                    <p className="mt-2 mb-0">Nenhum pedido atribuído em execução.</p>
+                    <small>Os pedidos aparecem aqui depois de o administrador os atribuir.</small>
                 </div>
             ) : (
                 filtered.map(r => (
                     <div
                         key={r.id}
-                        className={`card p-3 border-start border-4`}
-                        style={{ borderLeftColor: r.status === "closed" ? "#6c757d" : r.status === "in_progress" ? "#0dcaf0" : "#ffc107" }}
+                        className="card p-3 border-start border-4"
+                        style={{ borderLeftColor: r.status === "closed" ? "#6c757d" : "#0dcaf0" }}
                     >
                         <div className="d-flex justify-content-between align-items-start">
                             <div className="flex-grow-1">
@@ -641,7 +655,6 @@ function Requests() {
                                 </div>
                                 <div className="text-muted small mb-2">
                                     🏢 {r.company || "—"} · 📅 {r.date}
-                                    {r.assignedToName && <> · 👤 {r.assignedToName}</>}
                                 </div>
                                 {expandedId === r.id && r.description && (
                                     <div className="mt-2 p-2 bg-light rounded border small text-muted">
@@ -652,16 +665,16 @@ function Requests() {
 
                             {/* Ações */}
                             <div className="d-flex flex-column gap-1 ms-3" style={{ minWidth: 160 }}>
-                                {/* Alterar estado */}
+                                {/* Gestor só pode mover de in_progress para closed */}
                                 <select
                                     className="form-select form-select-sm"
                                     value={r.status}
                                     onChange={e => handleStatusChange(r.id, e.target.value)}
                                     style={{ fontSize: 12 }}
+                                    disabled={r.status === "closed"}
                                 >
-                                    {STATUS_OPTIONS.map(s => (
-                                        <option key={s} value={s}>{STATUS_LABELS[s]}</option>
-                                    ))}
+                                    <option value="in_progress">Em Execução</option>
+                                    <option value="closed">Concluído</option>
                                 </select>
                                 <button
                                     className="btn btn-sm btn-outline-secondary"

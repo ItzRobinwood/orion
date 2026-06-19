@@ -20,9 +20,9 @@ const request_list = async (req, res) => {
         });
 
         const mappedRequests = requests.map(r => {
-            let statusReact = "Pendente";
-            if (r.status === "in_progress") statusReact = "Em Execução";
-            if (r.status === "closed") statusReact = "Concluídos";
+            let statusLabel = "Pendente";
+            if (r.status === "in_progress") statusLabel = "Em Execução";
+            if (r.status === "closed") statusLabel = "Concluído";
 
             return {
                 id: r.id,
@@ -34,7 +34,8 @@ const request_list = async (req, res) => {
                 date: r.createdAt
                     ? new Date(r.createdAt).toLocaleDateString("pt-PT")
                     : new Date().toLocaleDateString("pt-PT"),
-                status: statusReact,
+                status: r.status,           // ✅ 'open', 'in_progress', 'closed'
+                statusLabel,                // ✅ 'Pendente', 'Em Execução', 'Concluído'
                 company: r.creator?.company?.nome || r.creator?.name || "Cliente",
                 creator: r.creator ? {
                     id: r.creator.id_Utilizador,
@@ -310,7 +311,42 @@ module.exports = {
     request_files_list,
     request_file_download,
     request_update,
+    request_update_status,
     request_delete,
     request_close,
     assign_manager
+};
+
+// ==========================================
+// 10. UPDATE STATUS (usado pelo manager)
+// ==========================================
+const request_update_status = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { status } = req.body;
+
+        const validStatuses = ['open', 'in_progress', 'closed'];
+        if (!validStatuses.includes(status)) {
+            return res.status(400).json({ success: false, message: 'Estado inválido.' });
+        }
+
+        const request = await Request.findByPk(id);
+        if (!request) {
+            return res.status(404).json({ success: false, message: 'Pedido não encontrado.' });
+        }
+
+        await request.update({ status });
+
+        await createLog({
+            action: "UPDATE",
+            entity: "Request",
+            details: `Pedido #${id} atualizado para estado: ${status}`,
+            ip: req.ip
+        });
+
+        return res.json({ success: true, request });
+
+    } catch (error) {
+        return res.status(500).json({ success: false, message: error.message });
+    }
 };

@@ -30,6 +30,7 @@ router.put('/requests/:id/close', requestController.request_close);
 // ==========================================
 // 4. ROTAS DE MODIFICAÇÃO E REMOÇÃO GERAIS (Fim do ficheiro)
 // ==========================================
+router.put('/requests/:id/status', requestController.request_update_status);
 router.put('/requests/:id', requestController.request_update);
 router.delete('/requests/:id', requestController.request_delete);
 
