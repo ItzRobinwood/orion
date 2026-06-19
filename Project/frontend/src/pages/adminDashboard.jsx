@@ -1134,7 +1134,7 @@ function Tickets() {
     const [managers, setManagers] = useState([]);
 
     const managerId = Number(localStorage.getItem("userId") || 1);
-    
+
     // 🌐 URL do teu Backend
     const BACKEND_URL = "https://orion-dewp.onrender.com/api";
 
@@ -1166,10 +1166,10 @@ function Tickets() {
 
     const handleAssign = async (managerId, managerName) => {
         try {
-            await axios.put(`${BACKEND_URL}/questions/${selectedTicketId}/assign`, { 
-                assignedToId: managerId 
+            await axios.put(`${BACKEND_URL}/questions/${selectedTicketId}/assign`, {
+                assignedToId: managerId
             });
-            
+
             setAssignModalOpen(false);
             setSelectedTicketId(null);
             await reloadTickets();
@@ -1286,7 +1286,7 @@ function Tickets() {
                                                 );
                                             })}
                                         </div>
-                                        
+
                                         {t.status === "Fechado" && (
                                             <div className="alert alert-secondary py-2 small mb-0 mt-2">🔒 Ticket fechado.</div>
                                         )}
@@ -1302,7 +1302,7 @@ function Tickets() {
                                 >
                                     {expandedId === t.id ? "Fechar" : "Ver Conversa"}
                                 </button>
-                                
+
                                 <button
                                     className="btn btn-sm btn-outline-secondary"
                                     onClick={() => openAssignModal(t.id)}
@@ -1619,10 +1619,170 @@ function Requests() {
 }
 
 function Docs() {
+    const [docs, setDocs] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [requests, setRequests] = useState([]);
+    const [filter, setFilter] = useState("Todos");
+
+    const DOC_TYPES = ["Todos", "Relatório", "Pentest", "Política", "Procedimento", "Outro"];
+
+    useEffect(() => {
+        fetchDocs();
+        fetchRequests();
+    }, []);
+
+    const fetchDocs = async () => {
+        setLoading(true);
+        try {
+            const res = await axios.get(`${API}/requests/files`);
+            const data = res.data?.files || res.data;
+            if (Array.isArray(data)) setDocs(data); // 👑 ADMIN VÊ TUDO: Lista todos os ficheiros globais do sistema
+        } catch (err) {
+            console.error("Erro ao carregar documentos:", err);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const fetchRequests = async () => {
+        try {
+            const res = await axios.get(`${API}/requests`);
+            setRequests(res.data.requests || []); // Carrega os dados dos pedidos apenas para mapear os nomes das empresas/assuntos
+        } catch (err) {
+            console.error("Erro ao carregar pedidos:", err);
+        }
+    };
+
+    const handleDownload = async (fileId, fileName) => {
+        try {
+            const response = await axios({
+                url: `${API}/requests/files/download/${fileId}`,
+                method: "GET",
+                responseType: "blob",
+            });
+            const url = window.URL.createObjectURL(new Blob([response.data]));
+            const link = document.createElement("a");
+            link.href = url;
+            link.setAttribute("download", fileName || "documento");
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+        } catch (err) {
+            alert("Não foi possível descarregar o ficheiro.");
+        }
+    };
+
+    const handleDelete = async (fileId) => {
+        if (!window.confirm("Remover este ficheiro do sistema definitivamente?")) return;
+        try {
+            await axios.delete(`${API}/requests/files/${fileId}`);
+            await fetchDocs(); // Atualiza a lista após remover
+        } catch (err) {
+            alert("Erro ao remover ficheiro.");
+        }
+    };
+
+    const inferType = (fileName) => {
+        if (!fileName) return "Outro";
+        const name = fileName.toLowerCase();
+        if (name.includes("relat")) return "Relatório";
+        if (name.includes("pentest")) return "Pentest";
+        if (name.includes("politic")) return "Política";
+        if (name.includes("proced")) return "Procedimento";
+        return "Outro";
+    };
+
+    const typeColor = {
+        "Relatório": "primary", "Pentest": "danger",
+        "Política": "warning", "Procedimento": "info", "Outro": "secondary",
+    };
+
+    // Filtro por Abas
+    const filteredDocs = filter === "Todos"
+        ? docs
+        : docs.filter(f => inferType(f.fileName) === filter);
+
     return (
-        <div className="card p-3">
-            <h5>Documentos</h5>
-            <p>Repositório de ficheiros</p>
+        <div className="card p-3 text-start">
+            <div className="mb-3">
+                <h6 className="fw-bold mb-0">Repositório Global de Documentos (Admin)</h6>
+                <p className="text-muted small mb-0">Controlo e auditoria de todos os ficheiros partilhados no sistema.</p>
+            </div>
+
+            {/* Abas de Filtros por Categoria */}
+            <div className="d-flex gap-2 flex-wrap mb-3">
+                {DOC_TYPES.map(t => (
+                    <button
+                        key={t}
+                        onClick={() => setFilter(t)}
+                        className={`btn btn-sm ${filter === t ? "btn-dark" : "btn-outline-secondary"}`}
+                    >
+                        {t}
+                    </button>
+                ))}
+            </div>
+
+            {loading ? (
+                <p className="text-muted small">A carregar repositório...</p>
+            ) : filteredDocs.length === 0 ? (
+                <div className="text-center text-muted py-5 border rounded bg-white">
+                    <div style={{ fontSize: 32 }}>📂</div>
+                    <p className="mt-2 mb-0">Nenhum documento encontrado no sistema.</p>
+                </div>
+            ) : (
+                <div className="table-responsive">
+                    <table className="table table-hover align-middle mb-0">
+                        <thead className="table-dark">
+                            <tr>
+                                <th>Documento</th>
+                                <th>Tipo</th>
+                                <th>Pedido Associado</th>
+                                <th>Data de Upload</th>
+                                <th>Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {filteredDocs.map(f => {
+                                const matchedRequest = requests.find(r => r.id === f.requestId);
+                                return (
+                                    <tr key={f.id}>
+                                        <td className="fw-semibold">📄 {f.fileName || "Sem nome"}</td>
+                                        <td>
+                                            <span className={`badge bg-${typeColor[inferType(f.fileName)] || "secondary"}`}>
+                                                {inferType(f.fileName)}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <span className="badge bg-light text-dark border">
+                                                #{f.requestId || "—"} {matchedRequest?.company ? `[${matchedRequest.company}]` : ""} {matchedRequest?.subject || ""}
+                                            </span>
+                                        </td>
+                                        <td style={{ fontSize: 13, color: "#6b7280" }}>
+                                            {f.uploadedAt ? new Date(f.uploadedAt).toLocaleDateString("pt-PT") : "—"}
+                                        </td>
+                                        <td>
+                                            <div className="d-flex gap-1">
+                                                <button
+                                                    className="btn btn-sm btn-outline-dark"
+                                                    onClick={() => handleDownload(f.id, f.fileName)}
+                                                >
+                                                    📥 Download
+                                                </button>
+                                                <button
+                                                    className="btn btn-sm btn-outline-danger"
+                                                    onClick={() => handleDelete(f.id)}
+                                                >
+                                                    Remover
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                );
+                            })}
+                        </tbody>
+                    </table>
+                </div>
+            )}
         </div>
     );
 }
