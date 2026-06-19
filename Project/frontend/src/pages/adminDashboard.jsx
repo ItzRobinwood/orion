@@ -1330,7 +1330,9 @@ function Requests() {
                     type: r.type,
                     subtype: r.subtype,
                     assignedTo: r.assignedToName,
-                    status: r.status
+                    assignedToId: r.assignedToId, // ✅ necessário para o manager filtrar
+                    status: r.status,             // ✅ 'open', 'in_progress', 'closed'
+                    statusLabel: r.statusLabel    // ✅ 'Pendente', 'Em Execução', 'Concluído'
                 }));
                 setRequests(mappedRequests);
             }
@@ -1386,10 +1388,6 @@ function Requests() {
     const totalRequests = requests.length;
     const countByStatus = (status) => requests.filter(r => r.status === status).length;
 
-    const filteredRequests = filter === "Todos"
-        ? requests
-        : requests.filter(r => r.status === filter);
-
     const getStatusBadgeClass = (status) => {
         switch (status) {
             case "open": return "bg-warning text-dark";
@@ -1402,6 +1400,18 @@ function Requests() {
     if (loading) {
         return <div className="text-center my-5 text-dark"><h5>A carregar gestão de pedidos com Axios... 🚀</h5></div>;
     }
+
+    const FILTER_MAP = {
+        "Todos": null,
+        "Por Atribuir": "open",
+        "Em Execução": "in_progress",
+        "Concluídos": "closed",
+    };
+
+    const filteredRequests = filter === "Todos"
+        ? requests
+        : requests.filter(r => r.status === FILTER_MAP[filter]);
+
 
     return (
         <div className="d-flex flex-column gap-4 text-dark text-start">
@@ -1423,8 +1433,8 @@ function Requests() {
                 <div className="col">
                     <div className="card p-3 d-flex flex-row align-items-center gap-3 shadow-sm">
                         <div>
-                            <div className="text-muted small">Pendentes</div>
-                            <h4 className="fw-bold text-primary m-0">{countByStatus("Pendente")}</h4>
+                            <div className="text-muted small">Por Atribuir</div>
+                            <h4 className="fw-bold text-warning m-0">{countByStatus("open")}</h4>
                         </div>
                     </div>
                 </div>
@@ -1432,7 +1442,7 @@ function Requests() {
                     <div className="card p-3 d-flex flex-row align-items-center gap-3 shadow-sm">
                         <div>
                             <div className="text-muted small">Em Execução</div>
-                            <h4 className="fw-bold text-warning m-0">{countByStatus("Em Execução")}</h4>
+                            <h4 className="fw-bold text-info m-0">{countByStatus("in_progress")}</h4>
                         </div>
                     </div>
                 </div>
@@ -1440,7 +1450,7 @@ function Requests() {
                     <div className="card p-3 d-flex flex-row align-items-center gap-3 shadow-sm">
                         <div>
                             <div className="text-muted small">Concluídos</div>
-                            <h4 className="fw-bold text-secondary m-0">{countByStatus("Concluídos")}</h4>
+                            <h4 className="fw-bold text-secondary m-0">{countByStatus("closed")}</h4>
                         </div>
                     </div>
                 </div>
@@ -1452,14 +1462,14 @@ function Requests() {
                     <span>Filtros</span>
                 </div>
                 <div className="d-flex gap-2">
-                    {["Todos", "Pendente", "Em Execução", "Concluídos"].map((status) => (
+                    {["Todos", "Por Atribuir", "Em Execução", "Concluídos"].map((f) => (
                         <button
-                            key={status}
-                            onClick={() => setFilter(status)}
-                            className={`btn btn-sm px-3 ${filter === status ? "btn-primary" : "btn-light border text-secondary"}`}
+                            key={f}
+                            onClick={() => setFilter(f)}
+                            className={`btn btn-sm px-3 ${filter === f ? "btn-primary" : "btn-light border text-secondary"}`}
                         >
-                            {status}
-                            {countByStatus(status) > 0 && ` (${countByStatus(status)})`}
+                            {f}
+                            {f !== "Todos" && countByStatus(FILTER_MAP[f]) > 0 && ` (${countByStatus(FILTER_MAP[f])})`}
                         </button>
                     ))}
                 </div>

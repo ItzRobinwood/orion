@@ -545,7 +545,17 @@ function Requests() {
         setLoading(true);
         try {
             const res = await axios.get(`${API}/requests`);
-            setRequests(res.data.requests || []);
+            const allRequests = res.data.requests || [];
+
+            // ✅ DEBUG — remove depois
+            console.log("managerId:", managerId);
+            console.log("todos os requests:", allRequests.map(r => ({
+                id: r.id,
+                assignedToId: r.assignedToId,
+                status: r.status
+            })));
+
+            setRequests(allRequests);
         } catch (err) {
             console.error("Erro ao carregar pedidos:", err);
         } finally {
