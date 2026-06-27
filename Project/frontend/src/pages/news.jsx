@@ -4,17 +4,17 @@ import Footer from "../components/footer";
 import axios from 'axios';
 
 const CATEGORY_STYLES = {
-  Ameaças:          { color: "#dc2626", bg: "#fff0f0", border: "#dc2626" },
+  Ameaças: { color: "#dc2626", bg: "#fff0f0", border: "#dc2626" },
   Vulnerabilidades: { color: "#d97706", bg: "#fffbeb", border: "#d97706" },
-  "Boas práticas":  { color: "#16a34a", bg: "#eaf7ee", border: "#16a34a" },
-  Legislação:       { color: "#3c8dbc", bg: "#eaf4fb", border: "#3c8dbc" },
-  Ransomware:       { color: "#dc2626", bg: "#fff0f0", border: "#dc2626" },
-  Malware:          { color: "#dc2626", bg: "#fff0f0", border: "#dc2626" },
-  Phishing:         { color: "#ea580c", bg: "#fff3e8", border: "#ea580c" },
-  Incidentes:       { color: "#dc2626", bg: "#fff0f0", border: "#dc2626" },
-  Privacidade:      { color: "#9333ea", bg: "#f3e8ff", border: "#9333ea" },
+  "Boas práticas": { color: "#16a34a", bg: "#eaf7ee", border: "#16a34a" },
+  Legislação: { color: "#3c8dbc", bg: "#eaf4fb", border: "#3c8dbc" },
+  Ransomware: { color: "#dc2626", bg: "#fff0f0", border: "#dc2626" },
+  Malware: { color: "#dc2626", bg: "#fff0f0", border: "#dc2626" },
+  Phishing: { color: "#ea580c", bg: "#fff3e8", border: "#ea580c" },
+  Incidentes: { color: "#dc2626", bg: "#fff0f0", border: "#dc2626" },
+  Privacidade: { color: "#9333ea", bg: "#f3e8ff", border: "#9333ea" },
   "IA & Segurança": { color: "#9333ea", bg: "#f3e8ff", border: "#9333ea" },
-  Ferramentas:      { color: "#16a34a", bg: "#eaf7ee", border: "#16a34a" },
+  Ferramentas: { color: "#16a34a", bg: "#eaf7ee", border: "#16a34a" },
 };
 
 const FILTERS = ["Todas", "Ameaças", "Vulnerabilidades", "Boas práticas", "Legislação", "Ransomware", "Incidentes"];
@@ -62,21 +62,25 @@ function NewsSection() {
   const [lastUpdate, setLastUpdate] = useState(null);
 
   const fetchNews = useCallback(async () => {
-  setLoading(true);
-  setError(null);
+    setLoading(true);
+    setError(null);
 
-  try {
-    const { data } = await axios.get("http://localhost:3000/api/news");
+    try {
+      // ✅ URL do Render em vez de localhost
+      const { data } = await axios.get("https://orion-dewp.onrender.com/api/news");
 
-    setPosts(data);
-    setLastUpdate(new Date().toLocaleString("pt-PT"));
-  } catch (error) {
-    setError("Não foi possível carregar as notícias. Tenta novamente.");
-    console.error(error);
-  } finally {
-    setLoading(false);
-  }
-}, []);
+      // ✅ data.news em vez de data
+      if (data.success) {
+        setPosts(data.news);
+      }
+      setLastUpdate(new Date().toLocaleString("pt-PT"));
+    } catch (error) {
+      setError("Não foi possível carregar as notícias. Tenta novamente.");
+      console.error(error);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
   useEffect(() => { fetchNews(); }, [fetchNews]);
 
