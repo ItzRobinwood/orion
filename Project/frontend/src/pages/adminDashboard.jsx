@@ -870,6 +870,10 @@ function AdminsTable({ admins, setAdmins, reloadAdmins }) {
     };
 
     const handleDelete = async (id) => {
+        if (admins.length === 1) {
+        alert("Não é possível eliminar o único administrador do sistema.");
+        return;
+        }
         try {
             const res = await axios.delete(`https://orion-dewp.onrender.com/api/users/${id}`);
             if (res.data.success) {

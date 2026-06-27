@@ -1,5 +1,6 @@
 const User = require("../models/User");
 const bcrypt = require("bcryptjs");
+const jwt = require('jsonwebtoken');
 const { createLog } = require('./logsController');
 
 // CRIAR UTILIZADOR
@@ -22,17 +23,14 @@ exports.createUser = async (req, res) => {
             });
         }
 
-        // 1. Primeiro geramos o Hash da password e guardamos na constante
         const hashedPassword = await bcrypt.hash(password, 10);
 
-        // O admin escolhe o estado no React, se for "Inativo" grava false, senão true
         const isWithActiveStatus = status === "Inativo" ? false : true;
 
-        // 2. Agora o 'hashedPassword' já existe e pode ser usado com segurança aqui dentro!
         const newUser = await User.create({
             name,
             email,
-            password: hashedPassword, // <--- Aqui ele já vai encontrar a variável!
+            password: hashedPassword,
             id_tipo,
             id_empresa: id_empresa || null,
             telephone,
@@ -95,9 +93,17 @@ exports.loginUser = async (req, res) => {
             userId: user.id_Utilizador
         });
 
+        // 🟢 GERAR O TOKEN
+        const token = jwt.sign(
+            { id: user.id_Utilizador, id_tipo: user.id_tipo },
+            process.env.JWT_SECRET,
+            { expiresIn: '8h' }
+        );
+
         return res.json({
             success: true,
             message: "Login efetuado com sucesso.",
+            token,
             user: {
                 id: user.id_Utilizador || user.id,
                 name: user.name,
@@ -126,20 +132,16 @@ exports.updateUser = async (req, res) => {
             });
         }
 
-        // Criar o objeto com os dados a atualizar
         const updateData = {};
         if (name) updateData.name = name;
         if (email) updateData.email = email;
         if (telephone) updateData.telephone = telephone;
         if (status) updateData.active = (status !== "Inativo");
 
-        // 🔴 2. Adicionamos a lógica para atualizar a empresa
-        // Se id_empresa vier no body, usamos o seu valor convertido ou null se for inválido/vazio
         if (id_empresa !== undefined) {
             updateData.id_empresa = id_empresa ? parseInt(id_empresa) : null;
         }
 
-        // 🟢 Se o pedido incluir alteração de password, valida a antiga antes de encriptar a nova
         if (password && newPassword) {
             const isMatch = await bcrypt.compare(password, user.password);
             if (!isMatch) {
@@ -165,11 +167,11 @@ exports.updateUser = async (req, res) => {
         });
     }
 };
+
 // LISTAR TODOS OS UTILIZADORES
 exports.getUsers = async (req, res) => {
     try {
         const users = await User.findAll({
-            // 🔴 CORREÇÃO: Adicionado 'id_empresa' para que o React consiga cruzar os dados!
             attributes: ['id_Utilizador', 'name', 'email', 'telephone', 'active', 'id_tipo', 'id_empresa']
         });
 
@@ -185,7 +187,7 @@ exports.getUsers = async (req, res) => {
     }
 };
 
-//DELETE USER
+// DELETE USER
 exports.deleteUser = async (req, res) => {
     try {
         const { id } = req.params;

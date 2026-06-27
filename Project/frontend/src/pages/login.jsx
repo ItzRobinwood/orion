@@ -27,6 +27,7 @@ function Login() {
 
                 localStorage.setItem("userId", data.user.id);
                 localStorage.setItem("userName", data.user.name);
+                localStorage.setItem("token", data.token);
 
                 if (userType === 1) {
                     navigate('/adminDashboard');
