@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import "bootstrap/dist/css/bootstrap.min.css";
 import axios from 'axios';
+import api from '../services/api';
 
 
 export default function AdminDashboard() {
@@ -175,7 +176,7 @@ function Accounts() {
 
     const reloadAdmins = async () => {
         try {
-            const res = await axios.get("https://orion-dewp.onrender.com/api/users");
+            const res = await api.get("/users");
             const data = res.data;
             const mapped = data.users
                 .filter(u => u.id_tipo === 1)
@@ -193,7 +194,7 @@ function Accounts() {
 
     const reloadManagers = async () => {
         try {
-            const res = await axios.get("https://orion-dewp.onrender.com/api/users");
+            const res = await api.get("/users");
             const data = res.data;
             const mapped = data.users
                 .filter(u => u.id_tipo === 2)
@@ -212,7 +213,7 @@ function Accounts() {
     // 🔴 CORREÇÃO: Removemos o "= accounts" traiçoeiro do parâmetro
     const reloadClients = async (currentAccounts) => {
         try {
-            const res = await axios.get("https://orion-dewp.onrender.com/api/users");
+            const res = await api.get("/users");
             const data = res.data;
 
             // Se passarmos a lista de empresas (como no reloadCompanies), usamos essa.
@@ -243,7 +244,7 @@ function Accounts() {
 
     const reloadCompanies = async () => {
         try {
-            const res = await axios.get("https://orion-dewp.onrender.com/api/companies");
+            const res = await api.get("/companies")
             const data = res.data;
             const mapped = data.companies.map(c => ({
                 id: c.id,
@@ -274,7 +275,7 @@ function Accounts() {
         }
     };
 
-    // 🔴 CORREÇÃO NO USEEFFECT: Adicionamos a dependência das accounts para que a função 
+    // 🔴 CORREÇÃO NO USEEFFECT: Adicionamos a dependência das accounts para que a função
     // reloadClients se atualize sempre que as empresas mudarem no sistema!
     useEffect(() => {
         reloadAdmins();
@@ -331,8 +332,8 @@ function CompaniesTable({ accounts, setAccounts, reloadCompanies }) {
     const handleCreate = async () => {
         if (!form.company) return;
         try {
-            const res = await axios.post("https://orion-dewp.onrender.com/api/companies", {
-                nome: form.company,
+            const res = await api.post("/companies", {
+                company: form.company,
                 status: form.status === "Ativo",
                 nomeResponsavelSeg: form.securityManager.name,
                 emailResponsavelSeg: form.securityManager.email,
@@ -349,8 +350,9 @@ function CompaniesTable({ accounts, setAccounts, reloadCompanies }) {
                 alert("Error: " + res.data.message);
             }
         } catch (err) {
-            alert("Connection error: " + err.message);
-        }
+    console.error("Full error response:", err.response?.data);
+    alert("Connection error: " + (err.response?.data?.message || err.message));
+}
     };
 
     const startEdit = (a) => {
@@ -364,7 +366,7 @@ function CompaniesTable({ accounts, setAccounts, reloadCompanies }) {
     const saveEdit = async () => {
         if (!editForm.company) return;
         try {
-            const res = await axios.put(`https://orion-dewp.onrender.com/api/companies/${editingId}`, {
+            const res = await api.put(`/companies/${editingId}`, {
                 nome: editForm.company,
                 status: editForm.status === "Ativo",
                 nomeResponsavelSeg: editForm.securityManager.name,
@@ -388,7 +390,7 @@ function CompaniesTable({ accounts, setAccounts, reloadCompanies }) {
     const handleDelete = async (id) => {
         if (!window.confirm("Tens a certeza que desejas remover esta empresa?")) return;
         try {
-            const res = await axios.delete(`https://orion-dewp.onrender.com/api/companies/${id}`);
+            const res = await api.delete(`/companies/${id}`)
             if (res.data.success) {
                 await reloadCompanies();
             } else {
@@ -509,7 +511,7 @@ function ClientsTable({ clients, setClients, reloadClients, accounts }) {
             return;
         }
         try {
-            const res = await axios.post("https://orion-dewp.onrender.com/api/users", {
+            const res = await api.post("/users", {
                 name: form.name,
                 email: form.email,
                 password: form.password,
@@ -548,7 +550,7 @@ function ClientsTable({ clients, setClients, reloadClients, accounts }) {
             return;
         }
         try {
-            const res = await axios.put(`https://orion-dewp.onrender.com/api/users/${editingId}`, {
+            const res = await api.put(`/users/${editingId}`, {
                 name: editForm.name,
                 email: editForm.email,
                 telephone: editForm.phone,
@@ -570,7 +572,7 @@ function ClientsTable({ clients, setClients, reloadClients, accounts }) {
     const handleDelete = async (id) => {
         if (!window.confirm("Tem a certeza que deseja remover este cliente?")) return;
         try {
-            const res = await axios.delete(`https://orion-dewp.onrender.com/api/users/${id}`);
+            const res = await api.delete(`/users/${id}`);
             if (res.data.success) {
                 await reloadClients(accounts);
             } else {
@@ -823,7 +825,7 @@ function AdminsTable({ admins, setAdmins, reloadAdmins }) {
             return;
         }
         try {
-            const res = await axios.post("https://orion-dewp.onrender.com/api/users", {
+            const res = await api.post("/users", {
                 name: form.name,
                 email: form.email,
                 password: form.password,
@@ -852,7 +854,7 @@ function AdminsTable({ admins, setAdmins, reloadAdmins }) {
     const saveEdit = async () => {
         if (!editForm.name || !editForm.email) return;
         try {
-            const res = await axios.put(`https://orion-dewp.onrender.com/api/users/${editingId}`, {
+            const res = await api.put(`/users/${editingId}`, {
                 name: editForm.name,
                 email: editForm.email,
                 telephone: editForm.phone,
@@ -871,11 +873,11 @@ function AdminsTable({ admins, setAdmins, reloadAdmins }) {
 
     const handleDelete = async (id) => {
         if (admins.length === 1) {
-        alert("Não é possível eliminar o único administrador do sistema.");
-        return;
+            alert("Não é possível eliminar o único administrador do sistema.");
+            return;
         }
         try {
-            const res = await axios.delete(`https://orion-dewp.onrender.com/api/users/${id}`);
+            const res = await api.delete(`/users/${id}`);
             if (res.data.success) {
                 await reloadAdmins();
             } else {
@@ -964,7 +966,7 @@ function ManagersTable({ managers, setManagers, reloadManagers }) {
             return;
         }
         try {
-            const res = await axios.post("https://orion-dewp.onrender.com/api/users", {
+            const res = await api.post("/users", {
                 name: form.name,
                 email: form.email,
                 password: form.password,
@@ -993,7 +995,7 @@ function ManagersTable({ managers, setManagers, reloadManagers }) {
     const saveEdit = async () => {
         if (!editForm.name || !editForm.email) return;
         try {
-            const res = await axios.put(`https://orion-dewp.onrender.com/api/users/${editingId}`, {
+            const res = await api.put(`/users/${editingId}`, {
                 name: editForm.name,
                 email: editForm.email,
                 telephone: editForm.phone,
@@ -1012,7 +1014,7 @@ function ManagersTable({ managers, setManagers, reloadManagers }) {
 
     const handleDelete = async (id) => {
         try {
-            const res = await axios.delete(`https://orion-dewp.onrender.com/api/users/${id}`);
+            const res = await api.delete(`/users/${id}`);
             if (res.data.success) {
                 await reloadManagers();
             } else {
@@ -1651,7 +1653,7 @@ function Docs() {
             // Alterado para usar ${BACKEND_URL}
             const res = await axios.get(`${BACKEND_URL}/requests/files`);
             const data = res.data?.files || res.data;
-            if (Array.isArray(data)) setDocs(data); 
+            if (Array.isArray(data)) setDocs(data);
         } catch (err) {
             console.error("Erro ao carregar documentos:", err);
         } finally {
@@ -1663,7 +1665,7 @@ function Docs() {
         try {
             // Alterado para usar ${BACKEND_URL}
             const res = await axios.get(`${BACKEND_URL}/requests`);
-            setRequests(res.data.requests || []); 
+            setRequests(res.data.requests || []);
         } catch (err) {
             console.error("Erro ao carregar pedidos:", err);
         }
@@ -1694,7 +1696,7 @@ function Docs() {
         try {
             // Alterado para usar ${BACKEND_URL}
             await axios.delete(`${BACKEND_URL}/requests/files/${fileId}`);
-            await fetchDocs(); 
+            await fetchDocs();
         } catch (err) {
             alert("Erro ao remover ficheiro.");
         }
@@ -1715,8 +1717,8 @@ function Docs() {
         "Política": "warning", "Procedimento": "info", "Outro": "secondary",
     };
 
-    const filteredDocs = filter === "Todos" 
-        ? docs 
+    const filteredDocs = filter === "Todos"
+        ? docs
         : docs.filter(f => inferType(f.fileName) === filter);
 
     return (

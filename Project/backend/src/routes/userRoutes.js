@@ -2,17 +2,16 @@ const express = require("express");
 const router = express.Router();
 const controller = require("../controllers/userController");
 const { verifyToken, verifyAdmin } = require("../middleware/auth");
- 
-// Criar conta
-router.post("/users", controller.createUser);
- 
-// Login
+
+// Criar conta — agora só admins
+router.post("/users", verifyToken, verifyAdmin, controller.createUser);
+
+// Login — mantém-se público
 router.post("/users/login", controller.loginUser);
- 
 
 router.get("/users", verifyToken, verifyAdmin, controller.getUsers);
 router.put("/users/:id", verifyToken, verifyAdmin, controller.updateUser);
 router.delete("/users/:id", verifyToken, verifyAdmin, controller.deleteUser);
 router.put("/users/:id/password", verifyToken, controller.changePassword);
- 
+
 module.exports = router;
