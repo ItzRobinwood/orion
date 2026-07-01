@@ -15,16 +15,3 @@ const seedContent = async () => {
 };
 
 module.exports = seedContent;
-
-
-server.js
-
-require("./models/contentModel");
-
-const contentRoutes = require("./routes/contentRoutes");
-
-const seedContent = require("./seeders/seedContent");
-
-app.use('/api', contentRoutes);
-
-  await seedContent();
