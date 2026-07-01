@@ -88,26 +88,31 @@ function Dashboard({ setActive, user }) {
     useEffect(() => {
         if (!user?.id) return;
 
-
         async function fetchLogs() {
             try {
                 setLoading(true);
                 const res = await axios.get(`${API}/logs/user/${user.id}`);
+
                 if (res.data.success) {
                     setLogs(res.data.logs);
                 } else {
                     setErro(res.data.message || "Falha ao carregar registos");
                 }
             } catch (err) {
-                setErro(
-                    err.response?.data?.message || "Falha ao carregar registos"
-                );
+                setErro(err.response?.data?.message || "Falha ao carregar registos");
             } finally {
                 setLoading(false);
             }
         }
 
         fetchLogs();
+
+        const interval = setInterval(() => {
+            fetchLogs();
+        }, 10000);
+
+        return () => clearInterval(interval);
+
     }, [user?.id]);
 
     return (
@@ -206,6 +211,12 @@ function Docs() {
 
     useEffect(() => {
         fetchDocs();
+
+        const interval = setInterval(() => {
+            fetchDocs();
+        }, 10000);
+
+        return () => clearInterval(interval);
     }, []);
 
     const fetchDocs = async () => {
@@ -242,13 +253,13 @@ function Docs() {
     };
 
     // 🟢 Corrigido: Agora valida o ID numérico ou string que vem no ficheiro
-   const getDocType = (file) => {
-    if (file.isFixed) return "Documentos Disponibilizados";
-    if (file.requestType && DOC_TYPES.includes(file.requestType)) {
-        return file.requestType;
-    }
-    return "Geral / Outros";
-};
+    const getDocType = (file) => {
+        if (file.isFixed) return "Documentos Disponibilizados";
+        if (file.requestType && DOC_TYPES.includes(file.requestType)) {
+            return file.requestType;
+        }
+        return "Geral / Outros";
+    };
 
     // 🟢 Garantido que as chaves batem certo com o array DOC_TYPES
     const typeColor = {
@@ -402,6 +413,12 @@ function Tickets() {
 
     useEffect(() => {
         fetchTickets();
+
+        const interval = setInterval(() => {
+            fetchTickets();
+        }, 10000);
+
+        return () => clearInterval(interval);
     }, []);
 
     const fetchTickets = async () => {
@@ -721,8 +738,14 @@ function Requests() {
 
     useEffect(() => {
         fetchRequests();
-    }, []);
 
+        const interval = setInterval(() => {
+            fetchRequests();
+        }, 10000);
+
+        return () => clearInterval(interval);
+    }, []);
+    
     const fetchRequests = async () => {
         setLoading(true);
         try {
