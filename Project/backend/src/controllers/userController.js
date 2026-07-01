@@ -232,3 +232,30 @@ exports.changePassword = async (req, res) => {
         return res.status(500).json({ success: false, message: error.message });
     }
 };
+
+// LISTAR SÓ CLIENTES (para manager)
+exports.getClients = async (req, res) => {
+    try {
+        const users = await User.findAll({
+            where: { id_tipo: 3 },
+            attributes: ['id_Utilizador', 'name', 'email', 'telephone', 'active', 'id_tipo', 'id_empresa']
+        });
+        return res.json({ success: true, users });
+    } catch (error) {
+        return res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+// DADOS DO UTILIZADOR LOGADO (para Settings)
+exports.getMe = async (req, res) => {
+    try {
+        const user = await User.findOne({
+            where: { id_Utilizador: req.user.id },
+            attributes: ['id_Utilizador', 'name', 'email', 'telephone', 'id_tipo', 'id_empresa']
+        });
+        if (!user) return res.status(404).json({ success: false, message: "Utilizador não encontrado." });
+        return res.json({ success: true, user });
+    } catch (error) {
+        return res.status(500).json({ success: false, message: error.message });
+    }
+};

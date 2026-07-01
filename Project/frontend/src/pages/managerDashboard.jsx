@@ -4,6 +4,16 @@ import "bootstrap/dist/css/bootstrap.min.css";
 
 const API = "https://orion-dewp.onrender.com/api";
 
+axios.interceptors.request.use(config => {
+    const token = localStorage.getItem("token");
+
+    if (token) {
+        config.headers.Authorization = `Bearer ${token}`;
+    }
+
+    return config;
+});
+
 export default function ManagerDashboard() {
     const [active, setActive] = useState("dashboard");
 
@@ -42,8 +52,8 @@ export default function ManagerDashboard() {
                         {item.label}
                     </button>
                 ))}
-                
-                    <div>
+
+                <div>
                     <button
                         className="btn btn-danger w-100 mb-3"
                         onClick={() => window.location.href = "/"}
@@ -81,13 +91,12 @@ function Dashboard({ setActive }) {
                 const [reqRes, tickRes, usersRes] = await Promise.all([
                     axios.get(`${API}/requests`),
                     axios.get(`${API}/questions`),
-                    axios.get(`${API}/users`),
+                    axios.get(`${API}/users/clients`),
                 ]);
 
                 const requests = reqRes.data.requests || [];
                 const tickets = tickRes.data.questions || [];
-                const users = usersRes.data.users || [];
-                const clients = users.filter(u => u.id_tipo === 3);
+                const clients = usersRes.data.users || [];
 
                 setStats({
                     clients: clients.length,
@@ -188,7 +197,7 @@ function Clients() {
         const load = async () => {
             try {
                 const [usersRes, companiesRes] = await Promise.all([
-                    axios.get(`${API}/users`),
+                    axios.get(`${API}/users/clients`),
                     axios.get(`${API}/companies`),
                 ]);
                 const allUsers = usersRes.data.users || [];
@@ -668,7 +677,7 @@ function Requests() {
                                 <div className="text-muted small mb-2">
                                     🏢 {r.company || "—"} · 📅 {r.date}
                                 </div>
-                                
+
                                 {expandedId === r.id && r.description && (
                                     <div className="mt-2 p-2 bg-light rounded border small text-muted">
                                         <div className="mb-2">
@@ -676,34 +685,34 @@ function Requests() {
                                         </div>
 
                                         {(requestFiles[r.id] || []).length > 0 && (
-                                        <div className="border-top pt-2 mt-2">
-                                            <div className="fw-semibold mb-2">📎 Documentos recebidos</div>
+                                            <div className="border-top pt-2 mt-2">
+                                                <div className="fw-semibold mb-2">📎 Documentos recebidos</div>
 
-                                            {(requestFiles[r.id] || [])
-                                                // 🟢 FILTRO CORRIGIDO: 
-                                                // Mantém apenas ficheiros cujo userId seja DIFERENTE do id do gestor atual.
-                                                // Convertemos ambos para String para evitar falhas caso um seja texto e outro número.
-                                                .filter(f => f.userId && String(f.userId) !== String(managerId))
-                                                .map(f => (
-                                                    <div key={f.id} className="d-flex justify-content-between align-items-center mb-1">
-                                                        <span>📄 {f.fileName}</span>
+                                                {(requestFiles[r.id] || [])
+                                                    // 🟢 FILTRO CORRIGIDO: 
+                                                    // Mantém apenas ficheiros cujo userId seja DIFERENTE do id do gestor atual.
+                                                    // Convertemos ambos para String para evitar falhas caso um seja texto e outro número.
+                                                    .filter(f => f.userId && String(f.userId) !== String(managerId))
+                                                    .map(f => (
+                                                        <div key={f.id} className="d-flex justify-content-between align-items-center mb-1">
+                                                            <span>📄 {f.fileName}</span>
 
-                                                        <a
-                                                            href={`${API}/requests/files/download/${f.id}`}
-                                                            className="btn btn-sm btn-outline-dark"
-                                                        >
-                                                            Ver / Download
-                                                        </a>
-                                                    </div>
-                                                ))
-                                            }
-                                            
-                                            {/* Mensagem de feedback caso todos os ficheiros tenham sido enviados pelo gestor */}
-                                            {(requestFiles[r.id] || []).filter(f => f.userId && String(f.userId) !== String(managerId)).length === 0 && (
-                                                <div className="text-muted small fst-italic">Nenhum documento recebido do cliente para este pedido.</div>
-                                            )}
-                                        </div>
-                                    )}
+                                                            <a
+                                                                href={`${API}/requests/files/download/${f.id}`}
+                                                                className="btn btn-sm btn-outline-dark"
+                                                            >
+                                                                Ver / Download
+                                                            </a>
+                                                        </div>
+                                                    ))
+                                                }
+
+                                                {/* Mensagem de feedback caso todos os ficheiros tenham sido enviados pelo gestor */}
+                                                {(requestFiles[r.id] || []).filter(f => f.userId && String(f.userId) !== String(managerId)).length === 0 && (
+                                                    <div className="text-muted small fst-italic">Nenhum documento recebido do cliente para este pedido.</div>
+                                                )}
+                                            </div>
+                                        )}
                                     </div>
                                 )}
                             </div>
@@ -1006,7 +1015,7 @@ function Docs() {
             const fd = new FormData();
             fd.append("file", form.file);
             fd.append("requestId", form.requestId);
-            
+
             // 🟢 GARANTIA: Envia também o userId do gestor para ficar registado na Base de Dados
             if (loggedInUserId) {
                 fd.append("userId", loggedInUserId);
@@ -1071,12 +1080,12 @@ function Docs() {
 
     // 🟢 FILTRAGEM DUPLA: Primeiro apenas os docs do utilizador atual, depois pelo tipo selecionado
     const filteredDocs = docs.filter(f => {
-    // Se o ficheiro não tem userId, ignora
-    if (!f.userId) return false;
-    
-    // Compara ambos convertidos para String para evitar erros de tipo (ex: 11 vs "11")
-    return String(f.userId) === String(loggedInUserId);
-});
+        // Se o ficheiro não tem userId, ignora
+        if (!f.userId) return false;
+
+        // Compara ambos convertidos para String para evitar erros de tipo (ex: 11 vs "11")
+        return String(f.userId) === String(loggedInUserId);
+    });
 
 
     return (
@@ -1227,17 +1236,19 @@ function Settings() {
     useEffect(() => {
         const loadProfile = async () => {
             try {
-                const res = await axios.get(`${API}/users`);
-                const userId = Number(localStorage.getItem("userId"));
-                const me = res.data.users.find(u => u.id_Utilizador === userId);
-                if (me) setProfile({
-                    name: me.name,
-                    email: me.email
-                });
+                const res = await axios.get(`${API}/users/me`);
+
+                if (res.data.success) {
+                    setProfile({
+                        name: res.data.user.name,
+                        email: res.data.user.email,
+                    });
+                }
             } catch (err) {
                 console.error("Erro ao carregar perfil:", err);
             }
         };
+
         loadProfile();
     }, []);
 

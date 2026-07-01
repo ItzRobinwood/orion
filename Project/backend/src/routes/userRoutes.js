@@ -6,6 +6,10 @@ const { verifyToken, verifyAdmin } = require("../middleware/auth");
 // Criar conta — agora só admins
 router.post("/users", verifyToken, verifyAdmin, controller.createUser);
 
+// Rotas para manager/cliente — só verifyToken
+router.get("/users/clients", verifyToken, controller.getClients);
+router.get("/users/me", verifyToken, controller.getMe);
+
 // Login — mantém-se público
 router.post("/users/login", controller.loginUser);
 
