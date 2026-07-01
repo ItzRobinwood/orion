@@ -96,6 +96,7 @@ function Dashboard({ setActive }) {
 
                 const requests = reqRes.data.requests || [];
                 const tickets = tickRes.data.questions || [];
+                const users = usersRes.data.users || [];
                 const clients = usersRes.data.users || [];
 
                 setStats({
