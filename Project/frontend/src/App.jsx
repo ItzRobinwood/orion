@@ -1,4 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { useEffect } from "react";
+import { loadContent } from "./services/contentService";
 import Home from "./pages/home";
 import Services from "./pages/services";
 import NIS2 from "./pages/NIS2";
@@ -17,18 +19,17 @@ function ProtectedRoute({ children, allowedTypes }) {
   const token = localStorage.getItem("token");
   const userType = Number(localStorage.getItem("userType"));
 
-  if (!token) {
-    return <Navigate to="/login" replace />;
-  }
-
-  if (allowedTypes && !allowedTypes.includes(userType)) {
-    return <Navigate to="/login" replace />;
-  }
+  if (!token) return <Navigate to="/login" replace />;
+  if (allowedTypes && !allowedTypes.includes(userType)) return <Navigate to="/login" replace />;
 
   return children;
 }
 
 function App() {
+  useEffect(() => {
+    loadContent();
+  }, []);
+
   return (
     <BrowserRouter>
       <Routes>
@@ -41,31 +42,9 @@ function App() {
         <Route path="/contacts" element={<Contacts />} />
         <Route path="/clientArea" element={<ClientArea />} />
         <Route path="/login" element={<Login />} />
-
-        <Route
-          path="/adminDashboard"
-          element={
-            <ProtectedRoute allowedTypes={[1]}>
-              <AdminDashboard />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/managerDashboard"
-          element={
-            <ProtectedRoute allowedTypes={[2]}>
-              <ManagerDashboard />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/clientDashboard"
-          element={
-            <ProtectedRoute allowedTypes={[3]}>
-              <ClientDashboard />
-            </ProtectedRoute>
-          }
-        />
+        <Route path="/adminDashboard" element={<ProtectedRoute allowedTypes={[1]}><AdminDashboard /></ProtectedRoute>} />
+        <Route path="/managerDashboard" element={<ProtectedRoute allowedTypes={[2]}><ManagerDashboard /></ProtectedRoute>} />
+        <Route path="/clientDashboard" element={<ProtectedRoute allowedTypes={[3]}><ClientDashboard /></ProtectedRoute>} />
       </Routes>
     </BrowserRouter>
   );
