@@ -1,25 +1,26 @@
+import { getContent } from "../../services/contentService";
+
 const threats = [
-  { icon: "⚠️", color: "#dc2626", bg: "#fff0f0", border: "#dc2626", title: "ATAQUES DE RANSOMWARE", desc: "Crescimento exponencial de ataques que encriptam dados e exigem resgates" },
+  { icon: "⚠️", color: "#dc2626", bg: "#fff0f0", border: "#dc2626", title: "ATAQUES DE RANSOMWARE",          desc: "Crescimento exponencial de ataques que encriptam dados e exigem resgates" },
   { icon: "🛡️", color: "#ea580c", bg: "#fff3e8", border: "#ea580c", title: "EXPLORAÇÃO DE VULNERABILIDADES", desc: "Aproveitamento de falhas de segurança em sistemas e aplicações" },
-  { icon: "🖥️", color: "#7c3aed", bg: "#f0ebff", border: "#7c3aed", title: "ATAQUES A INFRAESTRUTURAS", desc: "Alvos estratégicos como energia, água e transportes sob ameaça constante" },
-  { icon: "✉️", color: "#3c8dbc", bg: "#eaf4fb", border: "#3c8dbc", title: "PHISHING DIRECIONADO", desc: "Ataques sofisticados que exploram o fator humano" },
+  { icon: "🖥️", color: "#7c3aed", bg: "#f0ebff", border: "#7c3aed", title: "ATAQUES A INFRAESTRUTURAS",       desc: "Alvos estratégicos como energia, água e transportes sob ameaça constante" },
+  { icon: "✉️", color: "#3c8dbc", bg: "#eaf4fb", border: "#3c8dbc", title: "PHISHING DIRECIONADO",            desc: "Ataques sofisticados que exploram o fator humano" },
 ];
 
 function Context() {
   return (
     <section className="py-5" style={{ background: "#fff" }}>
       <div className="container">
-
-        {/* Header */}
         <div className="text-center mb-5">
           <span className="page-badge">PANORAMA ATUAL</span>
-          <h2 style={{ fontSize: 34, fontWeight: 700, color: "#1e293b", margin: "0 0 12px" }}>O Contexto Atual</h2>
+          <h2 style={{ fontSize: 34, fontWeight: 700, color: "#1e293b", margin: "0 0 12px" }}>
+            {getContent("Início", "Contexto Título", "O Contexto Atual")}
+          </h2>
           <p style={{ color: "#64748b", fontSize: 15 }}>
-            A cibersegurança tornou-se uma prioridade estratégica para organizações públicas e privadas.
+            {getContent("Início", "Contexto Subtítulo", "A cibersegurança tornou-se uma prioridade estratégica para organizações públicas e privadas.")}
           </p>
         </div>
 
-        {/* Threat cards */}
         <div className="row g-4 mb-4">
           {threats.map((t, i) => (
             <div className="col-md-3" key={i}>
@@ -34,16 +35,14 @@ function Context() {
           ))}
         </div>
 
-        {/* Info box */}
         <div style={{ background: "#f8fafc", border: "1px solid #e5e4e7", borderLeft: "4px solid #3c8dbc", borderRadius: 10, padding: "24px 28px" }}>
           <p style={{ fontSize: 14, color: "#475569", lineHeight: 1.75, marginBottom: 12 }}>
-            Muitas organizações descobrem tarde demais que não estavam preparadas para um incidente de segurança. Além do impacto operacional, existem hoje obrigações legais e regulatórias que exigem a implementação de medidas adequadas de cibersegurança.
+            {getContent("Início", "Contexto Info", "Muitas organizações descobrem tarde demais que não estavam preparadas para um incidente de segurança.")}
           </p>
           <div style={{ display: "flex", alignItems: "center", gap: 8, color: "#3c8dbc", fontWeight: 700, fontSize: 13, letterSpacing: 0.5 }}>
             <span>✅</span> A PREVENÇÃO É MAIS EFICAZ QUE A REMEDIAÇÃO
           </div>
         </div>
-
       </div>
     </section>
   );

@@ -99,12 +99,6 @@ function Dashboard() {
         };
 
         loadDashboard();
-
-        const interval = setInterval(() => {
-            loadDashboard();
-        }, 10000);
-
-        return () => clearInterval(interval);
     }, []);
 
     const actionColor = (action) => {
@@ -283,21 +277,15 @@ function Accounts() {
         }
     };
 
+    // 🔴 CORREÇÃO NO USEEFFECT: Adicionamos a dependência das accounts para que a função
     // reloadClients se atualize sempre que as empresas mudarem no sistema!
     useEffect(() => {
         reloadAdmins();
         reloadManagers();
         reloadCompanies();
-
-        const interval = setInterval(() => {
-            reloadAdmins();
-            reloadManagers();
-            reloadCompanies();
-        }, 10000);
-
-        return () => clearInterval(interval);
     }, []);
 
+    // 🔴 ADICIONAR ESTE SEGUNDO USEEFFECT: Garante a sincronização automática dos clientes
     // sempre que a lista de empresas (accounts) terminar de carregar no React.
     useEffect(() => {
         if (accounts.length > 0) {
@@ -305,6 +293,12 @@ function Accounts() {
         }
     }, [accounts]);
 
+    // 1. Primeiro ciclo de vida: Carrega dados independentes e as empresas
+    useEffect(() => {
+        reloadAdmins();
+        reloadManagers();
+        reloadCompanies();
+    }, []);
 
     return (
         <div className="d-flex flex-column gap-4">
@@ -358,9 +352,9 @@ function CompaniesTable({ accounts, setAccounts, reloadCompanies }) {
                 alert("Error: " + res.data.message);
             }
         } catch (err) {
-            console.error("Full error response:", err.response?.data);
-            alert("Connection error: " + (err.response?.data?.message || err.message));
-        }
+    console.error("Full error response:", err.response?.data);
+    alert("Connection error: " + (err.response?.data?.message || err.message));
+}
     };
 
     const startEdit = (a) => {
@@ -1171,15 +1165,7 @@ function Tickets() {
         }
     };
 
-    useEffect(() => {
-        reloadTickets();
-
-        const interval = setInterval(() => {
-            reloadTickets();
-        }, 10000);
-
-        return () => clearInterval(interval);
-    }, []);
+    useEffect(() => { reloadTickets(); }, []);
 
     const openAssignModal = async (ticketId) => {
         setSelectedTicketId(ticketId);
@@ -1434,12 +1420,6 @@ function Requests() {
 
     useEffect(() => {
         reloadRequests();
-
-        const interval = setInterval(() => {
-            reloadRequests();
-        }, 10000);
-
-        return () => clearInterval(interval);
     }, []);
 
     const [assignModalOpen, setAssignModalOpen] = useState(false);
@@ -1667,13 +1647,6 @@ function Docs() {
     useEffect(() => {
         fetchDocs();
         fetchRequests();
-
-        const interval = setInterval(() => {
-            fetchDocs();
-            fetchRequests();
-        }, 10000);
-
-        return () => clearInterval(interval);
     }, []);
 
     const fetchDocs = async () => {
