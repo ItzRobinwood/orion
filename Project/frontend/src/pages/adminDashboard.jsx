@@ -14,6 +14,7 @@ export default function AdminDashboard() {
         { id: "requests", label: "Pedidos" },
         { id: "docs", label: "Documentos" },
         { id: "settings", label: "Configurações" },
+        { id: "content", label: "Gestão de Conteúdo" },
     ];
 
     const renderContent = () => {
@@ -24,6 +25,7 @@ export default function AdminDashboard() {
             case "requests": return <Requests />;
             case "docs": return <Docs />;
             case "settings": return <Settings />;
+            case "content": return <Content />;
             default: return null;
         }
     };
@@ -1819,6 +1821,83 @@ function Settings() {
                 <input className="form-control" defaultValue="admin@cyberbox.pt" />
             </div>
             <button type="button" className="btn btn-dark">Guardar</button>
+        </div>
+    );
+}
+
+function Content() {
+    const [pages, setPages] = useState([]);
+    const [editing, setEditing] = useState(null);
+    const [text, setText] = useState("");
+
+    const reloadContent = async () => {
+        try {
+            const res = await axios.get("https://orion-dewp.onrender.com/api/content");
+            setPages(res.data);
+        } catch (err) {
+            console.error("Erro ao carregar conteúdos:", err);
+        }
+    };
+
+    useEffect(() => { reloadContent(); }, []);
+
+    const handleEdit = (item) => { setEditing(item.id); setText(item.content); };
+
+    const handleSave = async (id) => {
+        try {
+            const res = await axios.put(`https://orion-dewp.onrender.com/api/content/${id}`, {
+                content: text
+            });
+            if (res.data.success) {
+                await reloadContent();
+                setEditing(null);
+            } else {
+                alert("Erro ao guardar: " + (res.data.message || "Erro desconhecido"));
+            }
+        } catch (err) {
+            alert("Erro de ligação: " + err.message);
+        }
+    };
+
+    return (
+        <div className="card p-3">
+            <div className="d-flex justify-content-between align-items-center mb-3">
+                <h5 className="mb-0">Gestão de Conteúdo</h5>
+                <span className="badge bg-secondary">{pages.length} secções</span>
+            </div>
+            <table className="table">
+                <thead>
+                    <tr><th>Página</th><th>Secção</th><th>Conteúdo</th><th>Atualizado</th><th>Ação</th></tr>
+                </thead>
+                <tbody>
+                    {pages.map((item) => (
+                        <tr key={item.id}>
+                            <td><span className="badge bg-dark">{item.page}</span></td>
+                            <td>{item.section}</td>
+                            <td style={{ maxWidth: 250 }}>
+                                {editing === item.id
+                                    ? <textarea className="form-control form-control-sm" rows={2}
+                                        value={text} onChange={(e) => setText(e.target.value)} />
+                                    : <span className="text-muted" style={{ fontSize: 13 }}>{item.content}</span>}
+                            </td>
+                            <td style={{ fontSize: 13, color: "#6b7280" }}>{item.updated}</td>
+                            <td>
+                                {editing === item.id ? (
+                                    <>
+                                        <button type="button" className="btn btn-sm btn-success me-1" onClick={() => handleSave(item.id)}>Guardar</button>
+                                        <button type="button" className="btn btn-sm btn-outline-secondary" onClick={() => setEditing(null)}>Cancelar</button>
+                                    </>
+                                ) : (
+                                    <button type="button" className="btn btn-sm btn-outline-dark" onClick={() => handleEdit(item)}>Editar</button>
+                                )}
+                            </td>
+                        </tr>
+                    ))}
+                    {pages.length === 0 && (
+                        <tr><td colSpan={5} className="text-center text-muted py-3">A carregar...</td></tr>
+                    )}
+                </tbody>
+            </table>
         </div>
     );
 }
