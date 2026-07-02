@@ -1829,6 +1829,7 @@ function Content() {
     const [pages, setPages] = useState([]);
     const [editing, setEditing] = useState(null);
     const [text, setText] = useState("");
+    const [pageFilter, setPageFilter] = useState("Todas");
 
     const reloadContent = async () => {
         try {
@@ -1859,18 +1860,35 @@ function Content() {
         }
     };
 
+    // Lista de páginas únicas, para o filtro
+    const pageNames = ["Todas", ...Array.from(new Set(pages.map((p) => p.page)))];
+    const visiblePages = pageFilter === "Todas" ? pages : pages.filter((p) => p.page === pageFilter);
+
     return (
         <div className="card p-3">
             <div className="d-flex justify-content-between align-items-center mb-3">
                 <h5 className="mb-0">Gestão de Conteúdo</h5>
                 <span className="badge bg-secondary">{pages.length} secções</span>
             </div>
+
+            <div className="mb-3" style={{ maxWidth: 260 }}>
+                <select
+                    className="form-select form-select-sm"
+                    value={pageFilter}
+                    onChange={(e) => setPageFilter(e.target.value)}
+                >
+                    {pageNames.map((name) => (
+                        <option key={name} value={name}>{name}</option>
+                    ))}
+                </select>
+            </div>
+
             <table className="table">
                 <thead>
                     <tr><th>Página</th><th>Secção</th><th>Conteúdo</th><th>Atualizado</th><th>Ação</th></tr>
                 </thead>
                 <tbody>
-                    {pages.map((item) => (
+                    {visiblePages.map((item) => (
                         <tr key={item.id}>
                             <td><span className="badge bg-dark">{item.page}</span></td>
                             <td>{item.section}</td>
@@ -1893,7 +1911,7 @@ function Content() {
                             </td>
                         </tr>
                     ))}
-                    {pages.length === 0 && (
+                    {visiblePages.length === 0 && (
                         <tr><td colSpan={5} className="text-center text-muted py-3">A carregar...</td></tr>
                     )}
                 </tbody>

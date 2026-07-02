@@ -1,23 +1,56 @@
 import Navbar from "../components/navbar";
 import Footer from "../components/footer";
 import { useNavigate } from "react-router-dom";
+import { getContent } from "../services/contentService";
 
 const sectors = [
-  { icon: "⚡", label: "Energia" },
-  { icon: "🚆", label: "Transportes" },
-  { icon: "🏥", label: "Saúde" },
-  { icon: "💧", label: "Água potável e saneamento" },
-  { icon: "🌐", label: "Infraestruturas digitais" },
-  { icon: "🛡️", label: "Administração pública" },
+  { key: "energia", icon: "⚡", labelFallback: "Energia" },
+  { key: "transportes", icon: "🚆", labelFallback: "Transportes" },
+  { key: "saude", icon: "🏥", labelFallback: "Saúde" },
+  { key: "agua", icon: "💧", labelFallback: "Água potável e saneamento" },
+  { key: "digital", icon: "🌐", labelFallback: "Infraestruturas digitais" },
+  { key: "publica", icon: "🛡️", labelFallback: "Administração pública" },
+];
+
+const threats = [
+  { key: "ransomware", fallback: "Ataques de ransomware" },
+  { key: "vulnerabilidades", fallback: "Exploração de vulnerabilidades em infraestruturas críticas" },
+  { key: "espionagem", fallback: "Espionagem digital" },
+  { key: "cadeia", fallback: "Ataques a serviços públicos e cadeias de abastecimento" },
+];
+
+const sanctionBlocks = [
+  {
+    key: "essenciais",
+    icon: "🛡️",
+    color: "#dc2626",
+    titleFallback: "ENTIDADES ESSENCIAIS",
+    items: [
+      { key: "multa", fallback: "Até €10 milhões ou 2% do volume de negócios" },
+      { key: "auditorias", fallback: "Auditorias obrigatórias" },
+      { key: "ordens", fallback: "Ordens de implementação de medidas" },
+    ],
+  },
+  {
+    key: "importantes",
+    icon: "🗄️",
+    color: "#ea580c",
+    titleFallback: "ENTIDADES IMPORTANTES",
+    items: [
+      { key: "multa", fallback: "Até €7 milhões ou 1.4% do volume de negócios" },
+      { key: "supervisao", fallback: "Supervisão regulatória" },
+      { key: "responsabilizacao", fallback: "Responsabilização da gestão executiva" },
+    ],
+  },
 ];
 
 const howWeHelp = [
-  { color: "#3c8dbc", bg: "#eaf4fb", icon: "🛡️", title: "ANÁLISE DE ENQUADRAMENTO", desc: "Determinamos se a sua entidade está abrangida pela NIS2" },
-  { color: "#16a34a", bg: "#eaf7ee", icon: "📊", title: "AVALIAÇÃO DE MATURIDADE", desc: "Análise do nível atual de cibersegurança" },
-  { color: "#9333ea", bg: "#f3e8ff", icon: "🎯", title: "GESTÃO DE RISCO", desc: "Implementação de framework de análise de risco" },
-  { color: "#ea580c", bg: "#fff3e8", icon: "📄", title: "POLÍTICAS E PROCEDIMENTOS", desc: "Desenvolvimento de documentação necessária" },
-  { color: "#dc2626", bg: "#fff0f0", icon: "🔒", title: "CONTROLOS TÉCNICOS", desc: "Implementação de medidas de segurança adequadas" },
-  { color: "#7c3aed", bg: "#f0ebff", icon: "👁️", title: "GESTÃO DE INCIDENTES", desc: "Apoio à comunicação e resposta a incidentes" },
+  { key: "enquadramento", color: "#3c8dbc", bg: "#eaf4fb", icon: "🛡️", titleFallback: "ANÁLISE DE ENQUADRAMENTO", descFallback: "Determinamos se a sua entidade está abrangida pela NIS2" },
+  { key: "maturidade", color: "#16a34a", bg: "#eaf7ee", icon: "📊", titleFallback: "AVALIAÇÃO DE MATURIDADE", descFallback: "Análise do nível atual de cibersegurança" },
+  { key: "risco", color: "#9333ea", bg: "#f3e8ff", icon: "🎯", titleFallback: "GESTÃO DE RISCO", descFallback: "Implementação de framework de análise de risco" },
+  { key: "politicas", color: "#ea580c", bg: "#fff3e8", icon: "📄", titleFallback: "POLÍTICAS E PROCEDIMENTOS", descFallback: "Desenvolvimento de documentação necessária" },
+  { key: "controlos", color: "#dc2626", bg: "#fff0f0", icon: "🔒", titleFallback: "CONTROLOS TÉCNICOS", descFallback: "Implementação de medidas de segurança adequadas" },
+  { key: "incidentes", color: "#7c3aed", bg: "#f0ebff", icon: "👁️", titleFallback: "GESTÃO DE INCIDENTES", descFallback: "Apoio à comunicação e resposta a incidentes" },
 ];
 
 function Check({ color }) {
@@ -36,37 +69,78 @@ function NIS2() {
       <main className="page-main">
 
         <div className="page-header">
-          <span className="page-badge">LEGISLAÇÃO EUROPEIA</span>
-          <h1 className="page-title">Diretiva NIS2 em Portugal</h1>
-          <p className="page-subtitle">A Diretiva NIS2 foi transposta para a legislação portuguesa através do Decreto-Lei n.º 125/2025</p>
+          <span className="page-badge">
+            {getContent("NIS2", "Hero Badge", "LEGISLAÇÃO EUROPEIA")}
+          </span>
+          <h1 className="page-title">
+            {getContent("NIS2", "Hero Título", "Diretiva NIS2 em Portugal")}
+          </h1>
+          <p className="page-subtitle">
+            {getContent("NIS2", "Hero Subtítulo", "A Diretiva NIS2 foi transposta para a legislação portuguesa através do Decreto-Lei n.º 125/2025")}
+          </p>
         </div>
 
         <div className="container py-5">
           <div className="row g-4">
             <div className="col-lg-6">
               <div className="nis2-dark-card">
-                <h2>O QUE É A DIRETIVA NIS2</h2>
-                <p>A Diretiva NIS2 (Network and Information Security Directive 2) é legislação europeia destinada a reforçar a cibersegurança e a resiliência digital das organizações que prestam serviços essenciais ou importantes para a sociedade e economia.</p>
-                {["Ataques de ransomware", "Exploração de vulnerabilidades em infraestruturas críticas", "Espionagem digital", "Ataques a serviços públicos e cadeias de abastecimento"].map((item, i) => (
-                  <div key={i} className="threat-item"><span>⚠️</span>{item}</div>
+                <h2>{getContent("NIS2", "O Que É Título", "O QUE É A DIRETIVA NIS2")}</h2>
+                <p>
+                  {getContent(
+                    "NIS2",
+                    "O Que É Texto",
+                    "A Diretiva NIS2 (Network and Information Security Directive 2) é legislação europeia destinada a reforçar a cibersegurança e a resiliência digital das organizações que prestam serviços essenciais ou importantes para a sociedade e economia."
+                  )}
+                </p>
+                {threats.map((t, i) => (
+                  <div key={i} className="threat-item">
+                    <span>⚠️</span>
+                    {getContent("NIS2", `Ameaça ${t.key}`, t.fallback)}
+                  </div>
                 ))}
                 <div className="footer-info">
-                  <div className="label">Em vigor na União Europeia desde 2023</div>
-                  <div className="value">Transposta para Portugal através do <strong style={{ color: "#fff" }}>Decreto-Lei n.º 125/2025</strong></div>
+                  <div className="label">
+                    {getContent("NIS2", "Vigência Label", "Em vigor na União Europeia desde 2023")}
+                  </div>
+                  <div className="value">
+                    {getContent(
+                      "NIS2",
+                      "Vigência Valor",
+                      "Transposta para Portugal através do Decreto-Lei n.º 125/2025"
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
 
             <div className="col-lg-6">
               <div className="nis2-white-card">
-                <h2>A QUEM SE APLICA</h2>
-                <p style={{ fontSize: 13.5, color: "#64748b", marginBottom: 20 }}>A NIS2 aplica-se a <strong>Entidades Essenciais</strong> e <strong>Entidades Importantes</strong>:</p>
+                <h2>{getContent("NIS2", "Quem Se Aplica Título", "A QUEM SE APLICA")}</h2>
+                <p style={{ fontSize: 13.5, color: "#64748b", marginBottom: 20 }}>
+                  {getContent(
+                    "NIS2",
+                    "Quem Se Aplica Texto",
+                    "A NIS2 aplica-se a Entidades Essenciais e Entidades Importantes:"
+                  )}
+                </p>
                 {sectors.map((s, i) => (
-                  <div key={i} className="sector-item"><span>{s.icon}</span>{s.label}</div>
+                  <div key={i} className="sector-item">
+                    <span>{s.icon}</span>
+                    {getContent("NIS2", `Setor ${s.key}`, s.labelFallback)}
+                  </div>
                 ))}
                 <div className="nis2-criteria-box">
-                  <strong>Critérios gerais:</strong> Organizações com <strong>mais de 50 colaboradores</strong> ou com <strong>volume de negócios superior a 10 milhões de euros</strong>.<br />
-                  Em Portugal, a autoridade responsável é o <strong>Centro Nacional de Cibersegurança (CNCS)</strong>.
+                  {getContent(
+                    "NIS2",
+                    "Critérios Texto",
+                    "Critérios gerais: Organizações com mais de 50 colaboradores ou com volume de negócios superior a 10 milhões de euros."
+                  )}
+                  <br />
+                  {getContent(
+                    "NIS2",
+                    "Autoridade Texto",
+                    "Em Portugal, a autoridade responsável é o Centro Nacional de Cibersegurança (CNCS)."
+                  )}
                 </div>
               </div>
             </div>
@@ -76,19 +150,23 @@ function NIS2() {
         <div className="container pb-5">
           <div className="sanctions-box">
             <div className="sanctions-icon">⚠️</div>
-            <h2 style={{ fontSize: 20, fontWeight: 800, letterSpacing: 1.5, marginBottom: 8 }}>SANÇÕES POR INCUMPRIMENTO</h2>
-            <p style={{ fontSize: 14, color: "#64748b", marginBottom: 32 }}>As penalizações por não conformidade são significativas</p>
+            <h2 style={{ fontSize: 20, fontWeight: 800, letterSpacing: 1.5, marginBottom: 8 }}>
+              {getContent("NIS2", "Sanções Título", "SANÇÕES POR INCUMPRIMENTO")}
+            </h2>
+            <p style={{ fontSize: 14, color: "#64748b", marginBottom: 32 }}>
+              {getContent("NIS2", "Sanções Subtítulo", "As penalizações por não conformidade são significativas")}
+            </p>
             <div className="row g-4 mb-4">
-              {[
-                { title: "ENTIDADES ESSENCIAIS", icon: "🛡️", color: "#dc2626", items: ["Até €10 milhões ou 2% do volume de negócios", "Auditorias obrigatórias", "Ordens de implementação de medidas"] },
-                { title: "ENTIDADES IMPORTANTES", icon: "🗄️", color: "#ea580c", items: ["Até €7 milhões ou 1.4% do volume de negócios", "Supervisão regulatória", "Responsabilização da gestão executiva"] },
-              ].map((block, i) => (
+              {sanctionBlocks.map((block, i) => (
                 <div className="col-md-6" key={i}>
                   <div className="sanctions-card" style={{ borderLeft: `4px solid ${block.color}` }}>
-                    <div className="sanctions-card-title">{block.icon} {block.title}</div>
+                    <div className="sanctions-card-title">
+                      {block.icon} {getContent("NIS2", `Sanções ${block.key} Título`, block.titleFallback)}
+                    </div>
                     {block.items.map((item, j) => (
                       <div key={j} className="check-item">
-                        <Check color={block.color} />{item}
+                        <Check color={block.color} />
+                        {getContent("NIS2", `Sanções ${block.key} ${item.key}`, item.fallback)}
                       </div>
                     ))}
                   </div>
@@ -96,14 +174,16 @@ function NIS2() {
               ))}
             </div>
             <button className="btn-primary-custom" onClick={() => navigate("/contacts")}>
-              AVALIE A SUA CONFORMIDADE NIS2 →
+              {getContent("NIS2", "CTA Sanções Botão", "AVALIE A SUA CONFORMIDADE NIS2 →")}
             </button>
           </div>
         </div>
 
         <div className="container pb-5">
           <div className="section-card">
-            <h2 style={{ fontSize: 18, fontWeight: 800, color: "#3c8dbc", textAlign: "center", marginBottom: 36, letterSpacing: 1 }}>COMO AJUDAMOS NA CONFORMIDADE NIS2</h2>
+            <h2 style={{ fontSize: 18, fontWeight: 800, color: "#3c8dbc", textAlign: "center", marginBottom: 36, letterSpacing: 1 }}>
+              {getContent("NIS2", "Como Ajudamos Título", "COMO AJUDAMOS NA CONFORMIDADE NIS2")}
+            </h2>
             <div className="row g-4">
               {howWeHelp.map((item, i) => (
                 <div className="col-md-4" key={i}>
@@ -112,8 +192,12 @@ function NIS2() {
                       {item.icon}
                     </div>
                     <div>
-                      <div className="help-title">{item.title}</div>
-                      <div className="help-desc">{item.desc}</div>
+                      <div className="help-title">
+                        {getContent("NIS2", `Ajuda ${item.key} Título`, item.titleFallback)}
+                      </div>
+                      <div className="help-desc">
+                        {getContent("NIS2", `Ajuda ${item.key} Descrição`, item.descFallback)}
+                      </div>
                     </div>
                   </div>
                 </div>

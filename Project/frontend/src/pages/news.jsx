@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import Navbar from "../components/navbar";
 import Footer from "../components/footer";
 import axios from 'axios';
+import { getContent } from "../services/contentService";
 
 const CATEGORY_STYLES = {
   Ameaças: { color: "#dc2626", bg: "#fff0f0", border: "#dc2626" },
@@ -17,6 +18,9 @@ const CATEGORY_STYLES = {
   Ferramentas: { color: "#16a34a", bg: "#eaf7ee", border: "#16a34a" },
 };
 
+// Nota: os valores de FILTERS são usados para comparar com post.categoria vindo da API,
+// por isso mantêm-se fixos. Se precisares de traduzir os labels dos botões sem tocar
+// na lógica de filtragem, isso teria de ser feito com um mapa label/valor separado.
 const FILTERS = ["Todas", "Ameaças", "Vulnerabilidades", "Boas práticas", "Legislação", "Ransomware", "Incidentes"];
 
 function SkeletonCard() {
@@ -48,7 +52,11 @@ function NewsCard({ post }) {
       </div>
       <div className="news-card-footer">
         <span className="news-card-author">✍️ {post.autor}</span>
-        {post.url && <a href={post.url} target="_blank" rel="noopener noreferrer" className="news-card-link">Ler mais →</a>}
+        {post.url && (
+          <a href={post.url} target="_blank" rel="noopener noreferrer" className="news-card-link">
+            {getContent("Notícias", "Card Link Texto", "Ler mais →")}
+          </a>
+        )}
       </div>
     </div>
   );
@@ -75,7 +83,7 @@ function NewsSection() {
       }
       setLastUpdate(new Date().toLocaleString("pt-PT"));
     } catch (error) {
-      setError("Não foi possível carregar as notícias. Tenta novamente.");
+      setError(getContent("Notícias", "Erro Texto", "Não foi possível carregar as notícias. Tenta novamente."));
       console.error(error);
     } finally {
       setLoading(false);
@@ -89,9 +97,15 @@ function NewsSection() {
   return (
     <main className="page-main">
       <div className="page-header">
-        <span className="page-badge">CIBERSEGURANÇA</span>
-        <h1 className="page-title">Últimas Notícias</h1>
-        <p className="page-subtitle">Mantenha-se atualizado com as últimas notícias em cibersegurança</p>
+        <span className="page-badge">
+          {getContent("Notícias", "Hero Badge", "CIBERSEGURANÇA")}
+        </span>
+        <h1 className="page-title">
+          {getContent("Notícias", "Hero Título", "Últimas Notícias")}
+        </h1>
+        <p className="page-subtitle">
+          {getContent("Notícias", "Hero Subtítulo", "Mantenha-se atualizado com as últimas notícias em cibersegurança")}
+        </p>
       </div>
 
       <div className="container py-5">
@@ -102,11 +116,17 @@ function NewsSection() {
             ))}
           </div>
           <button onClick={fetchNews} disabled={loading} className="refresh-btn">
-            {loading ? "⏳ A carregar..." : "🔄 Atualizar"}
+            {loading
+              ? getContent("Notícias", "Botão A Carregar", "⏳ A carregar...")
+              : getContent("Notícias", "Botão Atualizar", "🔄 Atualizar")}
           </button>
         </div>
 
-        {error && <div style={{ background: "#fff0f0", border: "1px solid #fca5a5", borderRadius: 12, padding: 20, textAlign: "center", color: "#dc2626", marginBottom: 24 }}>{error}</div>}
+        {error && (
+          <div style={{ background: "#fff0f0", border: "1px solid #fca5a5", borderRadius: 12, padding: 20, textAlign: "center", color: "#dc2626", marginBottom: 24 }}>
+            {error}
+          </div>
+        )}
 
         <div className="row g-4">
           {loading
@@ -115,7 +135,11 @@ function NewsSection() {
           }
         </div>
 
-        {lastUpdate && !loading && <p style={{ textAlign: "right", fontSize: 12, color: "#94a3b8", marginTop: 24 }}>Última atualização: {lastUpdate}</p>}
+        {lastUpdate && !loading && (
+          <p style={{ textAlign: "right", fontSize: 12, color: "#94a3b8", marginTop: 24 }}>
+            {getContent("Notícias", "Última Atualização Label", "Última atualização:")} {lastUpdate}
+          </p>
+        )}
       </div>
     </main>
   );

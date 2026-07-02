@@ -1,9 +1,9 @@
 import { getContent } from "../../services/contentService";
 
 const cards = [
-  { icon: "🎯", color: "#3c8dbc", bg: "#eaf4fb", border: "#3c8dbc", title: "MISSÃO", section: "Missão" },
-  { icon: "👁️", color: "#16a34a", bg: "#eaf7ee", border: "#16a34a", title: "VISÃO",  section: "Visão"  },
-  { icon: "🏆", color: "#9333ea", bg: "#f3e8ff", border: "#9333ea", title: "VALORES", section: "Valores" },
+  { key: "missao", icon: "🎯", color: "#3c8dbc", bg: "#eaf4fb", border: "#3c8dbc", titleFallback: "MISSÃO", section: "Missão" },
+  { key: "visao", icon: "👁️", color: "#16a34a", bg: "#eaf7ee", border: "#16a34a", titleFallback: "VISÃO", section: "Visão" },
+  { key: "valores", icon: "🏆", color: "#9333ea", bg: "#f3e8ff", border: "#9333ea", titleFallback: "VALORES", section: "Valores" },
 ];
 
 function About() {
@@ -11,7 +11,9 @@ function About() {
     <section className="py-5" style={{ background: "#f8fafc" }}>
       <div className="container">
         <div className="text-center mb-5">
-          <span className="page-badge">QUEM SOMOS</span>
+          <span className="page-badge">
+            {getContent("Início", "Sobre Badge", "QUEM SOMOS")}
+          </span>
           <h2 style={{ fontSize: 34, fontWeight: 700, color: "#1e293b", margin: "0 0 12px" }}>
             {getContent("Início", "Sobre Título", "Sobre a CyberBox Security")}
           </h2>
@@ -27,7 +29,9 @@ function About() {
                 <div style={{ width: 52, height: 52, background: c.bg, borderRadius: 12, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22, marginBottom: 20 }}>
                   {c.icon}
                 </div>
-                <h4 style={{ fontSize: 13, fontWeight: 800, letterSpacing: 1, color: "#1e293b", marginBottom: 10 }}>{c.title}</h4>
+                <h4 style={{ fontSize: 13, fontWeight: 800, letterSpacing: 1, color: "#1e293b", marginBottom: 10 }}>
+                  {getContent("Início", `Sobre ${c.section} Título`, c.titleFallback)}
+                </h4>
                 <p style={{ fontSize: 13.5, color: "#64748b", lineHeight: 1.65, margin: 0 }}>
                   {getContent("Início", c.section, "")}
                 </p>
