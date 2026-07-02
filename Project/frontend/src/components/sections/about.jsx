@@ -1,9 +1,9 @@
 import { getContent } from "../../services/contentService";
 
 const cards = [
-  { key: "missao", icon: "🎯", color: "#3c8dbc", bg: "#eaf4fb", border: "#3c8dbc", titleFallback: "MISSÃO", section: "Missão" },
-  { key: "visao", icon: "👁️", color: "#16a34a", bg: "#eaf7ee", border: "#16a34a", titleFallback: "VISÃO", section: "Visão" },
-  { key: "valores", icon: "🏆", color: "#9333ea", bg: "#f3e8ff", border: "#9333ea", titleFallback: "VALORES", section: "Valores" },
+  { key: "missao", icon: "🎯", color: "#3c8dbc", bg: "#eaf4fb", border: "#3c8dbc", titleFallback: "MISSÃO: Proteger empresas e organizações contra ameaças cibernéticas através de soluções inovadoras, monitorização contínua e expertise especializada.", section: "Missão" },
+  { key: "visao", icon: "👁️", color: "#16a34a", bg: "#eaf7ee", border: "#16a34a", titleFallback: "VISÃO: Ser a referência nacional em cibersegurança, reconhecidos pela excelência técnica, inovação e compromisso com a segurança dos nossos clientes.", section: "Visão" },
+  { key: "valores", icon: "🏆", color: "#9333ea", bg: "#f3e8ff", border: "#9333ea", titleFallback: "VALORES: Integridade, excelência técnica, inovação contínua e compromisso total com a proteção dos dados e sistemas dos nossos clientes.", section: "Valores" },
 ];
 
 function About() {

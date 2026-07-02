@@ -16,7 +16,7 @@ function Hero() {
               {getContent("Início", "Hero Título", "Cibersegurança para organizações")}
             </h1>
             <p className="lead mb-4">
-              {getContent("Início", "Hero Texto", "Num contexto em que os ataques cibernéticos aumentam todos os dias...")}
+              {getContent("Início", "Hero Texto", "Num contexto em que os ataques cibernéticos aumentam todos os dias, as organizações precisam de proteger os seus sistemas, dados e serviços críticos. Apoiamos empresas e entidades públicas na redução do risco cibernético, no cumprimento de requisitos regulatórios, incluindo a Diretiva Europeia NIS2, e no reforço da sua postura de segurança.")}
             </p>
             <button className="btn btn-light btn-lg">
               {getContent("Início", "Hero Botão", "Contactar")}
