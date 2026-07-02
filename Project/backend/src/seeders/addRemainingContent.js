@@ -119,7 +119,7 @@ const entries = [
 
     // ---------- Início: Hero ----------
     { page: 'Início', section: 'Hero Título', content: 'Cibersegurança para organizações' },
-    { page: 'Início', section: 'Hero Texto', content: 'Num contexto em que os ataques cibernéticos aumentam todos os dias...' },
+    { page: 'Início', section: 'Hero Texto', content: 'Num contexto em que os ataques cibernéticos aumentam todos os dias, as organizações precisam de proteger os seus sistemas, dados e serviços críticos. Apoiamos empresas e entidades públicas na redução do risco cibernético, no cumprimento de requisitos regulatórios, incluindo a Diretiva Europeia NIS2, e no reforço da sua postura de segurança.' },
     { page: 'Início', section: 'Hero Botão', content: 'Contactar' },
 
     // ---------- Início: Context ----------
@@ -147,9 +147,9 @@ const entries = [
     { page: 'Início', section: 'Sobre Badge', content: 'QUEM SOMOS' },
     { page: 'Início', section: 'Sobre Título', content: 'Sobre a CyberBox Security' },
     { page: 'Início', section: 'Sobre Subtítulo', content: 'Somos especialistas em cibersegurança com mais de 15 anos de experiência.' },
-    { page: 'Início', section: 'Sobre Missão Título', content: 'MISSÃO' },
-    { page: 'Início', section: 'Sobre Visão Título', content: 'VISÃO' },
-    { page: 'Início', section: 'Sobre Valores Título', content: 'VALORES' },
+    { page: 'Início', section: 'Sobre Missão Título', content: 'MISSÃO: Proteger empresas e organizações contra ameaças cibernéticas através de soluções inovadoras, monitorização contínua e expertise especializada.' },
+    { page: 'Início', section: 'Sobre Visão Título', content: 'VISÃO: Ser a referência nacional em cibersegurança, reconhecidos pela excelência técnica, inovação e compromisso com a segurança dos nossos clientes.' },
+    { page: 'Início', section: 'Sobre Valores Título', content: 'VALORES: Integridade, excelência técnica, inovação contínua e compromisso total com a proteção dos dados e sistemas dos nossos clientes.' },
 
     // ---------- Notícias ----------
     { page: 'Notícias', section: 'Hero Badge', content: 'CIBERSEGURANÇA' },
