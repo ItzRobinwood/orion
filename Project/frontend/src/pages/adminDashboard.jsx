@@ -1809,18 +1809,140 @@ function Docs() {
 }
 
 function Settings() {
+    const [form, setForm] = useState({ current: "", newPw: "", confirm: "" });
+    const [strength, setStrength] = useState(0);
+    const [success, setSuccess] = useState(false);
+    const [error, setError] = useState("");
+    const [submitting, setSubmitting] = useState(false);
+    const [profile, setProfile] = useState({ name: "", email: "" });
+
+    const activeUserId = localStorage.getItem("userId");
+
+    useEffect(() => {
+        const loadProfile = async () => {
+            try {
+                const res = await api.get("/users");
+                const userId = Number(localStorage.getItem("userId"));
+                const me = res.data.users.find(u => (u.id_Utilizador || u.id) === userId);
+                if (me) setProfile({ name: me.name, email: me.email });
+            } catch (err) {
+                console.error("Erro ao carregar perfil:", err);
+            }
+        };
+        loadProfile();
+    }, []);
+
+    const checkStrength = (pw) => {
+        let score = 0;
+        if (pw.length >= 8) score++;
+        if (/[A-Z]/.test(pw)) score++;
+        if (/[0-9]/.test(pw)) score++;
+        if (/[^A-Za-z0-9]/.test(pw)) score++;
+        return score;
+    };
+
+    const handleChange = (key, value) => {
+        setForm(prev => ({ ...prev, [key]: value }));
+        if (key === "newPw") setStrength(checkStrength(value));
+        setSuccess(false);
+        setError("");
+    };
+
+    const strengthLabel = ["", "Fraca", "Fraca", "Média", "Forte"][strength];
+    const strengthColor = strength >= 3 ? "#198754" : strength >= 2 ? "#856404" : "#842029";
+    const barColor = strength <= 1 ? "#dc3545" : strength <= 2 ? "#ffc107" : "#198754";
+
+    const handleSubmit = async () => {
+        setError("");
+        setSuccess(false);
+        if (!form.current || !form.newPw || !form.confirm) {
+            setError("Preenche todos os campos obrigatórios.");
+            return;
+        }
+        if (form.newPw !== form.confirm) {
+            setError("As novas palavras-passe não coincidem.");
+            return;
+        }
+        if (form.newPw.length < 8) {
+            setError("A nova palavra-passe deve ter pelo menos 8 caracteres.");
+            return;
+        }
+        setSubmitting(true);
+        try {
+            await api.put(`/users/${activeUserId}/password`, {
+                currentPassword: form.current,
+                newPassword: form.newPw,
+            });
+            setSuccess(true);
+            setForm({ current: "", newPw: "", confirm: "" });
+            setStrength(0);
+        } catch (err) {
+            setError(err.response?.data?.message || "Erro ao alterar a palavra-passe.");
+        } finally {
+            setSubmitting(false);
+        }
+    };
+
     return (
-        <div className="card p-3">
-            <h5>Configurações</h5>
-            <div className="mb-3">
-                <label className="form-label">Nome</label>
-                <input className="form-control" defaultValue="Admin User" />
+        <div className="d-flex flex-column gap-3 text-start" style={{ maxWidth: 680 }}>
+            <div className="card p-4">
+                <h6 className="fw-bold mb-1">Informação da Conta</h6>
+                <p className="text-muted small mb-3">Detalhes do teu perfil.</p>
+                <div className="d-flex align-items-center gap-3">
+                    <div className="rounded-circle bg-dark text-white d-flex align-items-center justify-content-center fw-bold"
+                        style={{ width: 56, height: 56, fontSize: 18 }}>
+                        {(profile.name || "?").substring(0, 2).toUpperCase()}
+                    </div>
+                    <div>
+                        <div className="fw-semibold">{profile.name || "A carregar..."}</div>
+                        <div className="text-muted small">{profile.email || "—"}</div>
+                    </div>
+                </div>
             </div>
-            <div className="mb-3">
-                <label className="form-label">Email</label>
-                <input className="form-control" defaultValue="admin@cyberbox.pt" />
+
+            <div className="card p-4">
+                <h6 className="fw-bold mb-1">Alterar palavra-passe</h6>
+                <p className="text-muted small mb-3">Escolhe uma nova palavra-passe segura.</p>
+
+                {success && <div className="alert alert-success py-2 small mb-3">✅ Palavra-passe alterada com sucesso.</div>}
+                {error && <div className="alert alert-danger py-2 small mb-3">⚠️ {error}</div>}
+
+                <label className="form-label fw-semibold" style={{ fontSize: 12 }}>Palavra-passe atual *</label>
+                <input type="password" className="form-control form-control-sm mb-3" placeholder="••••••••"
+                    value={form.current} onChange={e => handleChange("current", e.target.value)} />
+
+                <div className="row g-3 mb-3">
+                    <div className="col-md-6">
+                        <label className="form-label fw-semibold" style={{ fontSize: 12 }}>Nova palavra-passe *</label>
+                        <input type="password" className="form-control form-control-sm" placeholder="••••••••"
+                            value={form.newPw} onChange={e => handleChange("newPw", e.target.value)} />
+                        <div className="d-flex gap-1 mt-2 mb-1">
+                            {[1, 2, 3, 4].map(i => (
+                                <div key={i} style={{ flex: 1, height: 4, borderRadius: 2,
+                                    background: i <= strength ? barColor : "#e9ecef", transition: "background 0.2s" }} />
+                            ))}
+                        </div>
+                        {form.newPw
+                            ? <small style={{ color: strengthColor, fontSize: 11 }}>{strengthLabel}</small>
+                            : <small className="text-muted" style={{ fontSize: 11 }}>Mínimo 8 caracteres</small>}
+                    </div>
+                    <div className="col-md-6">
+                        <label className="form-label fw-semibold" style={{ fontSize: 12 }}>Confirmar nova palavra-passe *</label>
+                        <input type="password" className="form-control form-control-sm" placeholder="••••••••"
+                            value={form.confirm} onChange={e => handleChange("confirm", e.target.value)} />
+                    </div>
+                </div>
+
+                <div className="d-flex gap-2">
+                    <button className="btn btn-sm btn-outline-secondary"
+                        onClick={() => { setForm({ current: "", newPw: "", confirm: "" }); setStrength(0); setError(""); setSuccess(false); }}>
+                        Cancelar
+                    </button>
+                    <button className="btn btn-sm btn-dark" onClick={handleSubmit} disabled={submitting}>
+                        {submitting ? "A guardar..." : "Guardar alterações"}
+                    </button>
+                </div>
             </div>
-            <button type="button" className="btn btn-dark">Guardar</button>
         </div>
     );
 }
