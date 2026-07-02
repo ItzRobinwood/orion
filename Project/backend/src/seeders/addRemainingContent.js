@@ -105,17 +105,17 @@ const entries = [
     { page: 'Metodologia', section: 'Hero Subtítulo', content: 'Frameworks e normas internacionais que guiam o nosso trabalho' },
 
     { page: 'Metodologia', section: 'Framework iso27001 Título', content: 'ISO/IEC 27001' },
-    { page: 'Metodologia', section: 'Framework iso27001 Descrição', content: 'Norma internacional para gestão de segurança da informação' },
+    { page: 'Metodologia', section: 'Framework iso27001 Descrição', content: 'Norma internacional para a gestão de privacidade e proteção de dados' },
     { page: 'Metodologia', section: 'Framework nist Título', content: 'NIST FRAMEWORK' },
-    { page: 'Metodologia', section: 'Framework nist Descrição', content: 'Framework de cibersegurança do National Institute of Standards and Technology' },
+    { page: 'Metodologia', section: 'Framework nist Descrição', content: 'Framework criada pelo Instituto Nacional de Padrões e Tecnologia (NIST) para ajudar organizações a gerir e mitigar riscos cibernéticos ' },
     { page: 'Metodologia', section: 'Framework cis Título', content: 'CIS CONTROLS' },
-    { page: 'Metodologia', section: 'Framework cis Descrição', content: 'Conjunto prioritário de ações para defesa contra ameaças cibernéticas' },
+    { page: 'Metodologia', section: 'Framework cis Descrição', content: 'Conjunto de boas práticas de cibersegurança, geridas pelo Center for Internet Security (CIS)' },
     { page: 'Metodologia', section: 'Framework enisa Título', content: 'ENISA GUIDELINES' },
-    { page: 'Metodologia', section: 'Framework enisa Descrição', content: 'Recomendações da Agência Europeia para Segurança Cibernética' },
+    { page: 'Metodologia', section: 'Framework enisa Descrição', content: 'Enquadramento de diretrizes, relatórios técnicos e boas práticas que visam alcançar um elevado nível comum de cibersegurança em toda a Europa.' },
 
     { page: 'Metodologia', section: 'CTA Título', content: 'QUER SABER MAIS SOBRE A NOSSA ABORDAGEM?' },
-    { page: 'Metodologia', section: 'CTA Texto', content: 'Entre em contacto e explicamos como aplicamos estas frameworks ao seu caso.' },
-    { page: 'Metodologia', section: 'CTA Botão', content: 'FALAR COM UM ESPECIALISTA →' },
+    { page: 'Metodologia', section: 'CTA Texto', content: 'Fale com especialistas e entenda como aplicar estas frameworks internacionais para blindar a sua infraestrutura e garantir a continuidade do seu negócio.' },
+    { page: 'Metodologia', section: 'CTA Botão', content: 'SOLICITAR CONSULTA COM UM ESPECIALISTA →' },
 
     // ---------- Início: Hero ----------
     { page: 'Início', section: 'Hero Título', content: 'Cibersegurança para organizações' },
@@ -125,7 +125,7 @@ const entries = [
     // ---------- Início: Context ----------
     { page: 'Início', section: 'Contexto Badge', content: 'PANORAMA ATUAL' },
     { page: 'Início', section: 'Contexto Título', content: 'O Contexto Atual' },
-    { page: 'Início', section: 'Contexto Subtítulo', content: 'A cibersegurança tornou-se uma prioridade estratégica para organizações públicas e privadas.' },
+    { page: 'Início', section: 'Contexto Subtítulo', content: 'A cibersegurança tornou-se uma prioridade estratégica para organizações públicas e privadas. Proteger os ativos de informação consiste num pilar fundamental para a continuidade e reputação de qualquer negócio. A sofisticação crescente das ameaças cibernéticas exige uma postura proativa, onde a mitigação de riscos e a resiliência operacional determinam o sucesso e a confiança no mercado.' },
 
     { page: 'Início', section: 'Ameaça ransomware Título', content: 'ATAQUES DE RANSOMWARE' },
     { page: 'Início', section: 'Ameaça ransomware Descrição', content: 'Crescimento exponencial de ataques que encriptam dados e exigem resgates' },
@@ -146,7 +146,7 @@ const entries = [
     // no painel de CMS (o fallback no código está vazio "").
     { page: 'Início', section: 'Sobre Badge', content: 'QUEM SOMOS' },
     { page: 'Início', section: 'Sobre Título', content: 'Sobre a CyberBox Security' },
-    { page: 'Início', section: 'Sobre Subtítulo', content: 'Somos especialistas em cibersegurança com mais de 15 anos de experiência.' },
+    { page: 'Início', section: 'Sobre Subtítulo', content: 'Somos uma equipa de especialistas em cibersegurança dedicados a proteger organizações públicas e privadas. Combinamos conhecimento técnico avançado, monitorização proativa e as melhores práticas internacionais para mitigar riscos, blindar infraestruturas críticas e garantir a continuidade do seu negócio face às ameaças cibernéticas mais complexas.' },
     { page: 'Início', section: 'Sobre Missão Título', content: 'MISSÃO: Proteger empresas e organizações contra ameaças cibernéticas através de soluções inovadoras, monitorização contínua e expertise especializada.' },
     { page: 'Início', section: 'Sobre Visão Título', content: 'VISÃO: Ser a referência nacional em cibersegurança, reconhecidos pela excelência técnica, inovação e compromisso com a segurança dos nossos clientes.' },
     { page: 'Início', section: 'Sobre Valores Título', content: 'VALORES: Integridade, excelência técnica, inovação contínua e compromisso total com a proteção dos dados e sistemas dos nossos clientes.' },
@@ -171,7 +171,7 @@ const entries = [
     { page: 'Contactos', section: 'Info telefone Título', content: 'TELEFONE' },
     { page: 'Contactos', section: 'Info telefone Valor', content: '+351 000 000 000' },
     { page: 'Contactos', section: 'Info localizacao Título', content: 'LOCALIZAÇÃO' },
-    { page: 'Contactos', section: 'Info localizacao Valor', content: 'Lisboa, Portugal' },
+    { page: 'Contactos', section: 'Info localizacao Valor', content: 'Viseu, Portugal' },
     { page: 'Contactos', section: 'Info horario Título', content: 'HORÁRIO' },
     { page: 'Contactos', section: 'Info horario Valor', content: 'Seg–Sex, 9h–18h' },
 
